@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evomni — 第三方登入</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { height: 100%; }
+  body { font-family: 'Noto Sans TC', -apple-system, sans-serif; font-size: 14px; background: #F5F7FA; color: #303133; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: #DCDFE6; border-radius: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  input[type="radio"], input[type="checkbox"] { accent-color: #409EFF; }
+  a { color: #409EFF; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="../components/Sidebar.jsx"></script>
+<script type="text/babel" src="../components/Header.jsx"></script>
+
+<script type="text/babel">
+
+// ─── Icons ─────────────────────────────────────────────────────────────────
+
+const LineLogo = ({ size = 20 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="white">
+    <path d="M12 2C6.477 2 2 6.124 2 11.18c0 4.546 3.738 8.35 8.787 9.069.342.074.808.226.926.52.106.267.069.685.034.957l-.142.853c-.043.267-.206 1.045.916.57 1.123-.475 6.058-3.571 8.265-6.112C21.545 15.298 22 13.308 22 11.18 22 6.124 17.523 2 12 2z"/>
+    <path fill="#06C755" d="M12 2C6.477 2 2 6.124 2 11.18c0 4.546 3.738 8.35 8.787 9.069.342.074.808.226.926.52.106.267.069.685.034.957l-.142.853c-.043.267-.206 1.045.916.57 1.123-.475 6.058-3.571 8.265-6.112C21.545 15.298 22 13.308 22 11.18 22 6.124 17.523 2 12 2z"/>
+  </svg>
+);
+
+const LineLogoWhite = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path fill="white" d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.346 0 .627.285.627.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.065-.022.133-.031.2-.031.211 0 .39.09.51.25l2.444 3.317V8.108c0-.345.282-.63.63-.63.346 0 .627.285.627.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.771zm-2.466.629H4.917c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.627-.63.349 0 .631.285.631.63v4.141h1.755c.349 0 .63.283.63.63 0 .344-.281.629-.63.629"/>
+  </svg>
+);
+
+const GoogleLogo = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24">
+    <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+    <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+    <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+    <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+  </svg>
+);
+
+const FacebookLogo = ({ size = 18 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="white">
+    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+  </svg>
+);
+
+const EyeIcon = ({ open = true }) => open ? (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#909399" strokeWidth="2" strokeLinecap="round">
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+  </svg>
+) : (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#909399" strokeWidth="2" strokeLinecap="round">
+    <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+    <line x1="1" y1="1" x2="23" y2="23"/>
+  </svg>
+);
+
+const InfoIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#909399" strokeWidth="2" strokeLinecap="round">
+    <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+  </svg>
+);
+
+const LinkChainIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#409EFF" strokeWidth="2" strokeLinecap="round">
+    <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+    <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+  </svg>
+);
+
+const CheckIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#67C23A" strokeWidth="2.5" strokeLinecap="round">
+    <polyline points="20 6 9 17 4 12"/>
+  </svg>
+);
+
+// ─── Shared styles ──────────────────────────────────────────────────────────
+
+const baseInput = {
+  width: '100%', height: 40, padding: '0 12px',
+  border: '1px solid #DCDFE6', borderRadius: 0,
+  fontSize: 14, fontFamily: 'Noto Sans TC, sans-serif',
+  outline: 'none', color: '#303133', background: '#fff',
+};
+
+const btn = {
+  primary:   { borderRadius: 0, cursor: 'pointer', fontSize: 14, fontFamily: 'Noto Sans TC, sans-serif', background: '#303133', color: '#fff', height: 40, padding: '0 16px', border: '1px solid #303133' },
+  primaryLg: { borderRadius: 0, cursor: 'pointer', fontSize: 14, fontFamily: 'Noto Sans TC, sans-serif', background: '#303133', color: '#fff', height: 44, padding: '0 16px', border: '1px solid #303133', width: '100%' },
+  plain:     { borderRadius: 0, cursor: 'pointer', fontSize: 14, fontFamily: 'Noto Sans TC, sans-serif', background: '#fff', color: '#303133', height: 40, padding: '0 16px', border: '1px solid #DCDFE6' },
+  plainLg:   { borderRadius: 0, cursor: 'pointer', fontSize: 14, fontFamily: 'Noto Sans TC, sans-serif', background: '#fff', color: '#303133', height: 44, padding: '0 16px', border: '1px solid #DCDFE6', width: '100%' },
+  text:      { borderRadius: 0, cursor: 'pointer', fontSize: 14, fontFamily: 'Noto Sans TC, sans-serif', background: 'none', color: '#409EFF', height: 'auto', padding: 0, border: 'none' },
+  textDanger:{ borderRadius: 0, cursor: 'pointer', fontSize: 14, fontFamily: 'Noto Sans TC, sans-serif', background: 'none', color: '#F56C6C', height: 'auto', padding: 0, border: 'none' },
+  disabledLg:{ borderRadius: 0, fontSize: 14, fontFamily: 'Noto Sans TC, sans-serif', background: '#F5F7FA', color: '#C0C4CC', height: 44, padding: '0 16px', border: '1px solid #DCDFE6', cursor: 'not-allowed', width: '100%' },
+  disabled:  { borderRadius: 0, fontSize: 14, fontFamily: 'Noto Sans TC, sans-serif', background: '#F5F7FA', color: '#C0C4CC', height: 40, padding: '0 16px', border: '1px solid #DCDFE6', cursor: 'not-allowed' },
+};
+
+// ─── Toast ──────────────────────────────────────────────────────────────────
+
+function ToastStack({ toasts }) {
+  const cs = {
+    success: { bg: '#f0f9eb', border: '#c2e7b0', color: '#67C23A' },
+    error:   { bg: '#fef0f0', border: '#fbc4c4', color: '#F56C6C' },
+    warning: { bg: '#fdf6ec', border: '#f5dab1', color: '#E6A23C' },
+    info:    { bg: '#ecf5ff', border: '#b3d8ff', color: '#409EFF' },
+  };
+  return (
+    <div style={{ position: 'fixed', top: 64, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8, pointerEvents: 'none' }}>
+      {toasts.map(t => {
+        const c = cs[t.type] || cs.info;
+        return (
+          <div key={t.id} style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.color, padding: '10px 16px', fontSize: 14, boxShadow: '0 2px 8px rgba(0,0,0,.08)', minWidth: 220, maxWidth: 360 }}>
+            {t.msg}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function useToast() {
+  const [toasts, setToasts] = React.useState([]);
+  const show = (msg, type = 'success') => {
+    const id = Date.now();
+    setToasts(t => [...t, { id, msg, type }]);
+    setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 2800);
+  };
+  return { toasts, show };
+}
+
+// ─── SocialButton ───────────────────────────────────────────────────────────
+
+function SocialButton({ platform, loading, disabled, onClick }) {
+  const cfg = {
+    LINE:     { bg: '#06C755', color: '#fff', border: 'none', logo: <LineLogoWhite size={18} />, label: '以 LINE 登入',     loadingLabel: '正在連接 LINE...' },
+    Google:   { bg: '#fff', color: '#303133', border: '1px solid #DCDFE6', logo: <GoogleLogo size={18} />, label: '以 Google 登入',   loadingLabel: '正在連接 Google...' },
+    Facebook: { bg: '#1877F2', color: '#fff', border: 'none', logo: <FacebookLogo size={18} />, label: '以 Facebook 登入', loadingLabel: '正在連接 Facebook...' },
+  }[platform];
+
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled || loading}
+      style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+        width: '100%', height: 44, borderRadius: 0,
+        background: disabled ? '#F5F7FA' : cfg.bg,
+        color: disabled ? '#C0C4CC' : cfg.color,
+        border: disabled ? '1px solid #DCDFE6' : cfg.border,
+        fontSize: 14, fontFamily: 'Noto Sans TC, sans-serif',
+        cursor: disabled || loading ? 'not-allowed' : 'pointer',
+        opacity: loading ? 0.8 : 1,
+        transition: 'opacity .15s',
+      }}
+    >
+      {!disabled && !loading && cfg.logo}
+      {loading ? cfg.loadingLabel : cfg.label}
+    </button>
+  );
+}
+
+// ─── Screen 1: 前台登入/註冊頁 ──────────────────────────────────────────────
+
+function Screen1() {
+  const [tab, setTab] = React.useState('login');
+  const [showPw, setShowPw] = React.useState(false);
+  const [loginState, setLoginState] = React.useState('default'); // default | error
+  const [loadingPlatform, setLoadingPlatform] = React.useState(null);
+  const { toasts, show: showToast } = useToast();
+
+  const handleSocialClick = (platform) => {
+    setLoadingPlatform(platform);
+    setTimeout(() => {
+      setLoadingPlatform(null);
+      showToast('登入已取消，請重試或使用 Email 登入', 'warning');
+    }, 2000);
+  };
+
+  const platforms = ['LINE', 'Google', 'Facebook'];
+
+  return (
+    <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '48px 16px 40px', background: '#F5F7FA' }}>
+      <div style={{ marginBottom: 32, textAlign: 'center' }}>
+        <div style={{ fontSize: 22, fontWeight: 700, letterSpacing: 2 }}>EVOMNI</div>
+        <div style={{ fontSize: 12, color: '#909399', marginTop: 4 }}>商店購物網</div>
+      </div>
+
+      <div style={{ background: '#fff', border: '1px solid #DCDFE6', width: '100%', maxWidth: 400, padding: '0 32px 32px' }}>
+        {/* Tabs */}
+        <div style={{ display: 'flex', borderBottom: '1px solid #DCDFE6', marginBottom: 28 }}>
+          {[['login','登入'],['register','註冊']].map(([id, label]) => (
+            <button key={id} onClick={() => { setTab(id); setShowPw(false); setLoginState('default'); }} style={{
+              flex: 1, height: 48, background: 'none', border: 'none',
+              borderBottom: tab === id ? '2px solid #409EFF' : '2px solid transparent',
+              color: tab === id ? '#409EFF' : '#606266',
+              fontSize: 15, fontWeight: tab === id ? 700 : 400,
+              cursor: 'pointer', fontFamily: 'Noto Sans TC, sans-serif',
+              marginBottom: -1,
+            }}>{label}</button>
+          ))}
+        </div>
+
+        {tab === 'login' ? (
+          <>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 13, color: '#606266', marginBottom: 6 }}>電子信箱</label>
+              <input type="email" placeholder="請輸入您的電子信箱"
+                style={{ ...baseInput, borderColor: loginState === 'error' ? '#F56C6C' : '#DCDFE6' }} />
+            </div>
+            <div style={{ marginBottom: 8 }}>
+              <label style={{ display: 'block', fontSize: 13, color: '#606266', marginBottom: 6 }}>密碼</label>
+              <div style={{ position: 'relative' }}>
+                <input type={showPw ? 'text' : 'password'} placeholder="請輸入密碼"
+                  style={{ ...baseInput, paddingRight: 40, borderColor: loginState === 'error' ? '#F56C6C' : '#DCDFE6' }} />
+                <button onClick={() => setShowPw(!showPw)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}>
+                  <EyeIcon open={showPw} />
+                </button>
+              </div>
+              {loginState === 'error' && (
+                <div style={{ fontSize: 12, color: '#F56C6C', marginTop: 4 }}>電子信箱或密碼不正確，請重試</div>
+              )}
+            </div>
+            <div style={{ textAlign: 'right', marginBottom: 20 }}>
+              <button style={{ ...btn.text, fontSize: 13, color: '#909399' }}>忘記密碼？</button>
+            </div>
+            <button onClick={() => setLoginState('error')} style={btn.primaryLg}>登入</button>
+            <div style={{ textAlign: 'center', marginTop: 14, fontSize: 13, color: '#606266' }}>
+              還沒有帳號？
+              <button onClick={() => setTab('register')} style={{ ...btn.text, fontSize: 13 }}>立即註冊</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: 'block', fontSize: 13, color: '#606266', marginBottom: 6 }}>電子信箱</label>
+              <input type="email" placeholder="請輸入您的電子信箱" style={baseInput} />
+            </div>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 13, color: '#606266', marginBottom: 6 }}>密碼</label>
+              <div style={{ position: 'relative' }}>
+                <input type={showPw ? 'text' : 'password'} placeholder="請設定密碼"
+                  style={{ ...baseInput, paddingRight: 40 }} />
+                <button onClick={() => setShowPw(!showPw)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}>
+                  <EyeIcon open={showPw} />
+                </button>
+              </div>
+              <div style={{ fontSize: 12, color: '#909399', marginTop: 4 }}>密碼長度需介於 8-16 字元，且包含英文與數字</div>
+            </div>
+            <button style={btn.primaryLg}>建立帳號</button>
+            <div style={{ textAlign: 'center', marginTop: 14, fontSize: 13, color: '#606266' }}>
+              已有帳號？
+              <button onClick={() => setTab('login')} style={{ ...btn.text, fontSize: 13 }}>立即登入</button>
+            </div>
+          </>
+        )}
+
+        {/* Divider */}
+        <div style={{ display: 'flex', alignItems: 'center', margin: '24px 0', gap: 12 }}>
+          <div style={{ flex: 1, height: 1, background: '#DCDFE6' }} />
+          <span style={{ fontSize: 13, color: '#909399' }}>或</span>
+          <div style={{ flex: 1, height: 1, background: '#DCDFE6' }} />
+        </div>
+
+        {/* Social buttons */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {platforms.map(p => (
+            <SocialButton
+              key={p}
+              platform={p}
+              loading={loadingPlatform === p}
+              disabled={loadingPlatform !== null && loadingPlatform !== p}
+              onClick={() => handleSocialClick(p)}
+            />
+          ))}
+        </div>
+      </div>
+
+      <ToastStack toasts={toasts} />
+    </div>
+  );
+}
+
+// ─── Screen 2: Email 補全頁 ──────────────────────────────────────────────────
+
+function Screen2() {
+  const [phase, setPhase] = React.useState('input'); // input | sending | sent
+  const [countdown, setCountdown] = React.useState(60);
+  const timerRef = React.useRef(null);
+  const { toasts, show: showToast } = useToast();
+
+  React.useEffect(() => {
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+  }, []);
+
+  const handleSend = () => {
+    setPhase('sending');
+    setTimeout(() => {
+      setPhase('sent');
+      setCountdown(60);
+      let n = 60;
+      timerRef.current = setInterval(() => {
+        n--;
+        setCountdown(n);
+        if (n <= 0) clearInterval(timerRef.current);
+      }, 1000);
+    }, 1500);
+  };
+
+  const handleResend = () => {
+    setCountdown(60);
+    let n = 60;
+    if (timerRef.current) clearInterval(timerRef.current);
+    timerRef.current = setInterval(() => {
+      n--;
+      setCountdown(n);
+      if (n <= 0) clearInterval(timerRef.current);
+    }, 1000);
+    showToast('驗證信已重新發送至 example@gmail.com', 'success');
+  };
+
+  return (
+    <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '48px 16px 40px', background: '#F5F7FA' }}>
+      <div style={{ background: '#fff', border: '1px solid #DCDFE6', width: '100%', maxWidth: 400, padding: 32 }}>
+
+        {/* Platform connected badge */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 24 }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 9999, padding: '6px 16px' }}>
+            <div style={{ width: 22, height: 22, background: '#06C755', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <LineLogoWhite size={14} />
+            </div>
+            <span style={{ fontSize: 13, color: '#16a34a', fontWeight: 500 }}>已連接 LINE</span>
+            <CheckIcon />
+          </div>
+        </div>
+
+        {phase === 'input' || phase === 'sending' ? (
+          <>
+            <h1 style={{ fontSize: 20, fontWeight: 700, textAlign: 'center', marginBottom: 8 }}>您好，王小明！</h1>
+            <p style={{ fontSize: 14, color: '#606266', textAlign: 'center', marginBottom: 28, lineHeight: 1.7 }}>
+              為了完成帳號建立，請提供您的 Email 地址。
+            </p>
+            <div style={{ marginBottom: 20 }}>
+              <label style={{ display: 'block', fontSize: 13, color: '#606266', marginBottom: 6 }}>電子信箱</label>
+              <input type="email" placeholder="請輸入您的 Email 地址" style={baseInput} />
+            </div>
+            <button onClick={handleSend} disabled={phase === 'sending'} style={{ ...btn.primaryLg, opacity: phase === 'sending' ? 0.75 : 1, cursor: phase === 'sending' ? 'wait' : 'pointer' }}>
+              {phase === 'sending' ? '發送中...' : '發送驗證信'}
+            </button>
+          </>
+        ) : (
+          <>
+            <h1 style={{ fontSize: 20, fontWeight: 700, textAlign: 'center', marginBottom: 16 }}>驗證信已發送</h1>
+            <div style={{ background: '#f0f9eb', border: '1px solid #c2e7b0', padding: '16px', marginBottom: 20, textAlign: 'center' }}>
+              <div style={{ fontSize: 13, color: '#606266', marginBottom: 4 }}>驗證信已發送至</div>
+              <div style={{ fontSize: 14, color: '#409EFF', fontWeight: 500 }}>example@gmail.com</div>
+            </div>
+            <p style={{ fontSize: 13, color: '#606266', textAlign: 'center', marginBottom: 20, lineHeight: 1.7 }}>
+              請前往您的信箱點擊驗證連結，完成帳號建立。
+            </p>
+            <div style={{ textAlign: 'center', fontSize: 13, color: '#606266', marginBottom: 12 }}>
+              沒有收到？請確認垃圾郵件資料夾，或
+            </div>
+            <button onClick={countdown > 0 ? undefined : handleResend} disabled={countdown > 0} style={countdown > 0 ? btn.disabledLg : btn.plainLg}>
+              {countdown > 0 ? `重新發送（${countdown} 秒後可重送）` : '重新發送驗證信'}
+            </button>
+          </>
+        )}
+
+        <div style={{ textAlign: 'center', marginTop: 20, fontSize: 12, color: '#909399' }}>
+          您的 Email 僅用於訂單通知，不會分享給第三方。
+        </div>
+      </div>
+
+      <ToastStack toasts={toasts} />
+    </div>
+  );
+}
+
+// ─── Screen 3: 帳號合併確認頁 ────────────────────────────────────────────────
+
+function Screen3() {
+  const [showPw, setShowPw] = React.useState(false);
+  const [state, setState] = React.useState('default'); // default | loading | error | locked
+  const [remaining, setRemaining] = React.useState(3);
+  const { toasts, show: showToast } = useToast();
+
+  const handleConfirm = () => {
+    setState('loading');
+    setTimeout(() => {
+      const left = remaining - 1;
+      if (left <= 0) {
+        setState('locked');
+        setRemaining(0);
+      } else {
+        setState('error');
+        setRemaining(left);
+      }
+    }, 1500);
+  };
+
+  const handleSendReset = () => {
+    showToast('密碼重設信已發送，請查收 Email 後回來繼續操作', 'info');
+  };
+
+  return (
+    <div style={{ minHeight: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', padding: '48px 16px 40px', background: '#F5F7FA' }}>
+      <div style={{ background: '#fff', border: '1px solid #DCDFE6', width: '100%', maxWidth: 400, padding: 32 }}>
+
+        {/* Icon */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+          <div style={{ width: 52, height: 52, background: '#ecf5ff', border: '1px solid #b3d8ff', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <LinkChainIcon />
+          </div>
+        </div>
+
+        <h1 style={{ fontSize: 18, fontWeight: 700, textAlign: 'center', marginBottom: 12 }}>找到現有帳號</h1>
+        <p style={{ fontSize: 14, color: '#606266', textAlign: 'center', marginBottom: 6, lineHeight: 1.7 }}>
+          您的 LINE 帳號的 Email（<strong style={{ color: '#303133' }}>te***@gmail.com</strong>）在我們系統中已有一個帳號。
+        </p>
+        <p style={{ fontSize: 13, color: '#909399', textAlign: 'center', marginBottom: 24, lineHeight: 1.7 }}>
+          連結後，您可以用 LINE 或 Email / 密碼兩種方式登入。
+        </p>
+
+        {/* Locked alert */}
+        {state === 'locked' && (
+          <div style={{ background: '#fdf6ec', border: '1px solid #f5dab1', padding: '12px 16px', marginBottom: 20, fontSize: 13, color: '#E6A23C', lineHeight: 1.6 }}>
+            帳號已暫時鎖定 30 分鐘，請稍後再試或使用密碼重設功能。
+          </div>
+        )}
+
+        {/* Password field */}
+        <div style={{ marginBottom: 8 }}>
+          <label style={{ display: 'block', fontSize: 13, color: '#606266', marginBottom: 6 }}>現有帳號密碼</label>
+          <div style={{ position: 'relative' }}>
+            <input
+              type={showPw ? 'text' : 'password'}
+              placeholder="請輸入您帳號的密碼"
+              disabled={state === 'locked'}
+              style={{ ...baseInput, paddingRight: 40, borderColor: state === 'error' ? '#F56C6C' : '#DCDFE6', background: state === 'locked' ? '#F5F7FA' : '#fff', color: state === 'locked' ? '#C0C4CC' : '#303133' }}
+            />
+            <button onClick={() => setShowPw(!showPw)} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}>
+              <EyeIcon open={showPw} />
+            </button>
+          </div>
+          {state === 'error' && (
+            <div style={{ fontSize: 12, color: '#F56C6C', marginTop: 4 }}>
+              密碼不正確，您還有 {remaining} 次嘗試機會
+            </div>
+          )}
+        </div>
+
+        <div style={{ textAlign: 'right', marginBottom: 24 }}>
+          <button onClick={handleSendReset} style={{ ...btn.text, fontSize: 13, color: '#909399' }}>不記得密碼？發送密碼重設信</button>
+        </div>
+
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => showToast('已取消，OAuth 授權已清除，返回登入頁', 'info')} style={{ ...btn.plain, flex: 1 }}>取消，不綁定</button>
+          <button
+            onClick={state !== 'locked' && state !== 'loading' ? handleConfirm : undefined}
+            disabled={state === 'locked' || state === 'loading'}
+            style={{ flex: 1, ...btn.primary, opacity: state === 'loading' ? 0.75 : 1, cursor: state === 'locked' ? 'not-allowed' : state === 'loading' ? 'wait' : 'pointer', background: state === 'locked' ? '#C0C4CC' : '#303133', borderColor: state === 'locked' ? '#C0C4CC' : '#303133' }}
+          >
+            {state === 'loading' ? '驗證中...' : '確認綁定'}
+          </button>
+        </div>
+      </div>
+
+      <ToastStack toasts={toasts} />
+    </div>
+  );
+}
+
+// ─── Screen 4: 帳號設定（社群帳號連結）admin layout ──────────────────────────
+
+function SocialLinkCard({ showToast }) {
+  const [links, setLinks] = React.useState({
+    LINE:     { linked: true,  name: '王小明'    },
+    Google:   { linked: false, name: null        },
+    Facebook: { linked: true,  name: 'Ming Wang' },
+  });
+  const [dialog, setDialog] = React.useState(null);
+  const [operating, setOperating] = React.useState(null);
+
+  const hasPassword = false;
+
+  const platformDef = [
+    {
+      id: 'LINE',
+      badge: <div style={{ width: 32, height: 32, background: '#06C755', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><LineLogoWhite size={16} /></div>,
+    },
+    {
+      id: 'Google',
+      badge: <div style={{ width: 32, height: 32, background: '#fff', border: '1px solid #DCDFE6', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><GoogleLogo size={18} /></div>,
+    },
+    {
+      id: 'Facebook',
+      badge: <div style={{ width: 32, height: 32, background: '#1877F2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}><FacebookLogo size={16} /></div>,
+    },
+  ];
+
+  const handleUnlink = (id) => { setDialog(id); };
+  const confirmUnlink = () => {
+    const id = dialog;
+    setDialog(null);
+    setOperating(id);
+    setTimeout(() => {
+      setLinks(prev => ({ ...prev, [id]: { linked: false, name: null, lastOnly: false } }));
+      setOperating(null);
+      showToast(`${id} 帳號連結已解除`, 'success');
+    }, 1200);
+  };
+  const handleLink = (id) => {
+    setOperating(id);
+    setTimeout(() => {
+      setLinks(prev => ({ ...prev, [id]: { linked: true, name: `${id} 用戶`, lastOnly: false } }));
+      setOperating(null);
+      showToast(`${id} 帳號已成功連結！`, 'success');
+    }, 1200);
+  };
+
+  return (
+    <div>
+      {/* 純社群帳號引導 */}
+      {!hasPassword && (
+        <div style={{ background: '#ecf5ff', border: '1px solid #b3d8ff', padding: '12px 16px', marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 10, fontSize: 13, color: '#606266' }}>
+          <InfoIcon />
+          <div style={{ flex: 1, lineHeight: 1.7 }}>
+            您的帳號目前沒有密碼。建議您設定密碼，以便在社群帳號無法使用時仍可登入。
+          </div>
+          <button style={{ ...btn.plain, height: 32, padding: '0 12px', fontSize: 13, flexShrink: 0 }}>設定帳號密碼</button>
+        </div>
+      )}
+
+      {/* Card */}
+      <div style={{ background: '#fff', border: '1px solid #DCDFE6' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #DCDFE6' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700 }}>社群帳號連結</h2>
+        </div>
+        <div>
+          {platformDef.map((p, i) => {
+            const info = links[p.id];
+            const linkedCount = Object.values(links).filter(l => l.linked).length;
+            const isLast = info.linked && linkedCount === 1 && !hasPassword;
+            const isOp = operating === p.id;
+            return (
+              <div key={p.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '18px 20px', borderBottom: i < platformDef.length - 1 ? '1px solid #F5F7FA' : 'none' }}>
+                {p.badge}
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: 14, fontWeight: 500 }}>{p.id}</div>
+                  {info.linked ? (
+                    <div style={{ fontSize: 13, color: '#67C23A', marginTop: 2 }}>已連結（{info.name}）</div>
+                  ) : (
+                    <div style={{ fontSize: 13, color: '#909399', marginTop: 2 }}>尚未連結</div>
+                  )}
+                </div>
+                {info.linked ? (
+                  <button
+                    onClick={() => !isLast && !isOp && handleUnlink(p.id)}
+                    title={isLast ? '無法解除連結，因為您目前沒有設定帳號密碼。請先設定密碼後再解除連結。' : ''}
+                    style={{ ...btn.textDanger, cursor: isLast ? 'not-allowed' : 'pointer', color: isLast ? '#C0C4CC' : '#F56C6C', fontSize: 13 }}
+                  >
+                    {isOp ? '解除中...' : '解除連結'}
+                  </button>
+                ) : (
+                  <button onClick={() => !isOp && handleLink(p.id)} style={{ ...btn.plain, height: 32, padding: '0 12px', fontSize: 13, opacity: isOp ? 0.7 : 1 }}>
+                    {isOp ? '連結中...' : '連結帳號'}
+                  </button>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Unlink dialog */}
+      {dialog && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000 }}>
+          <div style={{ background: '#fff', width: 440, maxWidth: '90vw', border: '1px solid #DCDFE6' }}>
+            <div style={{ padding: '16px 20px', borderBottom: '1px solid #DCDFE6', fontSize: 16, fontWeight: 700 }}>
+              確定要解除 {dialog} 帳號的連結嗎？
+            </div>
+            <div style={{ padding: 20, fontSize: 14, color: '#606266', lineHeight: 1.8 }}>
+              解除後，您將無法再使用此 {dialog} 帳號登入。請確認您有其他登入方式（Email / 密碼 或 其他社群帳號）可以繼續使用帳號。
+            </div>
+            <div style={{ padding: '12px 20px', borderTop: '1px solid #DCDFE6', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button style={btn.plain} onClick={() => setDialog(null)}>取消</button>
+              <button style={{ ...btn.primary, background: '#F56C6C', borderColor: '#F56C6C' }} onClick={confirmUnlink}>確定解除連結</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Screen 5: 後台第三方登入憑證設定 ────────────────────────────────────────
+
+function AdminCredentialsScreen({ showToast }) {
+  const [platforms, setPlatforms] = React.useState({
+    LINE:     { enabled: true,  callback: 'https://shop.example.com/auth/line/callback' },
+    Google:   { enabled: false, callback: 'https://shop.example.com/auth/google/callback' },
+    Facebook: { enabled: true,  callback: 'https://shop.example.com/auth/facebook/callback' },
+  });
+  const [formValues, setFormValues] = React.useState({
+    LINE:     { clientId: 'LINE-CHANNEL-12345', secret: '' },
+    Google:   { clientId: '',                    secret: '' },
+    Facebook: { clientId: 'FB-APP-98765',       secret: '' },
+  });
+  const [showSecrets, setShowSecrets] = React.useState({ LINE: false, Google: false, Facebook: false });
+  const [loginMode, setLoginMode] = React.useState('both');
+  const [testing, setTesting] = React.useState(null);
+
+  const updateFormValue = (name, key, value) => {
+    setFormValues(prev => ({ ...prev, [name]: { ...prev[name], [key]: value } }));
+  };
+
+  const platformConfig = {
+    LINE: {
+      badge: <div style={{ width: 30, height: 30, background: '#06C755', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LineLogoWhite size={15} /></div>,
+      consoleName: 'LINE Developers Console',
+      fields: [
+        { key: 'clientId', label: 'Channel ID', placeholder: '請輸入 Channel ID', type: 'text',     tooltip: 'LINE Login Channel ID，可在 LINE Developers Console > LINE Login 頻道設定中取得' },
+        { key: 'secret',   label: 'Channel Secret', placeholder: '請輸入 Channel Secret', type: 'password', tooltip: '點擊右側眼睛 icon 顯示；請妥善保管，不要分享給他人' },
+      ],
+      callbackLabel: 'Callback URL',
+      callbackHint: '唯讀，請在 LINE Developers Console 填入此 URL',
+    },
+    Google: {
+      badge: <div style={{ width: 30, height: 30, background: '#fff', border: '1px solid #DCDFE6', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><GoogleLogo size={18} /></div>,
+      consoleName: 'Google Cloud Console',
+      fields: [
+        { key: 'clientId', label: '用戶端 ID（Client ID）', placeholder: '請輸入 Client ID', type: 'text',     tooltip: '在 Google Cloud Console > OAuth 2.0 用戶端 ID 中取得' },
+        { key: 'secret',   label: '用戶端密碼（Client Secret）', placeholder: '請輸入 Client Secret', type: 'password', tooltip: '請妥善保管，不要分享給他人' },
+      ],
+      callbackLabel: '授權重新導向 URI（Callback URL）',
+      callbackHint: '唯讀，請在 Google Cloud Console 填入此 URI',
+    },
+    Facebook: {
+      badge: <div style={{ width: 30, height: 30, background: '#1877F2', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><FacebookLogo size={16} /></div>,
+      consoleName: 'Meta Developers',
+      fields: [
+        { key: 'clientId', label: '應用程式 ID（App ID）', placeholder: '請輸入 App ID', type: 'text',     tooltip: '在 Meta Developers > 應用程式設定中取得' },
+        { key: 'secret',   label: '應用程式密鑰（App Secret）', placeholder: '請輸入 App Secret', type: 'password', tooltip: '請妥善保管，不要分享給他人' },
+      ],
+      callbackLabel: '有效的 OAuth 重新導向 URI（Callback URL）',
+      callbackHint: '唯讀，請在 Meta Developers 應用程式設定中填入此 URI',
+    },
+  };
+
+  const togglePlatform = (name) => {
+    setPlatforms(prev => ({ ...prev, [name]: { ...prev[name], enabled: !prev[name].enabled } }));
+  };
+
+  const handleTest = (name) => {
+    setTesting(name);
+    setTimeout(() => {
+      setTesting(null);
+      if (formValues[name].clientId) {
+        showToast('連線測試成功，憑證有效', 'success');
+      } else {
+        showToast('連線失敗：憑證未填寫，請檢查憑證是否正確', 'error');
+      }
+    }, 1500);
+  };
+
+  const handleCopy = (text) => {
+    showToast('已複製', 'success');
+  };
+
+  const handleSave = (name) => {
+    const p = platforms[name];
+    const vals = formValues[name];
+    if (p.enabled && !vals.clientId) {
+      showToast(`${name} 已啟用但憑證未填寫，前台將無法使用此登入方式，請確認後儲存`, 'warning');
+    } else {
+      showToast('設定已儲存', 'success');
+    }
+  };
+
+  return (
+    <div style={{ padding: 24 }}>
+      {/* Breadcrumb + title */}
+      <div style={{ marginBottom: 6, fontSize: 13, color: '#909399' }}>
+        <span style={{ color: '#409EFF', cursor: 'pointer' }}>全域設定</span>
+        <span style={{ margin: '0 6px', color: '#C0C4CC' }}>/</span>
+        <span style={{ color: '#409EFF', cursor: 'pointer' }}>電商進階設定</span>
+        <span style={{ margin: '0 6px', color: '#C0C4CC' }}>/</span>
+        <span>第三方登入設定</span>
+      </div>
+      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>第三方登入設定</h1>
+      <p style={{ fontSize: 14, color: '#606266', marginBottom: 24, lineHeight: 1.7 }}>
+        設定第三方登入後，消費者可在您的商店使用社群帳號快速登入。各平台的應用程式憑證需在對應的開發者平台申請。
+      </p>
+
+      {/* Platform cards */}
+      {['LINE', 'Google', 'Facebook'].map(name => {
+        const p = platforms[name];
+        const cfg = platformConfig[name];
+        return (
+          <div key={name} style={{ background: '#fff', border: '1px solid #DCDFE6', marginBottom: 16, opacity: p.enabled ? 1 : 0.65, transition: 'opacity .2s' }}>
+            {/* Card header */}
+            <div style={{ padding: '14px 20px', borderBottom: '1px solid #DCDFE6', display: 'flex', alignItems: 'center', gap: 12 }}>
+              {cfg.badge}
+              <span style={{ fontSize: 15, fontWeight: 700, flex: 1 }}>{name} Login</span>
+              <span style={{ fontSize: 13, color: '#606266', marginRight: 8 }}>{p.enabled ? '啟用' : '停用'}</span>
+              <div onClick={() => togglePlatform(name)} style={{ width: 44, height: 22, borderRadius: 9999, background: p.enabled ? '#409EFF' : '#C0C4CC', position: 'relative', cursor: 'pointer', transition: 'background .2s', flexShrink: 0 }}>
+                <div style={{ position: 'absolute', top: 2, left: p.enabled ? 24 : 2, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.2)' }} />
+              </div>
+            </div>
+
+            {/* Card body */}
+            <div style={{ padding: 20 }}>
+              <p style={{ fontSize: 13, color: '#606266', marginBottom: 16 }}>
+                前往 {cfg.consoleName} 申請憑證：
+                <a href="#" style={{ color: '#409EFF', marginLeft: 6 }}>前往 {cfg.consoleName} ↗</a>
+              </p>
+
+              {/* Credential fields - 2 column grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+                {cfg.fields.map(field => (
+                  <div key={field.key}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 6 }}>
+                      <label style={{ fontSize: 13, color: '#606266', fontWeight: 500 }}>{field.label}</label>
+                      <span title={field.tooltip} style={{ cursor: 'help', display: 'flex', alignItems: 'center' }}><InfoIcon /></span>
+                    </div>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={field.type === 'password' && !showSecrets[name] ? 'password' : 'text'}
+                        placeholder={field.placeholder}
+                        value={formValues[name][field.key]}
+                        onChange={(e) => updateFormValue(name, field.key, e.target.value)}
+                        style={{ ...baseInput }}
+                      />
+                      {field.type === 'password' && (
+                        <button onClick={() => setShowSecrets(prev => ({ ...prev, [name]: !prev[name] }))} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, display: 'flex' }}>
+                          <EyeIcon open={showSecrets[name]} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Callback URL */}
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: 'block', fontSize: 13, color: '#606266', fontWeight: 500, marginBottom: 6 }}>{cfg.callbackLabel}</label>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input readOnly value={p.callback} style={{ ...baseInput, background: '#F5F7FA', color: '#909399', flex: 1 }} />
+                  <button onClick={() => handleCopy(p.callback)} style={{ ...btn.plain, flexShrink: 0, fontSize: 13 }}>複製</button>
+                </div>
+                <div style={{ fontSize: 12, color: '#909399', marginTop: 4 }}>
+                  {cfg.callbackHint}。請確認您已在 {name} 開發者後台將此 URL 加入允許清單，否則登入流程會失敗。
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                <button onClick={() => handleTest(name)} disabled={testing === name} style={{ ...btn.plain, opacity: testing === name ? 0.7 : 1 }}>
+                  {testing === name ? '測試中...' : '測試連線'}
+                </button>
+                <button onClick={() => handleSave(name)} style={btn.primary}>儲存</button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Display settings */}
+      <div style={{ background: '#fff', border: '1px solid #DCDFE6', marginBottom: 24 }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #DCDFE6' }}>
+          <h2 style={{ fontSize: 16, fontWeight: 700 }}>前台登入頁設定</h2>
+        </div>
+        <div style={{ padding: 20 }}>
+          {/* Button order */}
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>按鈕（Button）顯示順序</div>
+            <div style={{ fontSize: 12, color: '#909399', marginBottom: 12 }}>拖曳調整順序，僅已啟用的平台會顯示在前台<span style={{ color: '#C0C4CC', marginLeft: 8 }}>（Prototype 展示版不支援拖曳操作）</span></div>
+            <div style={{ border: '1px solid #DCDFE6' }}>
+              {['LINE', 'Google', 'Facebook'].map((name, i) => {
+                const enabled = platforms[name].enabled;
+                const badges = { LINE: '#06C755', Google: 'white', Facebook: '#1877F2' };
+                return (
+                  <div key={name} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', borderBottom: i < 2 ? '1px solid #F5F7FA' : 'none', background: enabled ? '#fff' : '#FAFAFA' }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C0C4CC" strokeWidth="2" strokeLinecap="round" style={{ cursor: 'grab', flexShrink: 0 }}>
+                      <line x1="9" y1="6" x2="15" y2="6"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="18" x2="15" y2="18"/>
+                    </svg>
+                    <span style={{ fontSize: 14, color: enabled ? '#303133' : '#909399', flex: 1 }}>{name}</span>
+                    <span style={{ fontSize: 12, borderRadius: 9999, padding: '2px 10px', border: '1px solid', ...(enabled ? { color: '#67C23A', background: '#f0f9eb', borderColor: '#c2e7b0' } : { color: '#909399', background: '#F5F7FA', borderColor: '#DCDFE6' }) }}>
+                      {enabled ? '啟用' : '停用'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Login mode */}
+          <div style={{ marginBottom: 20 }}>
+            <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 12 }}>前台登入模式</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              {[
+                { id: 'both',        label: '同時顯示 Email 登入和社群帳號登入（預設）' },
+                { id: 'social-only', label: '僅顯示社群帳號登入（關閉 Email / 密碼登入）' },
+              ].map(opt => (
+                <label key={opt.id} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 14 }}>
+                  <input type="radio" name="loginMode" value={opt.id} checked={loginMode === opt.id} onChange={() => setLoginMode(opt.id)} />
+                  {opt.label}
+                </label>
+              ))}
+            </div>
+            {loginMode === 'social-only' && (
+              <div style={{ background: '#fdf6ec', border: '1px solid #f5dab1', padding: '12px 16px', marginTop: 14, fontSize: 13, color: '#E6A23C', lineHeight: 1.6 }}>
+                關閉 Email 登入後，若消費者沒有 LINE / Google / Facebook 帳號將無法登入。請確認此設定符合您的客群需求。
+              </div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <button onClick={() => showToast('設定已儲存', 'success')} style={btn.primary}>儲存顯示設定</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Screen Picker ──────────────────────────────────────────────────────────
+
+const SCREENS = [
+  { id: 's1', label: 'Screen 1：前台登入頁',         group: '前台消費者端' },
+  { id: 's2', label: 'Screen 2：Email 補全頁',        group: '前台消費者端' },
+  { id: 's3', label: 'Screen 3：帳號合併確認頁',     group: '前台消費者端' },
+  { id: 's4', label: 'Screen 4：帳號設定（社群連結）', group: '後台管理端' },
+  { id: 's5', label: 'Screen 5：後台憑證設定',        group: '後台管理端' },
+];
+
+// ─── App ────────────────────────────────────────────────────────────────────
+
+function App() {
+  const [active, setActive] = React.useState('s1');
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+  const { toasts, show: showToast } = useToast();
+
+  const isAdmin = active === 's4' || active === 's5';
+
+  const breadcrumbs = {
+    s4: [{ label: '全域設定', page: 'gs-system' }, { label: '會員中心', page: 'members' }, '帳號設定'],
+    s5: [{ label: '全域設定', page: 'gs-system' }, { label: '電商進階設定', page: 'gs-advanced' }, '第三方登入設定'],
+  };
+
+  const activePage = active === 's4' ? 'member-settings' : 'gs-advanced';
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+
+      {/* Screen picker bar */}
+      <div style={{ background: '#fff', borderBottom: '1px solid #DCDFE6', padding: '0 16px', display: 'flex', alignItems: 'stretch', flexShrink: 0, overflowX: 'auto' }}>
+        <div style={{ display: 'flex', alignItems: 'center', paddingRight: 16, borderRight: '1px solid #F0F0F0', marginRight: 8, flexShrink: 0 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: '#909399', whiteSpace: 'nowrap' }}>第三方登入 Prototype</span>
+        </div>
+        {['前台消費者端', '後台管理端'].map(group => {
+          const gs = SCREENS.filter(s => s.group === group);
+          return (
+            <div key={group} style={{ display: 'flex', alignItems: 'center' }}>
+              <span style={{ fontSize: 11, color: '#C0C4CC', padding: '0 8px 0 4px', whiteSpace: 'nowrap', borderRight: '1px dotted #DCDFE6', marginRight: 2 }}>{group}</span>
+              {gs.map(s => (
+                <button key={s.id} onClick={() => setActive(s.id)} style={{
+                  height: 44, padding: '0 14px', background: 'none', border: 'none',
+                  borderBottom: active === s.id ? '2px solid #409EFF' : '2px solid transparent',
+                  color: active === s.id ? '#409EFF' : '#606266',
+                  fontSize: 12, fontWeight: active === s.id ? 700 : 400,
+                  cursor: 'pointer', fontFamily: 'Noto Sans TC, sans-serif', whiteSpace: 'nowrap',
+                  marginBottom: -1,
+                }}>
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Content area */}
+      {isAdmin ? (
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+          <Header
+            breadcrumbs={breadcrumbs[active]}
+            onNavigate={() => {}}
+            onToggleSidebar={() => setSidebarCollapsed(!sidebarCollapsed)}
+          />
+          <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+            <Sidebar
+              collapsed={sidebarCollapsed}
+              currentPage={activePage}
+              onNavigate={() => {}}
+            />
+            <main style={{ flex: 1, overflow: 'auto', background: '#F5F7FA' }}>
+              {active === 's4' && (
+                <div style={{ padding: 24 }}>
+                  <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>帳號設定</h1>
+                  <SocialLinkCard showToast={showToast} />
+                </div>
+              )}
+              {active === 's5' && <AdminCredentialsScreen showToast={showToast} />}
+            </main>
+          </div>
+        </div>
+      ) : (
+        <div style={{ flex: 1, overflow: 'auto', background: '#F5F7FA' }}>
+          {active === 's1' && <Screen1 />}
+          {active === 's2' && <Screen2 />}
+          {active === 's3' && <Screen3 />}
+        </div>
+      )}
+
+      <ToastStack toasts={toasts} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

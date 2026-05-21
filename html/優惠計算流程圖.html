@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evomni — 優惠計算優先序流程圖</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Noto Sans TC', -apple-system, sans-serif;
+    font-size: 16px;
+    background: #F5F7FA;
+    color: #303133;
+    -webkit-font-smoothing: antialiased;
+    padding: 40px 24px 80px;
+  }
+
+  /* ── Page header ── */
+  .page-header {
+    max-width: 860px;
+    margin: 0 auto 40px;
+  }
+  .page-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #303133;
+    margin-bottom: 6px;
+  }
+  .page-header p {
+    font-size: 15px;
+    color: #909399;
+  }
+
+  /* ── Flow container ── */
+  .flow {
+    max-width: 860px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* ── Start / End node ── */
+  .node-terminal {
+    background: #303133;
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    padding: 12px 36px;
+    border-radius: 9999px;
+    letter-spacing: 0.02em;
+  }
+  .node-terminal.end {
+    background: #67C23A;
+  }
+
+  /* ── Connector arrow ── */
+  .connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+    width: 100%;
+  }
+  .connector-line {
+    width: 2px;
+    height: 24px;
+    background: #DCDFE6;
+  }
+  .connector-arrow {
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 9px solid #DCDFE6;
+  }
+  .connector-label {
+    margin-top: 6px;
+    margin-bottom: 2px;
+    font-size: 13px;
+    color: #909399;
+    background: #EBEEF5;
+    border: 1px solid #DCDFE6;
+    padding: 3px 12px;
+    border-radius: 9999px;
+    white-space: nowrap;
+  }
+
+  /* ── Layer card ── */
+  .layer-card {
+    width: 100%;
+    background: #fff;
+    border: 1px solid #DCDFE6;
+    border-radius: 3px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  }
+  .layer-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 20px;
+    border-bottom: 1px solid #EBEEF5;
+  }
+  .layer-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+    color: #fff;
+  }
+  .layer-header-text { flex: 1; }
+  .layer-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #303133;
+    margin-bottom: 2px;
+  }
+  .layer-subtitle {
+    font-size: 14px;
+    color: #909399;
+  }
+  .plan-tag {
+    font-size: 13px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 9999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .plan-both {
+    background: #E1F3D8;
+    color: #529B2E;
+    border: 1px solid #B3E19D;
+  }
+  .plan-advanced {
+    background: #ECEBFF;
+    color: #5B3FE4;
+    border: 1px solid #C5BDFF;
+  }
+
+  .layer-body {
+    padding: 16px 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* ── Section inside card ── */
+  .section {
+    background: #F5F7FA;
+    border: 1px solid #EBEEF5;
+    border-radius: 3px;
+    padding: 12px 14px;
+  }
+  .section-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #909399;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .section-label svg { flex-shrink: 0; }
+  .section-content {
+    font-size: 15px;
+    color: #303133;
+    line-height: 1.7;
+  }
+  .section-content li {
+    list-style: none;
+    padding-left: 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .section-content li::before {
+    content: '';
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #DCDFE6;
+    margin-top: 6px;
+    flex-shrink: 0;
+  }
+  .base-highlight {
+    background: #FDF6EC;
+    border: 1px solid #FAECD8;
+    border-radius: 3px;
+    padding: 8px 12px;
+    font-size: 15px;
+    color: #E6A23C;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+  .base-highlight span {
+    display: block;
+    font-size: 13px;
+    color: #909399;
+    font-weight: 400;
+    margin-top: 2px;
+  }
+
+  /* ── Rule section ── */
+  .rule-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 15px;
+    color: #606266;
+    line-height: 1.6;
+  }
+  .rule-icon {
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ── Decision block (Layer 4) ── */
+  .decision-block {
+    background: #fff;
+    border: 1.5px dashed #DCDFE6;
+    border-radius: 3px;
+    padding: 12px 14px;
+  }
+  .decision-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 14px;
+    color: #606266;
+    line-height: 1.6;
+  }
+  .decision-branch {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+    padding-left: 16px;
+    border-left: 2px solid #EBEEF5;
+  }
+  .branch-yes { color: #67C23A; font-size: 13px; font-weight: 700; }
+  .branch-no  { color: #F56C6C; font-size: 13px; font-weight: 700; }
+  .branch-text { font-size: 14px; color: #606266; margin-left: 4px; }
+
+  /* ── Global rule footer ── */
+  .global-rule {
+    width: 100%;
+    background: #F5F7FA;
+    border: 1px solid #DCDFE6;
+    border-left: 4px solid #409EFF;
+    border-radius: 3px;
+    padding: 14px 20px;
+    margin-top: 32px;
+    font-size: 15px;
+    color: #606266;
+    line-height: 1.7;
+  }
+  .global-rule strong {
+    display: block;
+    font-weight: 700;
+    color: #303133;
+    margin-bottom: 8px;
+  }
+  .global-rule li {
+    list-style: none;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .global-rule li::before {
+    content: '';
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #409EFF;
+    margin-top: 7px;
+    flex-shrink: 0;
+  }
+
+  /* ── Color per layer ── */
+  .l1 { background: #5B3FE4; }
+  .l2 { background: #303133; }
+  .l3 { background: #E6A23C; }
+  .l4 { background: #409EFF; }
+  .l5 { background: #F56C6C; }
+
+  .l1-border { border-top: 3px solid #5B3FE4; }
+  .l2-border { border-top: 3px solid #303133; }
+  .l3-border { border-top: 3px solid #E6A23C; }
+  .l4-border { border-top: 3px solid #409EFF; }
+  .l5-border { border-top: 3px solid #F56C6C; }
+
+  /* output label color per layer */
+  .output-l1 { color: #5B3FE4; border-color: #C5BDFF; background: #F5F3FF; }
+  .output-l2 { color: #303133; border-color: #DCDFE6; background: #F5F7FA; }
+  .output-l3 { color: #B07300; border-color: #FAECD8; background: #FDF6EC; }
+  .output-l4 { color: #0066CC; border-color: #C6E2FF; background: #EFF6FF; }
+  .output-l5 { color: #C45656; border-color: #FCD3D3; background: #FEF0F0; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <h1>優惠計算優先序流程圖</h1>
+  <p>消費者結帳時，系統依以下 5 個層級依序套用優惠。每一層以「上一層的折後金額」為計算基準，非原始售價。</p>
+</div>
+
+<div class="flow">
+
+  <!-- START -->
+  <div class="node-terminal">消費者進入結帳，購物車開始計算</div>
+
+  <!-- Connector to L1 -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-arrow"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ LAYER 1 ═══ -->
+  <div class="layer-card l1-border">
+    <div class="layer-header">
+      <div class="layer-badge l1">1</div>
+      <div class="layer-header-text">
+        <div class="layer-title">產品層折扣</div>
+        <div class="layer-subtitle">針對單件產品本身的折扣，在訂單層計算前先行套用</div>
+      </div>
+      <div class="plan-tag plan-advanced">進階電商包</div>
+    </div>
+    <div class="layer-body">
+      <!-- 計算基準 -->
+      <div class="section">
+        <div class="section-label">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <circle cx="6" cy="6" r="5" stroke="#E6A23C" stroke-width="1.5"/>
+            <path d="M6 4v2.5l1.5 1" stroke="#E6A23C" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          計算基準
+        </div>
+        <div class="base-highlight">
+          各產品原始售價
+          <span>以產品原始定價逐件計算</span>
+        </div>
+      </div>
+      <!-- 包含優惠類型 -->
+      <div class="section">
+        <div class="section-label">包含優惠類型</div>
+        <ul class="section-content">
+          <li>限時折扣（含倒數計時）</li>
+          <li>組合優惠（紅配綠 / 買 X 享 Y）</li>
+          <li>產品組合價</li>
+        </ul>
+      </div>
+      <!-- 疊加規則 -->
+      <div class="section">
+        <div class="section-label">疊加規則</div>
+        <div class="rule-item">
+          <svg class="rule-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" fill="#FEF0F0"/>
+            <path d="M4.5 4.5l5 5M9.5 4.5l-5 5" stroke="#F56C6C" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          同一產品有多個折扣時，取最優惠者，不可疊加
+        </div>
+        <div class="rule-item">
+          <svg class="rule-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" fill="#E1F3D8"/>
+            <path d="M4 7l2 2 4-4" stroke="#67C23A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          不同產品的折扣各自獨立計算
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connector L1→L2 -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label output-l1">輸出：各產品折後單價小計加總 = Layer 1 折後金額</div>
+    <div class="connector-line"></div>
+    <div class="connector-arrow"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ LAYER 2 ═══ -->
+  <div class="layer-card l2-border">
+    <div class="layer-header">
+      <div class="layer-badge l2">2</div>
+      <div class="layer-header-text">
+        <div class="layer-title">訂單層折扣</div>
+        <div class="layer-subtitle">以整張訂單金額為單位計算的滿額/滿件優惠</div>
+      </div>
+      <div class="plan-tag plan-both">兩方案共有</div>
+    </div>
+    <div class="layer-body">
+      <!-- 計算基準 -->
+      <div class="section">
+        <div class="section-label">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <circle cx="6" cy="6" r="5" stroke="#E6A23C" stroke-width="1.5"/>
+            <path d="M6 4v2.5l1.5 1" stroke="#E6A23C" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          計算基準
+        </div>
+        <div class="base-highlight">
+          Layer 1 折後金額
+          <span>門檻判斷亦以此金額為準，非原價</span>
+        </div>
+      </div>
+      <!-- 包含優惠類型 -->
+      <div class="section">
+        <div class="section-label">包含優惠類型</div>
+        <ul class="section-content">
+          <li>滿額折扣（可設多階梯）</li>
+          <li>滿件折扣</li>
+          <li>免運活動</li>
+        </ul>
+      </div>
+      <!-- 疊加規則 -->
+      <div class="section">
+        <div class="section-label">疊加規則</div>
+        <div class="rule-item">
+          <svg class="rule-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" fill="#FEF0F0"/>
+            <path d="M4.5 4.5l5 5M9.5 4.5l-5 5" stroke="#F56C6C" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          多階梯滿額折扣取最優惠一層，不累加
+        </div>
+        <div class="rule-item">
+          <svg class="rule-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" fill="#E8F4FE"/>
+            <path d="M4 7h6M7 4v6" stroke="#409EFF" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          範例：Layer 1 後金額 900 元，「滿 1,000 享折扣」條件不成立，門檻以折後金額判斷
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connector L2→L3 -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label output-l2">輸出：訂單折扣後金額 + 已計算運費 = Layer 2 折後金額</div>
+    <div class="connector-line"></div>
+    <div class="connector-arrow"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ LAYER 3 ═══ -->
+  <div class="layer-card l3-border">
+    <div class="layer-header">
+      <div class="layer-badge l3">3</div>
+      <div class="layer-header-text">
+        <div class="layer-title">加購 / 贈品</div>
+        <div class="layer-subtitle">不直接扣減金額，而是將贈品或加購品加入購物車</div>
+      </div>
+      <div class="plan-tag plan-both">兩方案共有（加價購屬進階）</div>
+    </div>
+    <div class="layer-body">
+      <!-- 計算基準 -->
+      <div class="section">
+        <div class="section-label">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <circle cx="6" cy="6" r="5" stroke="#E6A23C" stroke-width="1.5"/>
+            <path d="M6 4v2.5l1.5 1" stroke="#E6A23C" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          計算基準
+        </div>
+        <div class="base-highlight">
+          Layer 2 折後金額
+          <span>以此金額判斷是否達贈品/加購門檻</span>
+        </div>
+      </div>
+      <!-- 包含優惠類型 -->
+      <div class="section">
+        <div class="section-label">包含優惠類型</div>
+        <ul class="section-content">
+          <li>滿額贈品（達金額門檻送指定品）</li>
+          <li>滿件贈品（達件數門檻送指定品）</li>
+          <li>滿額加購（優惠價加購）</li>
+          <li>產品加價購（進階）</li>
+        </ul>
+      </div>
+      <!-- 疊加規則 -->
+      <div class="section">
+        <div class="section-label">注意事項</div>
+        <div class="rule-item">
+          <svg class="rule-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" fill="#FDF6EC"/>
+            <path d="M7 4v3.5" stroke="#E6A23C" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="7" cy="9.5" r="0.8" fill="#E6A23C"/>
+          </svg>
+          贈品以 NT$0 加入購物車，不影響訂單金額小計，但佔購物車欄位
+        </div>
+        <div class="rule-item">
+          <svg class="rule-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" fill="#FEF0F0"/>
+            <path d="M4.5 4.5l5 5M9.5 4.5l-5 5" stroke="#F56C6C" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          贈品庫存不足時，依商家設定自動停止或繼續（不贈品）
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connector L3→L4 -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label output-l3">輸出：含贈品的購物車，訂單金額維持 Layer 2 折後金額不變</div>
+    <div class="connector-line"></div>
+    <div class="connector-arrow"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ LAYER 4 ═══ -->
+  <div class="layer-card l4-border">
+    <div class="layer-header">
+      <div class="layer-badge l4">4</div>
+      <div class="layer-header-text">
+        <div class="layer-title">優惠券折抵</div>
+        <div class="layer-subtitle">消費者手動輸入折扣碼，或系統自動套用帳戶優惠券</div>
+      </div>
+      <div class="plan-tag plan-both">兩方案共有（生日/滿額券屬進階）</div>
+    </div>
+    <div class="layer-body" style="grid-template-columns: 1fr 1fr 1fr;">
+      <!-- 計算基準 -->
+      <div class="section">
+        <div class="section-label">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <circle cx="6" cy="6" r="5" stroke="#E6A23C" stroke-width="1.5"/>
+            <path d="M6 4v2.5l1.5 1" stroke="#E6A23C" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          計算基準
+        </div>
+        <div class="base-highlight">
+          Layer 2 折後金額
+          <span>贈品不計入金額，Layer 3 不影響此基準</span>
+        </div>
+      </div>
+      <!-- 包含優惠類型 -->
+      <div class="section">
+        <div class="section-label">包含優惠類型</div>
+        <ul class="section-content">
+          <li>折扣碼（手動輸入）</li>
+          <li>入會贈券（自動發放）</li>
+          <li>生日贈券（進階，自動發放）</li>
+          <li>滿額贈券（進階，下次使用）</li>
+        </ul>
+      </div>
+      <!-- 決策邏輯 -->
+      <div class="section">
+        <div class="section-label">套用決策邏輯</div>
+        <div class="decision-block">
+          <div class="decision-row">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;margin-top:1px">
+              <rect x="2" y="7" width="7" height="7" rx="0" transform="rotate(-45 7 1)" stroke="#409EFF" stroke-width="1.3" fill="none"/>
+            </svg>
+            <span style="font-size:15px;font-weight:700;">優惠券有效？</span>
+          </div>
+          <div class="decision-branch">
+            <div><span class="branch-no">否</span> <span class="branch-text">→ 顯示錯誤提示，不套用</span></div>
+            <div><span class="branch-yes">是</span> <span class="branch-text">→ 進入下一判斷</span></div>
+          </div>
+          <div style="margin-top:8px;" class="decision-row">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style="flex-shrink:0;margin-top:1px">
+              <rect x="2" y="7" width="7" height="7" rx="0" transform="rotate(-45 7 1)" stroke="#409EFF" stroke-width="1.3" fill="none"/>
+            </svg>
+            <span style="font-size:15px;font-weight:700;">可與其他活動疊加？</span>
+          </div>
+          <div class="decision-branch">
+            <div><span class="branch-yes">是</span> <span class="branch-text">→ 直接套用優惠券折扣</span></div>
+            <div><span class="branch-no">否</span> <span class="branch-text">→ 若有其他活動則排除，顯示「此券不可與目前活動疊加」</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connector L4→L5 -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label output-l4">輸出：優惠券折抵後金額 = Layer 4 折後金額</div>
+    <div class="connector-line"></div>
+    <div class="connector-arrow"></div>
+  </div>
+
+  <!-- ═══════════════════════════════════════ LAYER 5 ═══ -->
+  <div class="layer-card l5-border">
+    <div class="layer-header">
+      <div class="layer-badge l5">5</div>
+      <div class="layer-header-text">
+        <div class="layer-title">點數折抵</div>
+        <div class="layer-subtitle">消費者選擇以紅利點數抵扣部分金額</div>
+      </div>
+      <div class="plan-tag plan-advanced">進階電商包</div>
+    </div>
+    <div class="layer-body">
+      <!-- 計算基準 -->
+      <div class="section">
+        <div class="section-label">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+            <circle cx="6" cy="6" r="5" stroke="#E6A23C" stroke-width="1.5"/>
+            <path d="M6 4v2.5l1.5 1" stroke="#E6A23C" stroke-width="1.3" stroke-linecap="round"/>
+          </svg>
+          計算基準
+        </div>
+        <div class="base-highlight">
+          Layer 4 折後金額
+          <span>所有折扣套用後，再以點數折抵</span>
+        </div>
+      </div>
+      <!-- 包含優惠類型 -->
+      <div class="section">
+        <div class="section-label">包含優惠類型</div>
+        <ul class="section-content">
+          <li>紅利點數折抵（1 點 = NT$1）</li>
+        </ul>
+      </div>
+      <!-- 規則 -->
+      <div class="section">
+        <div class="section-label">折抵規則</div>
+        <div class="rule-item">
+          <svg class="rule-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" fill="#FEF0F0"/>
+            <path d="M7 4v3.5" stroke="#F56C6C" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="7" cy="9.5" r="0.8" fill="#F56C6C"/>
+          </svg>
+          需達到商家設定的最低折抵門檻
+        </div>
+        <div class="rule-item">
+          <svg class="rule-icon" width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" fill="#FEF0F0"/>
+            <path d="M7 4v3.5" stroke="#F56C6C" stroke-width="1.5" stroke-linecap="round"/>
+            <circle cx="7" cy="9.5" r="0.8" fill="#F56C6C"/>
+          </svg>
+          最高可折抵金額依商家設定上限為準
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connector L5→End -->
+  <div class="connector">
+    <div class="connector-line"></div>
+    <div class="connector-label output-l5">輸出：最終應付金額</div>
+    <div class="connector-line"></div>
+    <div class="connector-arrow"></div>
+  </div>
+
+  <!-- END -->
+  <div class="node-terminal end">最終結帳金額確認，進入付款流程</div>
+
+  <!-- ── Global rules ── -->
+  <div class="global-rule">
+    <strong>全局疊加規則（適用所有層級）</strong>
+    <ul>
+      <li>同一層、同一類型的優惠：不可疊加，系統自動取最優惠者</li>
+      <li>不同層之間：可疊加，依 Layer 1 → 5 順序依序套用</li>
+      <li>商家可對特定活動設定「禁止與任何券疊加」，Layer 4 套用時此活動將排除優惠券</li>
+      <li>優惠套用必須在同一 Transaction 內完成，確保優惠券使用次數與點數扣減的資料一致性</li>
+    </ul>
+  </div>
+
+</div><!-- /flow -->
+
+</body>
+</html>

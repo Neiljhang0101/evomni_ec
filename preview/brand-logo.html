@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: #fff; padding: 24px; }
+  .row { display: flex; gap: 40px; align-items: center; }
+  .item { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+  .label { font-size: 11px; color: #909399; }
+  img { display: block; }
+  .dark-bg { background: #303133; padding: 16px 24px; }
+</style>
+</head>
+<body>
+<div class="row">
+  <div class="item">
+    <img src="../assets/logo.jpg" style="height:48px; object-fit:contain;">
+    <div class="label">Logo — Light Background</div>
+  </div>
+  <div class="item">
+    <div class="dark-bg">
+      <img src="../assets/logo.jpg" style="height:48px; object-fit:contain; filter:brightness(0) invert(1);">
+    </div>
+    <div class="label">Logo — Dark Background (inverted)</div>
+  </div>
+</div>
+</body>
+</html>

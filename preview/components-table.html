@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: #fff; padding: 20px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  thead th { background: #F5F7FA; color: #303133; font-weight: 700; font-size: 14px; padding: 10px 12px; text-align: left; border-bottom: 1px solid #DCDFE6; }
+  tbody td { padding: 10px 12px; color: #606266; border-bottom: 1px solid #EBEEF5; }
+  tbody tr:hover td { background: #F5F7FA; }
+  .tag { display: inline-flex; align-items: center; height: 22px; padding: 0 10px; border-radius: 9999px; font-size: 12px; }
+  .tag-s { background: #f0f9eb; color: #67C23A; border: 1px solid #c2e7b0; }
+  .tag-i { background: #f4f4f5; color: #909399; border: 1px solid #d3d4d6; }
+  .act { display: flex; gap: 8px; }
+  .edit { color: #409EFF; cursor: pointer; background: none; border: none; font-size: 14px; font-family: inherit; }
+  .del  { color: #F56C6C; cursor: pointer; background: none; border: none; font-size: 14px; font-family: inherit; }
+  input[type=checkbox] { accent-color: #303133; }
+</style>
+</head>
+<body>
+<table>
+  <thead>
+    <tr>
+      <th style="width:40px"><input type="checkbox"></th>
+      <th>標題</th>
+      <th style="width:80px">ID</th>
+      <th style="width:100px">狀態</th>
+      <th style="width:160px">建立日期</th>
+      <th style="width:120px">操作</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><input type="checkbox"></td>
+      <td>探索測試智慧手錶 Smart Watch Pro</td>
+      <td>#326</td>
+      <td><span class="tag tag-s">可選用</span></td>
+      <td>2026-03-20 03:35:59</td>
+      <td><div class="act"><button class="edit">編輯</button><button class="del">刪除</button></div></td>
+    </tr>
+    <tr>
+      <td><input type="checkbox"></td>
+      <td>香菜貢丸湯</td>
+      <td>#328</td>
+      <td><span class="tag tag-s">可選用</span></td>
+      <td>2026-03-31 06:56:28</td>
+      <td><div class="act"><button class="edit">編輯</button><button class="del">刪除</button></div></td>
+    </tr>
+    <tr>
+      <td><input type="checkbox"></td>
+      <td>—</td>
+      <td>#333</td>
+      <td><span class="tag tag-i">停用</span></td>
+      <td>2026-03-31 10:41:45</td>
+      <td><div class="act"><button class="edit">編輯</button><button class="del">刪除</button></div></td>
+    </tr>
+  </tbody>
+</table>
+</body>
+</html>

@@ -1,0 +1,2245 @@
+// PageMembers — 會員管理後台模組
+
+
+
+
+// ─── DESIGN TOKENS ──────────────────────────────────────────────────────────
+const T = {
+  primary: '#303133', blue: '#409EFF', success: '#67C23A',
+  warning: '#E6A23C', danger: '#F56C6C', gray: '#909399',
+  textPrimary: '#303133', textRegular: '#606266', textSecondary: '#909399',
+  border: '#DCDFE6', borderLight: '#EBEEF5',
+  bgPage: '#F5F7FA', bgCard: '#FFFFFF'
+};
+
+// ─── SHARED BUTTON STYLES ───────────────────────────────────────────────────
+const btnPrimary = { height: 36, padding: '0 16px', background: T.primary, color: '#fff', border: `1px solid ${T.primary}`, borderRadius: 0, cursor: 'pointer', fontSize: 14, whiteSpace: 'nowrap' };
+const btnPlain = { height: 36, padding: '0 16px', background: '#fff', color: T.textPrimary, border: `1px solid ${T.border}`, borderRadius: 0, cursor: 'pointer', fontSize: 14, whiteSpace: 'nowrap' };
+const btnBlue = { height: 36, padding: '0 16px', background: T.blue, color: '#fff', border: `1px solid ${T.blue}`, borderRadius: 0, cursor: 'pointer', fontSize: 14, whiteSpace: 'nowrap' };
+const btnDanger = { height: 36, padding: '0 16px', background: '#fff', color: T.danger, border: `1px solid ${T.danger}`, borderRadius: 0, cursor: 'pointer', fontSize: 14, whiteSpace: 'nowrap' };
+const btnGhost = { height: 36, padding: '0 16px', background: 'none', color: T.blue, border: `1px solid ${T.blue}`, borderRadius: 0, cursor: 'pointer', fontSize: 14, whiteSpace: 'nowrap' };
+const textLink = { background: 'none', border: 'none', color: T.blue, cursor: 'pointer', fontSize: 14, padding: 0, fontFamily: 'inherit' };
+const textDanger = { background: 'none', border: 'none', color: T.danger, cursor: 'pointer', fontSize: 14, padding: 0, fontFamily: 'inherit' };
+
+
+// ─── SHARED COMPONENT: Input ────────────────────────────────────────────────
+function Input({ value, onChange, placeholder, disabled, style = {}, type = 'text' }) {
+  const [focused, setFocused] = React.useState(false);
+  return (
+    <input type={type} value={value || ''} onChange={(e) => onChange && onChange(e.target.value)}
+    placeholder={placeholder} disabled={disabled}
+    onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
+    style={{ height: 36, padding: '0 10px', border: `1px solid ${focused ? T.blue : T.border}`,
+      borderRadius: 0, fontSize: 14, color: T.textPrimary, background: disabled ? T.bgPage : '#fff',
+      width: '100%', ...style }} />);
+
+}
+
+// ─── SHARED COMPONENT: Select ───────────────────────────────────────────────
+function Select({ value, onChange, options, style = {} }) {
+  return (
+    <select value={value || ''} onChange={(e) => onChange && onChange(e.target.value)}
+    style={{ height: 36, padding: '0 8px', border: `1px solid ${T.border}`, borderRadius: 0,
+      fontSize: 14, color: T.textPrimary, background: '#fff', ...style }}>
+      {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>);
+
+}
+
+// ─── SHARED COMPONENT: Textarea ─────────────────────────────────────────────
+function Textarea({ value, onChange, placeholder, rows = 4, disabled, style = {} }) {
+  return (
+    <textarea value={value || ''} onChange={(e) => onChange && onChange(e.target.value)}
+    placeholder={placeholder} rows={rows} disabled={disabled}
+    style={{ padding: '8px 10px', border: `1px solid ${T.border}`, borderRadius: 0,
+      fontSize: 14, color: T.textPrimary, background: disabled ? T.bgPage : '#fff',
+      width: '100%', resize: 'vertical', lineHeight: 1.6, ...style }} />);
+
+}
+
+// ─── SHARED COMPONENT: MemToast ────────────────────────────────────────────────
+function MemToast({ toasts }) {
+  return (
+    <div style={{ position: 'fixed', top: 64, right: 24, zIndex: 9999, display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {toasts.map((t) => {
+        const colors = {
+          success: { bg: '#f0f9eb', border: '#c2e7b0', color: '#67C23A' },
+          danger: { bg: '#fef0f0', border: '#fbc4c4', color: '#F56C6C' },
+          info: { bg: '#ecf5ff', border: '#b3d8ff', color: '#409EFF' },
+          warning: { bg: '#fdf6ec', border: '#f5dab1', color: '#E6A23C' }
+        };
+        const c = colors[t.type] || colors.success;
+        return (
+          <div key={t.id} style={{ background: c.bg, border: `1px solid ${c.border}`, color: c.color,
+            padding: '10px 16px', fontSize: 14, minWidth: 280, maxWidth: 400, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+            {t.msg}
+          </div>);
+
+      })}
+    </div>);
+
+}
+
+// ─── SHARED COMPONENT: MemDialog ───────────────────────────────────────────────
+function MemDialog({ open, title, onClose, children, width = 480, footer }) {
+  if (!open) return null;
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)' }} />
+      <div style={{ position: 'relative', background: '#fff', width, maxWidth: '90vw', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '16px 20px', borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <span style={{ fontSize: 16, fontWeight: 700, color: T.textPrimary }}>{title}</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: T.gray, lineHeight: 1 }}>×</button>
+        </div>
+        <div style={{ padding: '20px', overflowY: 'auto', flex: 1 }}>{children}</div>
+        {footer && <div style={{ padding: '12px 20px', borderTop: `1px solid ${T.border}`, display: 'flex', gap: 8, justifyContent: 'flex-end', flexShrink: 0 }}>{footer}</div>}
+      </div>
+    </div>);
+
+}
+
+// ─── SHARED COMPONENT: MemDrawer ───────────────────────────────────────────────
+function MemDrawer({ open, title, onClose, children, width = 480 }) {
+  return (
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, pointerEvents: open ? 'auto' : 'none' }}>
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', opacity: open ? 1 : 0, transition: 'opacity 0.25s' }} />
+      <div style={{ position: 'absolute', top: 0, right: 0, bottom: 0, width, background: '#fff', transform: open ? 'translateX(0)' : 'translateX(100%)', transition: 'transform 0.25s ease-in-out', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '16px 20px', borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <span style={{ fontSize: 16, fontWeight: 700 }}>{title}</span>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: T.gray }}>×</button>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: 20 }}>{children}</div>
+      </div>
+    </div>);
+
+}
+
+// ─── SHARED COMPONENT: FormRow ──────────────────────────────────────────────
+function FormRow({ label, required, children, helper, error }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{ display: 'block', fontSize: 13, color: T.textRegular, marginBottom: 6 }}>
+        {required && <span style={{ color: T.danger, marginRight: 2 }}>*</span>}{label}
+      </label>
+      {children}
+      {helper && !error && <div style={{ fontSize: 12, color: T.textSecondary, marginTop: 4 }}>{helper}</div>}
+      {error && <div style={{ fontSize: 12, color: T.danger, marginTop: 4 }}>{error}</div>}
+    </div>);
+
+}
+
+// ─── SHARED COMPONENT: MemCard ─────────────────────────────────────────────────
+function MemCard({ children, style = {}, title, extra }) {
+  return (
+    <div style={{ background: T.bgCard, border: `1px solid ${T.border}`, marginBottom: 16, ...style }}>
+      {title &&
+      <div style={{ padding: '14px 20px', borderBottom: `1px solid ${T.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: T.textPrimary }}>{title}</span>
+          {extra}
+        </div>
+      }
+      <div style={{ padding: 20 }}>{children}</div>
+    </div>);
+
+}
+
+// ─── SHARED COMPONENT: MemEmptyState ───────────────────────────────────────────
+function MemEmptyState({ headline, subtext, cta, onCta }) {
+  return (
+    <div style={{ textAlign: 'center', padding: '64px 0', color: T.textSecondary }}>
+      <div style={{ fontSize: 40, marginBottom: 16, opacity: 0.3 }}>◎</div>
+      <div style={{ fontSize: 15, fontWeight: 600, color: T.textRegular, marginBottom: 8 }}>{headline}</div>
+      <div style={{ fontSize: 13, marginBottom: cta ? 20 : 0, maxWidth: 360, margin: '0 auto 20px' }}>{subtext}</div>
+      {cta && <button onClick={onCta} style={btnPrimary}>{cta}</button>}
+    </div>);
+
+}
+
+// ─── SHARED COMPONENT: MemInfoBanner ───────────────────────────────────────────
+function MemInfoBanner({ children, type = 'info' }) {
+  const colors = {
+    info:    { bg: '#ECF5FF', border: '#b3d8ff', iconStroke: '#409EFF', iconFill: '#409EFF' },
+    warning: { bg: '#fdf6ec', border: '#f5dab1', iconStroke: '#E6A23C', iconFill: '#E6A23C' },
+    danger:  { bg: '#fef0f0', border: '#fbc4c4', iconStroke: '#F56C6C', iconFill: '#F56C6C' }
+  };
+  const c = colors[type] || colors.info;
+  return (
+    <div style={{ background: c.bg, border: `1px solid ${c.border}`, borderRadius: 3, padding: '10px 16px', fontSize: 13, color: '#606266', display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 16 }}>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+        <circle cx="7" cy="7" r="6" stroke={c.iconStroke} strokeWidth="1.2"/><line x1="7" y1="6" x2="7" y2="10" stroke={c.iconStroke} strokeWidth="1.2" strokeLinecap="round"/><circle cx="7" cy="4.5" r="0.6" fill={c.iconFill}/>
+      </svg>
+      <span>{children}</span>
+    </div>);
+}
+
+// ─── SAMPLE DATA ────────────────────────────────────────────────────────────
+const SAMPLE_CUSTOMERS = [
+{ id: 'C001', name: '陳小明', email: 'chen@example.com', phone: '0912-345-678', type: 'member', status: 'normal', joined: '2025-08-15', lastLogin: '2026-04-28', tags: ['高價值客', '活躍客', '品類愛好者'] },
+{ id: 'C002', name: '林美玲', email: 'lin@example.com', phone: '0923-456-789', type: 'member', status: 'normal', joined: '2025-10-02', lastLogin: '2026-05-01', tags: ['新客'] },
+{ id: 'C003', name: '王大偉', email: 'wang@example.com', phone: '0934-567-890', type: 'customer', status: 'normal', joined: '2026-01-10', lastLogin: '2026-03-15', tags: [] },
+{ id: 'C004', name: '張雅婷', email: 'chang@example.com', phone: '0945-678-901', type: 'member', status: 'blacklist', joined: '2025-06-20', lastLogin: '2026-02-01', tags: ['流失客'] },
+{ id: 'C005', name: '劉建志', email: 'liu@example.com', phone: '0956-789-012', type: 'member', status: 'inactive', joined: '2025-12-05', lastLogin: '2026-01-20', tags: ['沉睡客'] },
+{ id: 'C006', name: '吳佩珊', email: 'wu@example.com', phone: '0967-890-123', type: 'customer', status: 'normal', joined: '2026-03-22', lastLogin: '2026-04-10', tags: [] },
+{ id: 'C007', name: '蔡文豪', email: 'tsai@example.com', phone: '0978-901-234', type: 'member', status: 'normal', joined: '2025-09-14', lastLogin: '2026-04-30', tags: ['活躍客', '高價值客'] },
+{ id: 'C008', name: '黃淑芬', email: 'huang@example.com', phone: '0989-012-345', type: 'member', status: 'normal', joined: '2026-02-28', lastLogin: '2026-04-25', tags: ['新客'] }];
+
+
+const SAMPLE_BLACKLIST = [
+{ id: 'C004', name: '張雅婷', email: 'chang@example.com', phone: '0945-***-901', added: '2026-02-05', reason: '惡意退貨超過 5 次，疑似詐騙行為，已與法務確認。', operator: '系統管理員' },
+{ id: 'B002', name: '林俊宏', email: 'lin2@example.com', phone: '0911-***-222', added: '2026-03-12', reason: '多次使用無效優惠碼套利，反覆申請退款。', operator: '客服專員' }];
+
+
+const SAMPLE_LEVELS = [
+{ id: 'L1', name: '一般會員', icon: '', threshold: 0, buyCount: 0, discount: 0, status: 'enabled', memberCount: 1284 },
+{ id: 'L2', name: '銀卡會員', icon: '', threshold: 3000, buyCount: 3, discount: 3, status: 'enabled', memberCount: 456 },
+{ id: 'L3', name: '金卡 VIP', icon: '', threshold: 10000, buyCount: 8, discount: 5, status: 'enabled', memberCount: 128 },
+{ id: 'L4', name: '鑽石會員', icon: '', threshold: 30000, buyCount: 20, discount: 8, status: 'enabled', memberCount: 32 }];
+
+
+const SAMPLE_TAGS_CUSTOM = [
+{ id: 'T1', name: '合作廠商', color: '#409EFF', desc: '與本店有合作關係的廠商聯絡人', count: 12 },
+{ id: 'T2', name: 'KOL', color: '#E6A23C', desc: '網紅/意見領袖，定期寄送試用品', count: 8 },
+{ id: 'T3', name: '黑五搶購客', color: '#F56C6C', desc: '黑色星期五大量下單的顧客群', count: 247 }];
+
+
+// ─── SCREEN 1: 顧客管理列表 ─────────────────────────────────────────────────
+function CustomerListPage({ onNavigate, showToast }) {
+  const [search, setSearch] = React.useState({ keyword: '', tag: '', status: '', type: '', dateFrom: '', dateTo: '' });
+  const [selected, setSelected] = React.useState([]);
+  const [showBatchTagDialog, setShowBatchTagDialog] = React.useState(false);
+  const [batchTag, setBatchTag] = React.useState('');
+  const [data] = React.useState(SAMPLE_CUSTOMERS);
+  const [sortKey, setSortKey] = React.useState('joined');
+  const [sortDir, setSortDir] = React.useState('desc');
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(20);
+
+  const handleSort = (key) => {
+    if (sortKey === key) { setSortDir(d => d === 'asc' ? 'desc' : 'asc'); }
+    else { setSortKey(key); setSortDir('desc'); }
+  };
+
+  const SortIcon = ({ col }) => {
+    if (sortKey !== col) return <span style={{ color: '#C0C4CC', marginLeft: 4, fontSize: 10 }}>↕</span>;
+    return <span style={{ color: T.blue, marginLeft: 4, fontSize: 10 }}>{sortDir === 'asc' ? '↑' : '↓'}</span>;
+  };
+
+  const filtered = React.useMemo(() => {
+    let result = data.filter((r) => {
+      if (search.keyword && !r.name.includes(search.keyword) && !r.email.includes(search.keyword) && !r.phone.includes(search.keyword)) return false;
+      if (search.status && search.status !== r.status) return false;
+      if (search.type && search.type !== r.type) return false;
+      return true;
+    });
+    return [...result].sort((a, b) => {
+      const va = a[sortKey] || '', vb = b[sortKey] || '';
+      if (va < vb) return sortDir === 'asc' ? -1 : 1;
+      if (va > vb) return sortDir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }, [data, search, sortKey, sortDir]);
+
+  const toggleRow = (id) => setSelected((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
+  const toggleAll = () => setSelected(selected.length === filtered.length ? [] : filtered.map((r) => r.id));
+
+  const typeTag = (type) => type === 'member' ?
+  <StatusTag type="primary">會員</StatusTag> :
+  <span style={{ display: 'inline-flex', alignItems: 'center', height: 22, padding: '0 10px', borderRadius: 9999, fontSize: 12, border: `1px solid ${T.border}`, background: T.bgPage, color: T.textRegular }}>顧客</span>;
+
+  const statusTag = (s) => {
+    if (s === 'normal') return <StatusTag type="success">正常</StatusTag>;
+    if (s === 'blacklist') return <StatusTag type="danger">黑名單</StatusTag>;
+    return <StatusTag type="info">停用</StatusTag>;
+  };
+
+  const TagsCell = ({ tags }) => {
+    const shown = tags.slice(0, 2);
+    const extra = tags.length - 2;
+    return (
+      <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', alignItems: 'center' }}>
+        {shown.map((t) => <StatusTag key={t} type="warning">{t}</StatusTag>)}
+        {extra > 0 && <span style={{ fontSize: 12, color: T.blue }}>+{extra}</span>}
+        {tags.length === 0 && <span style={{ color: T.textSecondary, fontSize: 13 }}>—</span>}
+      </div>);
+
+  };
+
+  return (
+    <div data-screen-label="01 顧客管理">
+      {/* Page Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+            <h1 style={{ fontSize: 20, fontWeight: 700, color: T.textPrimary }}>顧客管理</h1>
+            <span style={{ fontSize: 13, color: T.textSecondary }}>顧客 / 顧客管理</span>
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <span style={{ fontSize: 12, color: T.textSecondary, cursor: 'pointer' }} title="同一 Email 在 CMS 顧客與電商會員中只計算一筆，身分以電商會員為優先。">ℹ 說明</span>
+          <button style={btnPlain} onClick={() => showToast('匯入功能開發中', 'info')}>匯入</button>
+          <button style={btnBlue} onClick={() => showToast('報表產生中，完成後將寄送至您的信箱', 'info')}>匯出全部</button>
+        </div>
+      </div>
+
+      {/* Search Bar */}
+      <div style={{ padding: '12px 0', marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'nowrap', overflowX: 'auto' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flex: '1 1 200px', minWidth: 180 }}>
+            <label style={{ fontSize: 13, color: T.textRegular }}>關鍵字</label>
+            <input value={search.keyword} onChange={(e) => setSearch((s) => ({ ...s, keyword: e.target.value }))}
+            placeholder="請輸入姓名、Email、電話或公司名稱"
+            style={{ height: 40, padding: '0 12px', border: `1px solid ${T.border}`, borderRadius: 0, fontSize: 14, color: T.textPrimary, outline: 'none', width: '100%' }}
+            onFocus={(e) => e.target.style.borderColor = T.blue} onBlur={(e) => e.target.style.borderColor = T.border} />
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:4, flexShrink:0 }}>
+            <label style={{ fontSize:13, color:T.textRegular }}>標籤</label>
+            <select value={search.tag} onChange={e=>setSearch(s=>({...s,tag:e.target.value}))}
+              style={{ height:40, padding:'0 12px', border:`1px solid ${T.border}`, borderRadius:0, fontSize:14, color:T.textPrimary, background:'#fff', width:130 }}>
+              {[{value:'',label:'請選擇標籤'},{value:'高價值客',label:'高價值客'},{value:'活躍客',label:'活躍客'},{value:'新客',label:'新客'},{value:'沉睡客',label:'沉睡客'},{value:'流失客',label:'流失客'},{value:'合作廠商',label:'合作廠商'}].map(o=><option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
+            <label style={{ fontSize: 13, color: T.textRegular }}>狀態</label>
+            <select value={search.status} onChange={(e) => setSearch((s) => ({ ...s, status: e.target.value }))}
+            style={{ height: 40, padding: '0 12px', border: `1px solid ${T.border}`, borderRadius: 0, fontSize: 14, color: T.textPrimary, background: '#fff', width: 120 }}>
+              {[{ value: '', label: '全部' }, { value: 'normal', label: '正常' }, { value: 'inactive', label: '停用' }, { value: 'blacklist', label: '黑名單' }].map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
+            <label style={{ fontSize: 13, color: T.textRegular }}>身分類型</label>
+            <select value={search.type} onChange={(e) => setSearch((s) => ({ ...s, type: e.target.value }))}
+            style={{ height: 40, padding: '0 12px', border: `1px solid ${T.border}`, borderRadius: 0, fontSize: 14, color: T.textPrimary, background: '#fff', width: 120 }}>
+              {[{ value: '', label: '全部' }, { value: 'customer', label: '顧客' }, { value: 'member', label: '會員' }].map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
+            <label style={{ fontSize: 13, color: T.textRegular }}>加入日期</label>
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <input type="date" value={search.dateFrom} onChange={(e) => setSearch((s) => ({ ...s, dateFrom: e.target.value }))}
+              style={{ height: 40, padding: '0 8px', border: `1px solid ${T.border}`, borderRadius: 0, fontSize: 13, color: T.textPrimary, outline: 'none', width: 136 }}
+              onFocus={(e) => e.target.style.borderColor = T.blue} onBlur={(e) => e.target.style.borderColor = T.border} />
+              <span style={{ color: T.textSecondary, fontSize: 13 }}>至</span>
+              <input type="date" value={search.dateTo} onChange={(e) => setSearch((s) => ({ ...s, dateTo: e.target.value }))}
+              style={{ height: 40, padding: '0 8px', border: `1px solid ${T.border}`, borderRadius: 0, fontSize: 13, color: T.textPrimary, outline: 'none', width: 136 }}
+              onFocus={(e) => e.target.style.borderColor = T.blue} onBlur={(e) => e.target.style.borderColor = T.border} />
+            </div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+            <button style={{ ...btnPlain, height: 40 }} onClick={() => setSearch({ keyword: '', tag: '', status: '', type: '', dateFrom: '', dateTo: '' })}>清除</button>
+            <button style={{ ...btnPrimary, height: 40 }}>搜尋</button>
+          </div>
+        </div>
+      </div>
+
+      {/* Batch Toolbar */}
+      {selected.length > 0 &&
+      <div style={{ background: '#ECF5FF', border: `1px solid #b3d8ff`, padding: '10px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ color: T.blue, fontSize: 14 }}>已選 <strong>{selected.length}</strong> 筆</span>
+          <button style={btnGhost} onClick={() => setShowBatchTagDialog(true)}>加標籤</button>
+          <button style={btnGhost} onClick={() => showToast('報表產生中，完成後將寄送至您的信箱', 'info')}>匯出已選</button>
+          <button disabled style={{ ...btnGhost, opacity: 0.45, cursor: 'not-allowed' }} title="此功能為進階電商包專屬，請洽詢升級">
+            發送優惠券
+            <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 600, color: '#fff', background: '#409EFF', padding: '1px 5px', borderRadius: 2 }}>進階</span>
+          </button>
+          <button style={textLink} onClick={() => setSelected([])}>取消選取</button>
+        </div>
+      }
+
+      {/* Table */}
+      <TableWrapper>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+          <thead>
+            <tr>
+              <th style={tableThStyle}><input type="checkbox" checked={selected.length === filtered.length && filtered.length > 0} onChange={toggleAll} style={{ accentColor: T.primary }} /></th>
+              <th style={tableThStyle}>Email / 姓名</th>
+              <th style={tableThStyle}>電話</th>
+              <th style={tableThStyle}>身分</th>
+              <th style={{ ...tableThStyle, cursor:'pointer', userSelect:'none' }} onClick={() => handleSort('joined')}>加入日期<SortIcon col="joined" /></th>
+              <th style={{ ...tableThStyle, cursor:'pointer', userSelect:'none' }} onClick={() => handleSort('lastLogin')}>最後登入<SortIcon col="lastLogin" /></th>
+              <th style={tableThStyle}>標籤</th>
+              <th style={tableThStyle}>狀態</th>
+              <th style={tableThStyle}>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((r, i) =>
+            <tr key={r.id}
+            style={{ background: selected.includes(r.id) ? tableRowSelectedBg : tableRowBg(i) }}
+            {...tableRowHandlers(i, selected.includes(r.id))}>
+                <td style={tableTdStyle}><input type="checkbox" checked={selected.includes(r.id)} onChange={() => toggleRow(r.id)} style={{ accentColor: T.primary }} /></td>
+                <td style={tableTdStyle}>
+                  <div>
+                    <button onClick={() => onNavigate('customer-detail', r)} style={{ ...textLink, fontWeight: 500 }}>{r.email}</button>
+                    <div style={{ fontSize: 14, color: T.textSecondary }}>{r.name}</div>
+                  </div>
+                </td>
+                <td style={tableTdStyle}>{r.phone.replace(/(\d{4})-(\d{3,4})-(\d{3,4})/, '$1-****-$3')}</td>
+                <td style={tableTdStyle}>{typeTag(r.type)}</td>
+                <td style={tableTdStyle}>{r.joined}</td>
+                <td style={tableTdStyle}>{r.lastLogin}</td>
+                <td style={tableTdStyle}><TagsCell tags={r.tags} /></td>
+                <td style={tableTdStyle}>{statusTag(r.status)}</td>
+                <td style={tableTdStyle}>
+                  <button onClick={() => onNavigate('customer-detail', r)} style={textLink}>查看</button>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </TableWrapper>
+      {filtered.length === 0 &&
+      <MemEmptyState headline="找不到符合條件的記錄" subtext="請確認關鍵字是否正確，或嘗試清除篩選條件。" cta="清除篩選條件" onCta={() => setSearch({ keyword: '', tag: '', status: '', type: '', dateFrom: '', dateTo: '' })} />
+      }
+      <Pagination
+        total={filtered.length}
+        page={currentPage}
+        pageSize={pageSize}
+        pageSizes={[20, 50, 100]}
+        onChange={setCurrentPage}
+        onPageSizeChange={ps => { setPageSize(ps); setCurrentPage(1); }}
+        style={{ borderTop: `1px solid ${T.borderLight}`, padding: '10px 12px' }}
+      />
+
+      {/* Batch Tag MemDialog */}
+      <MemDialog open={showBatchTagDialog} title="批次加標籤" onClose={() => setShowBatchTagDialog(false)}
+      footer={<>
+          <button style={btnPlain} onClick={() => setShowBatchTagDialog(false)}>取消</button>
+          <button style={btnPrimary} onClick={() => {setShowBatchTagDialog(false);showToast(`已成功為 ${selected.length} 位顧客/會員套用標籤`);}}>確認套用</button>
+        </>}>
+        <FormRow label="選擇標籤" required>
+          <Select value={batchTag} onChange={setBatchTag} options={[{ value: '', label: '請選擇標籤' }, { value: '合作廠商', label: '合作廠商' }, { value: 'KOL', label: 'KOL' }, { value: '黑五搶購客', label: '黑五搶購客' }]} style={{ width: '100%' }} />
+        </FormRow>
+      </MemDialog>
+    </div>);
+
+}
+
+// ─── SCREEN 2: 顧客詳情頁 ────────────────────────────────────────────────────
+function CustomerDetailPage({ customer, onBack, onNavigate, showToast }) {
+  const isMember = customer.type === 'member';
+  const isBlacklisted = customer.status === 'blacklist';
+
+  const [editMode, setEditMode] = React.useState(false);
+  const [editData, setEditData] = React.useState({ name: customer.name, phone: customer.phone, company: '' });
+  const [drawerOpen, setDrawerOpen] = React.useState(false);
+  const [blacklistDialog, setBlacklistDialog] = React.useState(false);
+  const [unblacklistDialog, setUnblacklistDialog] = React.useState(false);
+  const [blacklistReason, setBlacklistReason] = React.useState('');
+  const [blacklistConfirm, setBlacklistConfirm] = React.useState(false);
+  const [blacklistReasonError, setBlacklistReasonError] = React.useState('');
+  const [pointType, setPointType] = React.useState('add');
+  const [pointAmount, setPointAmount] = React.useState('');
+  const [pointReason, setPointReason] = React.useState('');
+  const [pointAmountError, setPointAmountError] = React.useState('');
+  const [pointReasonError, setPointReasonError] = React.useState('');
+  const [notes, setNotes] = React.useState('此會員曾反映配送問題，已補償 100 點。');
+  const [tags, setTags] = React.useState(customer.tags || []);
+  const [addTagOpen, setAddTagOpen] = React.useState(false);
+  const [inviteCooldown, setInviteCooldown] = React.useState(false);
+  const [inviteSent, setInviteSent] = React.useState(false);
+  const [newTag, setNewTag] = React.useState('');
+  const [memberPoints] = React.useState(1850);
+
+  const orders = isMember ? [
+  { no: '#ORD-2389', date: '2026-04-25', amount: 'NT$ 2,800', status: 'completed' },
+  { no: '#ORD-2201', date: '2026-03-10', amount: 'NT$ 1,500', status: 'completed' },
+  { no: '#ORD-1987', date: '2026-01-20', amount: 'NT$ 890', status: 'refunded' }] :
+  [];
+
+  const orderStatusTag = (s) => {
+    const map = { completed: ['已完成', 'success'], cancelled: ['已取消', 'info'], refunded: ['已退款', 'warning'], pending: ['待付款', 'warning'], processing: ['處理中', 'primary'] };
+    const [l, t] = map[s] || ['—', 'info'];
+    return <StatusTag type={t}>{l}</StatusTag>;
+  };
+
+  const handleSavePoints = () => {
+    let valid = true;
+    if (!pointAmount || isNaN(pointAmount) || Number(pointAmount) < 1 || Number(pointAmount) > 99999) {
+      setPointAmountError('請輸入有效的點數數量（1–99,999）');valid = false;
+    } else setPointAmountError('');
+    if (!pointReason.trim()) {
+      setPointReasonError('原因為必填欄位，請至少輸入 1 個字');valid = false;
+    } else setPointReasonError('');
+    if (!valid) return;
+    const action = pointType === 'add' ? '增加' : '扣除';
+    const newBalance = pointType === 'add' ? memberPoints + Number(pointAmount) : memberPoints - Number(pointAmount);
+    setDrawerOpen(false);
+    setPointAmount('');setPointReason('');
+    showToast(`已成功為 ${customer.name} ${action} ${pointAmount} 點，目前餘額 ${newBalance} 點`);
+  };
+
+  const handleBlacklist = () => {
+    if (blacklistReason.trim().length < 1) {setBlacklistReasonError('原因為必填欄位，請至少輸入 10 個字');return;}
+    if (!blacklistConfirm) {setBlacklistReasonError('請先勾選確認才能執行此操作');return;}
+    setBlacklistDialog(false);
+    showToast(`已將 ${customer.name} 加入黑名單`, 'warning');
+  };
+
+  const pointPreview = pointAmount && !isNaN(pointAmount) ?
+  pointType === 'add' ?
+  `確定為會員 ${customer.name} 增加 ${pointAmount} 點，調整後餘額為 ${memberPoints + Number(pointAmount)} 點。` :
+  `確定為會員 ${customer.name} 扣除 ${pointAmount} 點，調整後餘額為 ${memberPoints - Number(pointAmount)} 點。` :
+  null;
+
+  return (
+    <div data-screen-label="02 顧客詳情">
+      {/* Back */}
+      <button onClick={onBack} style={{ ...textLink, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 4 }}>← 返回顧客管理</button>
+
+      {/* Blacklist Banner */}
+      {isBlacklisted &&
+      <div style={{ background: '#fef0f0', border: `1px solid #fbc4c4`, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ color: T.danger }}>⚠</span>
+          <span style={{ color: T.danger, fontWeight: 600 }}>此會員目前在黑名單中</span>
+        </div>
+      }
+
+      {/* Page Title Row */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:14 }}>
+          {/* Avatar */}
+          <div style={{ width:44, height:44, borderRadius:'50%', background:'linear-gradient(135deg,#5B21B6,#409EFF)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:18, fontWeight:700, flexShrink:0 }}>
+            {customer.name.charAt(0)}
+          </div>
+          <div>
+            <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
+              <h1 style={{ fontSize:20, fontWeight:700 }}>{customer.name}</h1>
+              {customer.type === 'member'
+                ? <StatusTag type="primary">會員</StatusTag>
+                : <span style={{ display:'inline-flex', alignItems:'center', height:22, padding:'0 10px', borderRadius:9999, fontSize:12, border:`1px solid ${T.border}`, background:T.bgPage, color:T.textRegular }}>顧客</span>}
+              {customer.status === 'normal' && <StatusTag type="success">正常</StatusTag>}
+              {customer.status === 'inactive' && <StatusTag type="info">停用</StatusTag>}
+              {customer.status === 'blacklist' && <StatusTag type="danger">黑名單</StatusTag>}
+            </div>
+            <div style={{ display:'flex', gap:16, fontSize:13, color:T.textRegular }}>
+              <span>{customer.email}</span>
+              <span>{customer.phone}</span>
+            </div>
+          </div>
+        </div>
+        <div style={{ display:'flex', gap:8 }}>
+          {isMember && <button style={btnPrimary} onClick={() => setDrawerOpen(true)}>調整點數</button>}
+          <button style={btnPlain} onClick={() => showToast('即將跳轉至發送優惠券', 'info')}>發送優惠券</button>
+          {!isBlacklisted
+            ? <button style={btnDanger} onClick={() => setBlacklistDialog(true)}>加入黑名單</button>
+            : <button style={btnBlue} onClick={() => setUnblacklistDialog(true)}>解除黑名單</button>}
+        </div>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 16 }}>
+        {/* Left column */}
+        <div>
+          {/* KPI Cards */}
+          {isMember &&
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 16 }}>
+              {[
+            { label: '累計消費', value: 'NT$ 15,190' },
+            { label: '購買次數', value: '3 筆' },
+            { label: '平均客單價', value: 'NT$ 5,063' },
+            { label: '最後購買日', value: '2026-04-25' }].
+            map((k) =>
+            <div key={k.label} style={{ background: '#fff', border: `1px solid ${T.border}`, padding: '14px 16px' }}>
+                  <div style={{ fontSize: 12, color: T.textSecondary, marginBottom: 6 }}>{k.label}</div>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: T.textPrimary }}>{k.value}</div>
+                </div>
+            )}
+            </div>
+          }
+
+          {/* Basic Info */}
+          <MemCard title="基本資料" extra={!editMode && <button style={btnPlain} onClick={() => setEditMode(true)}>編輯基本資料</button>}>
+            {editMode ?
+            <div>
+                <FormRow label="姓名" required>
+                  <Input value={editData.name} onChange={(v) => setEditData((d) => ({ ...d, name: v }))} placeholder="請輸入姓名" />
+                </FormRow>
+                <FormRow label="Email" helper="此欄位為識別錨點，如需修改請聯繫工程師">
+                  <Input value={customer.email} disabled />
+                </FormRow>
+                <FormRow label="電話">
+                  <Input value={editData.phone} onChange={(v) => setEditData((d) => ({ ...d, phone: v }))} placeholder="請輸入電話號碼" />
+                </FormRow>
+                <FormRow label="公司" helper="CMS 顧客欄位">
+                  <Input value={editData.company} onChange={(v) => setEditData((d) => ({ ...d, company: v }))} placeholder="請輸入公司名稱" />
+                </FormRow>
+                <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                  <button style={btnPlain} onClick={() => setEditMode(false)}>取消</button>
+                  <button style={btnPrimary} onClick={() => {setEditMode(false);showToast('資料已更新');}}>儲存</button>
+                </div>
+              </div> :
+
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:'12px 24px' }}>
+              {[
+                ['姓名', customer.name],
+                ['Email', customer.email],
+                ['電話', customer.phone],
+                ['公司', '—'],
+                ['加入來源', customer.type === 'member' ? '電商前台自行註冊（2026-08-15）' : 'CMS 聯絡表單（2026-01-10）'],
+                ['加入日期', customer.joined],
+              ].map(([l,v]) => (
+                <div key={l}>
+                  <div style={{ fontSize:12, color:T.textSecondary, marginBottom:3 }}>{l}</div>
+                  <div style={{ fontSize:14, color:T.textPrimary }}>{v}</div>
+                </div>
+              ))}
+            </div>
+            }
+          </MemCard>
+
+          {/* Member Info */}
+          {isMember &&
+          <MemCard title="電商會員資訊">
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '12px 24px' }}>
+                {[['等級', '金卡 VIP'], ['點數餘額', `${memberPoints.toLocaleString()} 點`], ['帳號狀態', customer.status === 'normal' ? '正常' : customer.status], ['加入日期', customer.joined], ['累計消費', 'NT$ 15,190'], ['購買次數', '3 筆']].map(([l, v]) =>
+              <div key={l}>
+                    <div style={{ fontSize: 12, color: T.textSecondary, marginBottom: 3 }}>{l}</div>
+                    <div style={{ fontSize: 14, color: T.textPrimary }}>{v}</div>
+                  </div>
+              )}
+              </div>
+            </MemCard>
+          }
+
+          {/* Orders */}
+          {isMember &&
+          <MemCard title="訂單記錄">
+              {orders.length > 0 ?
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                  <thead>
+                    <tr>{['訂單編號', '日期', '金額', '狀態'].map((h) => <th key={h} style={{ ...tableThStyle, background: 'transparent' }}>{h}</th>)}</tr>
+                  </thead>
+                  <tbody>
+                    {orders.map((o) =>
+                <tr key={o.no}>
+                        <td style={tableTdStyle}><button style={textLink} onClick={() => onNavigate('order-list')}>{o.no}</button></td>
+                        <td style={tableTdStyle}>{o.date}</td>
+                        <td style={tableTdStyle}>{o.amount}</td>
+                        <td style={tableTdStyle}>{orderStatusTag(o.status)}</td>
+                      </tr>
+                )}
+                  </tbody>
+                </table> :
+            <MemEmptyState headline="此會員尚無訂單記錄" subtext="完成首次購買後，訂單將自動出現在這裡。" />}
+              <div style={{ marginTop: 12, textAlign: 'right' }}>
+                <button style={textLink} onClick={() => onNavigate('order-list')}>查看全部訂單 →</button>
+              </div>
+            </MemCard>
+          }
+
+          {/* CMS History (customer only) */}
+          {customer.type === 'customer' &&
+          <MemCard title="CMS 互動歷程（2 筆表單提交記錄）">
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                <thead><tr>{['時間', '表單類型', '內容摘要'].map((h) => <th key={h} style={{ ...tableThStyle, background: 'transparent' }}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {[{ t: '2026-03-20', f: '詢問單', s: '詢問關於產品保固方式' },
+                { t: '2026-01-05', f: '聯絡表單', s: '反映配送延誤問題' }].map((r, i) =>
+                <tr key={i}><td style={tableTdStyle}>{r.t}</td><td style={tableTdStyle}>{r.f}</td><td style={tableTdStyle}>{r.s}</td></tr>
+                )}
+                </tbody>
+              </table>
+            </MemCard>
+          }
+
+          {/* Invite Banner (customer only) */}
+          {!isMember && (
+            <div style={{ background:'#EFF2F7', border:`1px solid #C6D5EB`, padding:'16px 20px', marginBottom:16, display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+              <div>
+                <div style={{ fontSize:14, fontWeight:600, color:T.textPrimary, marginBottom:4 }}>此顧客尚未成為電商會員</div>
+                <div style={{ fontSize:13, color:T.textRegular }}>寄送邀請信，引導顧客在電商前台完成會員申請。</div>
+                {inviteSent && <div style={{ fontSize:12, color:T.textSecondary, marginTop:4 }}>✓ 邀請信已寄出，7 天內不可重複寄送</div>}
+              </div>
+              <div title={inviteCooldown ? '已於 2 天前寄出邀請，請等待 5 天後再次寄送' : ''}>
+                <button
+                  style={{ ...btnBlue, opacity: inviteCooldown ? 0.5 : 1, cursor: inviteCooldown ? 'not-allowed' : 'pointer' }}
+                  disabled={inviteCooldown}
+                  onClick={() => {
+                    setInviteSent(true);
+                    setInviteCooldown(true);
+                    showToast(`邀請信已寄至 ${customer.email}`);
+                  }}>寄送邀請加入會員信</button>
+              </div>
+            </div>
+          )}
+
+          {/* Notes */}
+          <MemCard title="內部備註（不對顧客/會員顯示）">
+            <Textarea value={notes} onChange={setNotes} rows={3} placeholder="記錄內部備忘，例：此會員曾反映配送問題，已補償 100 點。" />
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+              <span style={{ fontSize: 12, color: T.textSecondary }}>最後更新：2026-04-30 by 系統管理員</span>
+              <button style={btnPrimary} onClick={() => showToast('備註已儲存')}>儲存備註</button>
+            </div>
+          </MemCard>
+        </div>
+
+        {/* Right column: Tags */}
+        <div>
+          <MemCard title="標籤">
+            <div style={{ marginBottom: 12 }}>
+              <div style={{ fontSize: 12, color: T.textSecondary, marginBottom: 8 }}>系統自動標籤（唯讀）</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {['高價值客', '活躍客'].filter((t) => tags.includes(t)).map((t) =>
+                <StatusTag key={t} type="warning">{t}</StatusTag>
+                )}
+                {['新客', '品類愛好者', '沉睡客', '流失客'].filter((t) => tags.includes(t)).map((t) =>
+                <StatusTag key={t} type="info">{t}</StatusTag>
+                )}
+                {!tags.some((t) => ['高價值客', '活躍客', '新客', '品類愛好者', '沉睡客', '流失客'].includes(t)) &&
+                <span style={{ fontSize: 13, color: T.textSecondary }}>尚無系統標籤</span>}
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: 12, color: T.textSecondary, marginBottom: 8 }}>商家自定義標籤（可編輯）</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {tags.filter((t) => !['高價值客', '活躍客', '新客', '品類愛好者', '沉睡客', '流失客'].includes(t)).map((t) =>
+                <span key={t} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 24, padding: '0 10px', borderRadius: 9999, fontSize: 12, border: `1px solid ${T.border}`, background: T.bgPage, color: T.textRegular }}>
+                    {t}
+                    <button onClick={() => {setTags((ts) => ts.filter((x) => x !== t));showToast('標籤已移除');}} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.textSecondary, fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+                  </span>
+                )}
+                {addTagOpen ?
+                <div style={{ display: 'flex', gap: 4 }}>
+                    <Select value={newTag} onChange={setNewTag} options={[{ value: '', label: '選擇標籤' }, { value: '合作廠商', label: '合作廠商' }, { value: 'KOL', label: 'KOL' }, { value: '黑五搶購客', label: '黑五搶購客' }]} style={{ height: 28, fontSize: 13 }} />
+                    <button style={{ ...btnPrimary, height: 28, fontSize: 12 }} onClick={() => {
+                    if (newTag && !tags.includes(newTag)) {setTags((ts) => [...ts, newTag]);showToast('標籤已套用');}
+                    setAddTagOpen(false);setNewTag('');
+                  }}>確認</button>
+                    <button style={{ ...btnPlain, height: 28, fontSize: 12 }} onClick={() => setAddTagOpen(false)}>取消</button>
+                  </div> :
+
+                <button onClick={() => setAddTagOpen(true)} style={{ ...textLink, fontSize: 13 }}>+ 新增標籤</button>
+                }
+              </div>
+            </div>
+          </MemCard>
+        </div>
+      </div>
+
+      {/* Adjust Points MemDrawer */}
+      <MemDrawer open={drawerOpen} title="調整點數" onClose={() => setDrawerOpen(false)} width={460}>
+        <div style={{ marginBottom: 16, padding: '12px 16px', background: T.bgPage, border: `1px solid ${T.border}` }}>
+          <div style={{ fontSize: 13, color: T.textSecondary }}>目前點數餘額</div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: T.textPrimary }}>{memberPoints.toLocaleString()} 點</div>
+        </div>
+        <FormRow label="調整類型" required>
+          <div style={{ display: 'flex', gap: 16 }}>
+            {[['add', '增加點數'], ['deduct', '扣除點數']].map(([v, l]) =>
+            <label key={v} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 14 }}>
+                <input type="radio" value={v} checked={pointType === v} onChange={() => setPointType(v)} style={{ accentColor: T.primary }} />
+                {l}
+              </label>
+            )}
+          </div>
+        </FormRow>
+        <FormRow label="調整數量" required helper="最多一次調整 99,999 點" error={pointAmountError}>
+          <Input value={pointAmount} onChange={(v) => {setPointAmount(v);setPointAmountError('');}} placeholder="請輸入點數數量" type="number" />
+        </FormRow>
+        <FormRow label="調整原因" required helper="最多 200 字" error={pointReasonError}>
+          <Textarea value={pointReason} onChange={(v) => {setPointReason(v);setPointReasonError('');}} placeholder="請填寫調整原因，例：客服補償、活動獎勵" rows={3} />
+        </FormRow>
+        {pointPreview &&
+        <div style={{ background: '#EFF2F7', border: `1px solid #C6D5EB`, padding: '10px 14px', fontSize: 13, color: T.textRegular, marginBottom: 16 }}>
+            {pointPreview}
+          </div>
+        }
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button style={btnPlain} onClick={() => setDrawerOpen(false)}>取消</button>
+          <button style={btnPrimary} onClick={handleSavePoints}>確認送出</button>
+        </div>
+      </MemDrawer>
+
+      {/* Blacklist MemDialog */}
+      <MemDialog open={blacklistDialog} title="加入黑名單" onClose={() => setBlacklistDialog(false)}
+      footer={<>
+          <button style={btnPlain} onClick={() => setBlacklistDialog(false)}>取消</button>
+          <button style={{ ...btnPrimary, background: T.danger, borderColor: T.danger }} onClick={handleBlacklist}>確認加入黑名單</button>
+        </>}>
+        <FormRow label="加入原因" required error={blacklistReasonError}>
+          <Textarea value={blacklistReason} onChange={(v) => {setBlacklistReason(v);setBlacklistReasonError('');}}
+          placeholder="請詳細說明將此會員加入黑名單的原因，例：惡意退貨 X 次、疑似詐騙下單等。此記錄不對消費者顯示，僅供內部查核。" rows={4} />
+          <div style={{ fontSize: 12, color: T.textSecondary, marginTop: 4 }}>最少 10 字，最多 300 字</div>
+        </FormRow>
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', fontSize: 13, color: T.textRegular }}>
+          <input type="checkbox" checked={blacklistConfirm} onChange={(e) => setBlacklistConfirm(e.target.checked)} style={{ marginTop: 2, accentColor: T.danger }} />
+          我確認此操作，加入黑名單後該會員將無法在本商店下單
+        </label>
+      </MemDialog>
+
+      {/* Unblacklist Confirm */}
+      <MemDialog open={unblacklistDialog} title="解除黑名單確認" onClose={() => setUnblacklistDialog(false)}
+      footer={<>
+          <button style={btnPlain} onClick={() => setUnblacklistDialog(false)}>取消</button>
+          <button style={btnBlue} onClick={() => {setUnblacklistDialog(false);showToast(`已解除 ${customer.name} 的黑名單，該會員現在可以正常下單`);}}>確定解除</button>
+        </>}>
+        <p style={{ fontSize: 14, color: T.textRegular, lineHeight: 1.7 }}>
+          確定要解除 <strong>{customer.name}</strong> 的黑名單？解除後，該會員可以再次在本商店下單。如有疑慮，建議維持黑名單狀態。
+        </p>
+      </MemDialog>
+    </div>);
+
+}
+
+// ─── SCREEN 3: 會員等級設定 ─────────────────────────────────────────────────
+function MemberLevelPage({ showToast }) {
+  const [levels, setLevels] = React.useState(SAMPLE_LEVELS);
+  const [dialog, setDialog] = React.useState(null); // null | 'add' | {level}
+  const [deleteDialog, setDeleteDialog] = React.useState(null);
+  const [form, setForm] = React.useState({ name: '', threshold: 0, buyCount: 0, discount: 0, period: '永久', expiry: '永久', expiryMonths: '', retentionAmount: '', retentionPeriod: '年度', welcomeGift: '', status: 'enabled' });
+  const [formError, setFormError] = React.useState({});
+
+  const openAdd = () => {setForm({ name: '', threshold: '', buyCount: '', discount: 0, period: '永久', expiry: '永久', expiryMonths: '', retentionAmount: '', retentionPeriod: '年度', welcomeGift: '', status: 'enabled' });setFormError({});setDialog('add');};
+  const openEdit = (lv) => {setForm({ ...lv });setFormError({});setDialog(lv);};
+
+  const saveLevel = () => {
+    const err = {};
+    if (!form.name.trim()) err.name = '等級名稱為必填欄位（最多 10 字）';
+    if (Object.keys(err).length > 0) {setFormError(err);return;}
+    if (dialog === 'add') {
+      const newLv = { ...form, id: `L${Date.now()}`, memberCount: 0 };
+      setLevels((ls) => [...ls, newLv]);
+      showToast(`等級「${form.name}」已新增`);
+    } else {
+      setLevels((ls) => ls.map((l) => l.id === form.id ? { ...l, ...form } : l));
+      showToast('等級已更新');
+    }
+    setDialog(null);
+  };
+
+  return (
+    <div data-screen-label="03 等級設定">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: T.textPrimary }}>會員等級設定</h1>
+        </div>
+        <button style={levels.length >= 5 ? { ...btnPrimary, opacity: 0.5, cursor: 'not-allowed' } : btnPrimary}
+        onClick={() => levels.length < 5 && openAdd()} disabled={levels.length >= 5}>新增等級</button>
+      </div>
+
+      <MemInfoBanner>設定會員升等條件與專屬權益。設定儲存後，系統將於每日凌晨 00:00 重新計算所有會員等級。</MemInfoBanner>
+
+      <div style={{ background: '#fff', borderRadius: 3, boxShadow: '0 2px 12px 0 rgba(0,0,0,0.08)' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+          <thead>
+            <tr>
+              <th style={{ ...tableThStyle, width: 36 }} title="拖曳以調整等級顯示順序"></th>
+              {['等級名稱', '升等門檻（累計消費）', '升等門檻（購買次數）', '折扣', '會員數', '狀態', '操作'].map((h) => <th key={h} style={tableThStyle}>{h}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {levels.map((lv, i) =>
+            <tr key={lv.id}
+            style={{ background: tableRowBg(i) }}
+            {...tableRowHandlers(i, false)}>
+                <td style={{ ...tableTdStyle, width: 36, textAlign: 'center', cursor: 'grab', color: T.textSecondary, fontSize: 16, userSelect: 'none' }} title="拖曳以調整等級顯示順序">&#8942;&#8942;</td>
+                <td style={tableTdStyle}><span style={{ fontWeight: 600 }}>{lv.name}</span></td>
+                <td style={tableTdStyle}>{lv.threshold > 0 ? `NT$ ${lv.threshold.toLocaleString()}` : '—'}</td>
+                <td style={tableTdStyle}>{lv.buyCount > 0 ? `${lv.buyCount} 次` : '—'}</td>
+                <td style={tableTdStyle}>{lv.discount > 0 ? `${lv.discount}%` : '—'}</td>
+                <td style={tableTdStyle}>{lv.memberCount.toLocaleString()} 人</td>
+                <td style={tableTdStyle}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                    <div style={{ width: 36, height: 20, background: lv.status === 'enabled' ? T.success : T.border, borderRadius: 10, position: 'relative', transition: 'background 0.2s' }}
+                  onClick={() => {
+                    setLevels((ls) => ls.map((l) => l.id === lv.id ? { ...l, status: l.status === 'enabled' ? 'disabled' : 'enabled' } : l));
+                    showToast(`已${lv.status === 'enabled' ? '停用' : '啟用'}「${lv.name}」`);
+                  }}>
+                      <div style={{ width: 14, height: 14, background: '#fff', borderRadius: '50%', position: 'absolute', top: 3, left: lv.status === 'enabled' ? 18 : 3, transition: 'left 0.2s' }} />
+                    </div>
+                    <span style={{ fontSize: 13, color: lv.status === 'enabled' ? T.success : T.textSecondary }}>{lv.status === 'enabled' ? '啟用中' : '已停用'}</span>
+                  </label>
+                </td>
+                <td style={tableTdStyle}>
+                  <div style={{ display: 'flex', gap: 12 }}>
+                    <button style={textLink} onClick={() => openEdit(lv)}>編輯</button>
+                    <button style={textDanger} onClick={() => setDeleteDialog(lv)}>刪除</button>
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+        {levels.length === 0 && <MemEmptyState headline="尚未設定任何會員等級" subtext="新增至少一個等級，系統才會啟動自動升降等機制。" cta="新增第一個等級" onCta={openAdd} />}
+      </div>
+
+      {/* Level MemDialog */}
+      <MemDialog open={!!dialog} title={dialog === 'add' ? '新增等級' : '編輯等級'} onClose={() => setDialog(null)} width={520}
+      footer={<>
+          <button style={btnPlain} onClick={() => setDialog(null)}>取消</button>
+          <button style={btnPrimary} onClick={saveLevel}>儲存</button>
+        </>}>
+        <FormRow label="等級名稱" required helper="最多 10 字" error={formError.name}>
+          <Input value={form.name} onChange={(v) => setForm((f) => ({ ...f, name: v }))} placeholder="請輸入等級名稱，例：銀卡、金卡 VIP" />
+        </FormRow>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <FormRow label="升等條件 — 累計消費金額" helper="消費達此金額自動升等">
+            <Input value={form.threshold} onChange={(v) => setForm((f) => ({ ...f, threshold: v }))} placeholder="NT$" type="number" />
+          </FormRow>
+          <FormRow label="升等條件 — 購買次數">
+            <Input value={form.buyCount} onChange={(v) => setForm((f) => ({ ...f, buyCount: v }))} placeholder="次數" type="number" />
+          </FormRow>
+        </div>
+        <FormRow label="專屬折扣（%）" helper="此等級消費享有額外折扣；0 代表無折扣">
+          <Input value={form.discount} onChange={(v) => setForm((f) => ({ ...f, discount: v }))} type="number" />
+        </FormRow>
+        <FormRow label="累計計算方式">
+          <div style={{ display: 'flex', gap: 16 }}>
+            {['永久累計', '年度累計（每年 1 月 1 日重置）'].map((v) =>
+            <label key={v} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 14 }}>
+                <input type="radio" value={v} checked={form.period === v} onChange={() => setForm((f) => ({ ...f, period: v }))} style={{ accentColor: T.primary }} />
+                {v}
+              </label>
+            )}
+          </div>
+        </FormRow>
+        <FormRow label="等級有效期" helper="等級到期後若未達保級條件，系統自動降等">
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+            {['永久', '自訂月數'].map((v) =>
+            <label key={v} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 14 }}>
+                <input type="radio" value={v} checked={form.expiry === v} onChange={() => setForm((f) => ({ ...f, expiry: v }))} style={{ accentColor: T.primary }} />
+                {v}
+              </label>
+            )}
+            {form.expiry === '自訂月數' &&
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Input value={form.expiryMonths} onChange={(v) => setForm((f) => ({ ...f, expiryMonths: v }))} type="number" placeholder="月數" style={{ width: 80 }} />
+                <span style={{ fontSize: 13, color: T.textSecondary }}>個月</span>
+              </div>
+            }
+          </div>
+        </FormRow>
+        <FormRow label="保級條件" helper="等級有效期內須達到此消費金額方可保留等級；留空代表無需保級">
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, flex: 1 }}>
+              <span style={{ fontSize: 13, color: T.textSecondary, flexShrink: 0 }}>NT$</span>
+              <Input value={form.retentionAmount} onChange={(v) => setForm((f) => ({ ...f, retentionAmount: v }))} type="number" placeholder="輸入金額（留空代表無保級條件）" />
+            </div>
+            <div style={{ display: 'flex', gap: 12, flexShrink: 0 }}>
+              {['年度', '效期內'].map((v) =>
+              <label key={v} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 14 }}>
+                  <input type="radio" value={v} checked={form.retentionPeriod === v} onChange={() => setForm((f) => ({ ...f, retentionPeriod: v }))} style={{ accentColor: T.primary }} />
+                  {v}
+                </label>
+              )}
+            </div>
+          </div>
+        </FormRow>
+        <FormRow label="入會禮 / 升等禮說明" helper="最多 100 字；填入後將顯示於升等通知信及前台會員等級頁面（選填）">
+          <Textarea value={form.welcomeGift} onChange={(v) => setForm((f) => ({ ...f, welcomeGift: v }))} placeholder="例：升等即贈 NT$200 購物金 + 免運一次，效期 30 天" rows={2} />
+        </FormRow>
+      </MemDialog>
+
+      {/* Delete Confirm MemDialog */}
+      <MemDialog open={!!deleteDialog} title="確認刪除等級" onClose={() => setDeleteDialog(null)} width={420}
+      footer={<>
+          <button style={btnPlain} onClick={() => setDeleteDialog(null)}>取消</button>
+          <button style={{ ...btnPrimary, background: T.danger, borderColor: T.danger }} onClick={() => {
+          setLevels((ls) => ls.filter((l) => l.id !== deleteDialog.id));
+          setDeleteDialog(null);showToast('等級已刪除');
+        }}>確認刪除</button>
+        </>}>
+        {deleteDialog && <p style={{ fontSize: 14, color: T.textRegular, lineHeight: 1.7 }}>
+          此等級目前有 <strong>{deleteDialog.memberCount.toLocaleString()}</strong> 位會員，刪除後這些會員將自動降至前一等級，確定要繼續？
+        </p>}
+      </MemDialog>
+    </div>);
+
+}
+
+// ─── SCREEN 4: 點數設定 ─────────────────────────────────────────────────────
+function PointsSettingPage({ showToast }) {
+  const [s, setS] = React.useState({
+    rate: 1, maxReward: 0, referReward: 200, refereeReward: 100,
+    redeemRate: 100, maxRedeemPct: 30, minOrderAmount: 500,
+    expireType: '永久', expireMonths: '',
+    reminderDays: 14
+  });
+  const [isPro, setIsPro] = React.useState(window.__evomni_isPro || false);
+  React.useEffect(() => {
+    const handler = e => setIsPro(e.detail.isPro);
+    window.addEventListener('evomni:planchange', handler);
+    return () => window.removeEventListener('evomni:planchange', handler);
+  }, []);
+
+  return (
+    <div data-screen-label="04 點數設定">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: T.textPrimary }}>點數設定</h1>
+        </div>
+      </div>
+
+      {/* 基礎點數回饋 */}
+      <MemCard title="基礎點數回饋">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+          <FormRow label="消費回饋比率" helper="消費者每消費 NT$1 自動獲得 X 點。設定為 0 則停用點數回饋。">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Input value={s.rate} onChange={(v) => setS((x) => ({ ...x, rate: v }))} type="number" style={{ width: 80 }} />
+              <span style={{ color: T.textSecondary, fontSize: 13 }}>點 / NT$1</span>
+            </div>
+          </FormRow>
+          <FormRow label="單筆訂單最高回饋點數" helper="輸入 0 代表無上限">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Input value={s.maxReward} onChange={(v) => setS((x) => ({ ...x, maxReward: v }))} type="number" style={{ width: 100 }} />
+              <span style={{ color: T.textSecondary, fontSize: 13 }}>點</span>
+            </div>
+          </FormRow>
+          <FormRow label="推薦人獎勵點數" helper="推薦人成功邀請新會員首購後獲得的點數">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Input value={s.referReward} onChange={(v) => setS((x) => ({ ...x, referReward: v }))} type="number" style={{ width: 100 }} />
+              <span style={{ color: T.textSecondary, fontSize: 13 }}>點</span>
+            </div>
+          </FormRow>
+          <FormRow label="被推薦人獎勵點數" helper="被推薦新會員完成首購後獲得的點數">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Input value={s.refereeReward} onChange={(v) => setS((x) => ({ ...x, refereeReward: v }))} type="number" style={{ width: 100 }} />
+              <span style={{ color: T.textSecondary, fontSize: 13 }}>點</span>
+            </div>
+          </FormRow>
+        </div>
+      </MemCard>
+
+      {/* 點數折抵 (進階) */}
+      <MemCard title={<span>點數折抵設定 <StatusTag type="primary">進階方案</StatusTag></span>}>
+        {!isPro && <UpgradeLockBanner
+          featureName="點數折抵設定"
+          valueProp="讓顧客用購物點數折抵訂單金額，提高回購率與消費黏著度"
+          onLearnMore={() => showToast('請前往「全域設定 → 方案狀態」查看升級方案，或聯絡您的營運輔導顧問', 'info')}
+        />}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, filter: !isPro ? 'blur(3px)' : 'none', pointerEvents: isPro ? 'auto' : 'none' }}>
+          <FormRow label="兌換比率" helper="消費者使用 X 點可折抵 NT$1。例：設定 100，則 1,000 點折抵 NT$10">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Input value={s.redeemRate} onChange={(v) => setS((x) => ({ ...x, redeemRate: v }))} type="number" style={{ width: 80 }} />
+              <span style={{ color: T.textSecondary, fontSize: 13 }}>點 = NT$1</span>
+            </div>
+          </FormRow>
+          <FormRow label="單筆最多折抵比例" helper="每筆訂單最多折抵訂單金額的 X%（0–100）">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Input value={s.maxRedeemPct} onChange={(v) => setS((x) => ({ ...x, maxRedeemPct: v }))} type="number" style={{ width: 80 }} />
+              <span style={{ color: T.textSecondary, fontSize: 13 }}>%</span>
+            </div>
+          </FormRow>
+          <FormRow label="使用點數最低訂單金額">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ color: T.textSecondary, fontSize: 13 }}>NT$</span>
+              <Input value={s.minOrderAmount} onChange={(v) => setS((x) => ({ ...x, minOrderAmount: v }))} type="number" style={{ width: 100 }} />
+            </div>
+          </FormRow>
+        </div>
+      </MemCard>
+
+      {/* 點數有效期 */}
+      <MemCard title="點數有效期與提醒">
+        <FormRow label="點數有效期">
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            {['永久', '自訂月數'].map((v) =>
+            <label key={v} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 14 }}>
+                <input type="radio" value={v} checked={s.expireType === v} onChange={() => setS((x) => ({ ...x, expireType: v }))} style={{ accentColor: T.primary }} />
+                {v}
+              </label>
+            )}
+            {s.expireType === '自訂月數' &&
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <Input value={s.expireMonths} onChange={(v) => setS((x) => ({ ...x, expireMonths: v }))} type="number" placeholder="月數" style={{ width: 80 }} />
+                <span style={{ fontSize: 13, color: T.textSecondary }}>個月</span>
+              </div>
+            }
+          </div>
+        </FormRow>
+        <FormRow label="點數到期提醒提前天數" helper="系統在點數到期前 X 天發送提醒通知（10–60 天）">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <Input value={s.reminderDays} onChange={(v) => setS((x) => ({ ...x, reminderDays: v }))} type="number" style={{ width: 80 }} />
+            <span style={{ color: T.textSecondary, fontSize: 13 }}>天前</span>
+          </div>
+        </FormRow>
+        <MemInfoBanner>此設定值與「行銷活動 → 自動化旅程 → 點數到期提醒旅程」中的天數設定共用，修改此處將同步更新。</MemInfoBanner>
+      </MemCard>
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', paddingBottom: 24 }}>
+        <button style={btnBlue} onClick={() => showToast('點數設定已更新，新規則立即生效')}>儲存設定</button>
+      </div>
+    </div>);
+
+}
+
+// ─── SCREEN 5: 標籤管理 ─────────────────────────────────────────────────────
+function TagsPage({ showToast }) {
+  const [tab, setTab] = React.useState('system');
+  const [customTags, setCustomTags] = React.useState(SAMPLE_TAGS_CUSTOM);
+  const [dialog, setDialog] = React.useState(null); // null | 'add' | tag
+  const [deleteDialog, setDeleteDialog] = React.useState(null);
+  const [form, setForm] = React.useState({ name: '', color: '#409EFF', desc: '' });
+  const [formError, setFormError] = React.useState({});
+
+  const systemTags = [
+  { name: '新客', color: '#67C23A', rule: '首次完成購買後 30 天內' },
+  { name: '活躍客', color: '#409EFF', rule: '近 30 天內有完成訂單' },
+  { name: '高價值客', color: '#E6A23C', rule: '近 365 天消費 > 所有活躍會員平均 ×2，且至少 2 筆完成訂單' },
+  { name: '沉睡客', color: '#909399', rule: '最後完成訂單距今 90–180 天' },
+  { name: '流失客', color: '#F56C6C', rule: '最後完成訂單距今超過 180 天' },
+  { name: '品類愛好者', color: '#409EFF', rule: '同一產品分類完成訂單次數 ≥ 3 次' }];
+
+
+  const saveTag = () => {
+    const err = {};
+    if (!form.name.trim()) err.name = '標籤名稱為必填欄位';
+    if (form.name.length > 15) err.name = '標籤名稱最多 15 字';
+    if (systemTags.some((t) => t.name === form.name)) err.name = '此名稱與系統標籤重複，請使用其他名稱';
+    if (Object.keys(err).length > 0) {setFormError(err);return;}
+    if (dialog === 'add') {
+      setCustomTags((ts) => [...ts, { id: `T${Date.now()}`, ...form, count: 0 }]);
+      showToast(`標籤「${form.name}」已建立`);
+    } else {
+      setCustomTags((ts) => ts.map((t) => t.id === form.id ? { ...t, ...form } : t));
+      showToast('標籤已更新');
+    }
+    setDialog(null);
+  };
+
+  const PRESET_COLORS = ['#409EFF', '#67C23A', '#E6A23C', '#F56C6C', '#909399', '#5B21B6', '#EC4899', '#0891B2'];
+
+  return (
+    <div data-screen-label="05 標籤管理">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: T.textPrimary }}>標籤管理</h1>
+        </div>
+        {tab === 'custom' && <button style={btnPrimary} onClick={() => {setForm({ name: '', color: '#409EFF', desc: '' });setFormError({});setDialog('add');}}>新增標籤</button>}
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', borderBottom: `1px solid ${T.border}`, marginBottom: 16 }}>
+        {[['system', '系統自動標籤'], ['custom', '商家自定義標籤']].map(([k, l]) =>
+        <button key={k} onClick={() => setTab(k)} style={{ padding: '10px 20px', background: 'none', border: 'none', borderBottom: tab === k ? `2px solid ${T.blue}` : '2px solid transparent', color: tab === k ? T.blue : T.textRegular, cursor: 'pointer', fontSize: 14, fontFamily: 'inherit', marginBottom: -1 }}>{l}</button>
+        )}
+      </div>
+
+      {tab === 'system' &&
+      <div>
+          <MemInfoBanner>以下標籤由系統每日凌晨 02:00 自動計算套用，規則不可修改。標籤結果可用於顧客管理篩選及行銷活動分眾。</MemInfoBanner>
+          <div style={{ background: '#fff', borderRadius: 3, boxShadow: '0 2px 12px 0 rgba(0,0,0,0.08)' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+              <thead><tr>{['標籤預覽', '標籤名稱', '自動判斷規則說明'].map((h) => <th key={h} style={tableThStyle}>{h}</th>)}</tr></thead>
+              <tbody>
+                {systemTags.map((t, i) =>
+              <tr key={t.name}
+              style={{ background: tableRowBg(i) }}
+              {...tableRowHandlers(i, false)}>
+                    <td style={tableTdStyle}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', height: 22, padding: '0 10px', borderRadius: 9999, fontSize: 12, background: t.color + '22', border: `1px solid ${t.color}55`, color: t.color }}>{t.name}</span>
+                    </td>
+                    <td style={{ ...tableTdStyle, fontWeight: 600 }}>{t.name}</td>
+                    <td style={tableTdStyle}>{t.rule}</td>
+                  </tr>
+              )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+
+      {tab === 'custom' &&
+      <div>
+          {customTags.length === 0 ?
+        <MemEmptyState headline="尚未建立任何自定義標籤" subtext="建立標籤後，可在顧客詳情頁或批次操作中套用至顧客/會員。" cta="新增第一個標籤" onCta={() => {setForm({ name: '', color: '#409EFF', desc: '' });setFormError({});setDialog('add');}} /> :
+
+        <div style={{ background: '#fff', borderRadius: 3, boxShadow: '0 2px 12px 0 rgba(0,0,0,0.08)' }}>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+                <thead><tr>{['標籤預覽', '標籤名稱', '說明', '套用人數', '操作'].map((h) => <th key={h} style={tableThStyle}>{h}</th>)}</tr></thead>
+                <tbody>
+                  {customTags.map((t, i) =>
+              <tr key={t.id}
+              style={{ background: tableRowBg(i) }}
+              {...tableRowHandlers(i, false)}>
+                      <td style={tableTdStyle}><span style={{ display: 'inline-flex', alignItems: 'center', height: 24, padding: '0 10px', borderRadius: 9999, fontSize: 14, background: t.color + '22', border: `1px solid ${t.color}55`, color: t.color }}>{t.name}</span></td>
+                      <td style={{ ...tableTdStyle, fontWeight: 600 }}>{t.name}</td>
+                      <td style={tableTdStyle}>{t.desc}</td>
+                      <td style={tableTdStyle}>{t.count} 人</td>
+                      <td style={tableTdStyle}>
+                        <div style={{ display: 'flex', gap: 12 }}>
+                          <button style={textLink} onClick={() => {setForm({ ...t });setFormError({});setDialog(t);}}>編輯</button>
+                          <button style={textDanger} onClick={() => setDeleteDialog(t)}>刪除</button>
+                        </div>
+                      </td>
+                    </tr>
+              )}
+                </tbody>
+              </table>
+            </div>
+        }
+        </div>
+      }
+
+      {/* Tag MemDialog */}
+      <MemDialog open={!!dialog} title={dialog === 'add' ? '新增標籤' : '編輯標籤'} onClose={() => setDialog(null)} width={440}
+      footer={<>
+          <button style={btnPlain} onClick={() => setDialog(null)}>取消</button>
+          <button style={btnPrimary} onClick={saveTag}>儲存</button>
+        </>}>
+        <FormRow label="標籤名稱" required helper="最多 15 字；不可與系統標籤同名" error={formError.name}>
+          <Input value={form.name} onChange={(v) => {setForm((f) => ({ ...f, name: v }));setFormError({});}} placeholder="請輸入標籤名稱" />
+        </FormRow>
+        <FormRow label="標籤顏色">
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 8 }}>
+            {PRESET_COLORS.map((c) =>
+            <div key={c} onClick={() => setForm((f) => ({ ...f, color: c }))} style={{ width: 28, height: 28, background: c, borderRadius: 4, cursor: 'pointer', border: form.color === c ? `3px solid ${T.primary}` : '3px solid transparent' }} />
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', height: 22, padding: '0 10px', borderRadius: 9999, fontSize: 12, background: form.color + '22', border: `1px solid ${form.color}55`, color: form.color }}>{form.name || '預覽'}</span>
+          </div>
+        </FormRow>
+        <FormRow label="說明備註" helper="最多 50 字；僅後台可見">
+          <Textarea value={form.desc} onChange={(v) => setForm((f) => ({ ...f, desc: v }))} placeholder="請輸入內部說明，例：VIP 客戶、合作廠商" rows={2} />
+        </FormRow>
+      </MemDialog>
+
+      {/* Delete Confirm */}
+      <MemDialog open={!!deleteDialog} title="確認刪除標籤" onClose={() => setDeleteDialog(null)} width={380}
+      footer={<>
+          <button style={btnPlain} onClick={() => setDeleteDialog(null)}>取消</button>
+          <button style={{ ...btnPrimary, background: T.danger, borderColor: T.danger }} onClick={() => {setCustomTags((ts) => ts.filter((t) => t.id !== deleteDialog.id));setDeleteDialog(null);showToast('標籤已刪除');}}>確認刪除</button>
+        </>}>
+        {deleteDialog && <p style={{ fontSize: 14, color: T.textRegular, lineHeight: 1.7 }}>此標籤目前套用於 <strong>{deleteDialog.count}</strong> 位顧客/會員。刪除後標籤將自動移除，確定繼續？</p>}
+      </MemDialog>
+    </div>);
+
+}
+
+// ─── SCREEN 6: 分眾篩選器 ───────────────────────────────────────────────────
+function SegmentPage({ showToast }) {
+  const [logic, setLogic] = React.useState('AND');
+  const [conditions, setConditions] = React.useState([]);
+  const [preview, setPreview] = React.useState(null); // null | number
+  const [previewLoading, setPreviewLoading] = React.useState(false);
+  const [saveDialog, setSaveDialog] = React.useState(false);
+  const [groupName, setGroupName] = React.useState('');
+  const [groupNameError, setGroupNameError] = React.useState('');
+  const [savedGroups] = React.useState([
+  { id: 'G1', name: '高價值活躍客', condCount: 3, created: '2026-04-01' },
+  { id: 'G2', name: '沉睡客喚醒名單', condCount: 2, created: '2026-04-15' }]
+  );
+  const [showSaved, setShowSaved] = React.useState(false);
+
+  const FIELD_OPTIONS = [
+  { value: '', label: '請選擇條件欄位' },
+  { value: 'totalSpend', label: '累計消費金額' },
+  { value: 'buyCount', label: '購買次數' },
+  { value: 'daysSinceLast', label: '最後購買日距今天數' },
+  { value: 'level', label: '會員等級' },
+  { value: 'tag', label: '會員標籤' },
+  { value: 'joinDate', label: '加入日期' },
+  { value: 'type', label: '身分類型' }];
+
+
+  const OPS_BY_FIELD = {
+    totalSpend: [{ value: 'gt', label: '大於' }, { value: 'lt', label: '小於' }, { value: 'eq', label: '等於' }, { value: 'between', label: '介於' }],
+    buyCount: [{ value: 'gt', label: '大於' }, { value: 'lt', label: '小於' }, { value: 'eq', label: '等於' }],
+    daysSinceLast: [{ value: 'within', label: '在過去 N 天內' }, { value: 'over', label: '超過 N 天' }],
+    level: [{ value: 'eq', label: '等於' }, { value: 'neq', label: '不等於' }],
+    tag: [{ value: 'has', label: '包含' }, { value: 'nothas', label: '不包含' }],
+    joinDate: [{ value: 'within', label: '在過去 N 天內' }, { value: 'between', label: '介於' }],
+    type: [{ value: 'eq', label: '等於' }]
+  };
+
+  const addCondition = () => setConditions((cs) => [...cs, { id: Date.now(), field: '', op: '', value: '' }]);
+  const removeCondition = (id) => setConditions((cs) => cs.filter((c) => c.id !== id));
+  const updateCondition = (id, key, val) => setConditions((cs) => cs.map((c) => c.id === id ? { ...c, [key]: val, ...(key === 'field' ? { op: '', value: '' } : {}) } : c));
+
+  const doPreview = () => {
+    setPreviewLoading(true);
+    setPreview(null);
+    setTimeout(() => {setPreviewLoading(false);setPreview(Math.floor(Math.random() * 500) + 10);}, 1200);
+  };
+
+  const [isPro, setIsPro] = React.useState(window.__evomni_isPro || false);
+  React.useEffect(() => {
+    const handler = e => setIsPro(e.detail.isPro);
+    window.addEventListener('evomni:planchange', handler);
+    return () => window.removeEventListener('evomni:planchange', handler);
+  }, []);
+
+  const handleSaveGroup = () => {
+    if (!groupName.trim()) {setGroupNameError('群組名稱為必填欄位');return;}
+    setSaveDialog(false);
+    showToast(`分眾群組「${groupName}」已儲存`);
+    setGroupName('');
+  };
+
+  return (
+    <div data-screen-label="06 分眾篩選">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: T.textPrimary }}>分眾篩選（依條件挑選特定會員群）</h1>
+        </div>
+      </div>
+
+      <MemInfoBanner>設定多個條件篩選出目標顧客/會員，預覽符合人數後可發送優惠券或儲存為群組以便日後重複使用。選出符合條件的會員後，可以傳送專屬通知或優惠券。</MemInfoBanner>
+
+      {!isPro && <UpgradeLockBanner
+        featureName="進階會員分眾系統"
+        valueProp="精準觸達每個消費層級的顧客，提升再購率"
+        onLearnMore={() => showToast('請前往「全域設定 → 方案狀態」查看升級方案，或聯絡您的營運輔導顧問')}
+      />}
+      <div style={{ filter: !isPro ? 'blur(3px)' : 'none', pointerEvents: isPro ? 'auto' : 'none' }}>
+
+      <MemCard>
+        {/* Logic selector */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 20 }}>
+          <span style={{ fontSize: 14, color: T.textRegular }}>符合以下</span>
+          {[['AND', '所有條件（AND）'], ['OR', '任一條件（OR）']].map(([v, l]) =>
+          <label key={v} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 14 }}>
+              <input type="radio" value={v} checked={logic === v} onChange={() => setLogic(v)} style={{ accentColor: T.primary }} />{l}
+            </label>
+          )}
+        </div>
+
+        {/* Conditions */}
+        {conditions.length === 0 ?
+        <div style={{ textAlign: 'center', padding: '32px 0', color: T.textSecondary, border: `1px dashed ${T.border}`, marginBottom: 16 }}>
+            <div style={{ marginBottom: 8 }}>尚未新增任何篩選條件</div>
+            <div style={{ fontSize: 13 }}>點擊「+ 新增條件」開始設定分眾條件。</div>
+          </div> :
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+            {conditions.map((c, idx) => {
+            const ops = OPS_BY_FIELD[c.field] || [];
+            return (
+              <div key={c.id} style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                  {idx > 0 && <span style={{ fontSize: 12, color: T.blue, width: 30, textAlign: 'center', fontWeight: 600 }}>{logic}</span>}
+                  {idx === 0 && <span style={{ width: 30 }}></span>}
+                  <Select value={c.field} onChange={(v) => updateCondition(c.id, 'field', v)}
+                options={FIELD_OPTIONS} style={{ width: 180 }} />
+                  <Select value={c.op} onChange={(v) => updateCondition(c.id, 'op', v)}
+                options={[{ value: '', label: '選擇條件' }, ...ops]} style={{ width: 140 }} />
+                  <Input value={c.value} onChange={(v) => updateCondition(c.id, 'value', v)} placeholder="輸入值" style={{ width: 140 }} />
+                  <button onClick={() => removeCondition(c.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: T.textSecondary, fontSize: 18, lineHeight: 1, padding: '0 4px', flexShrink: 0 }}>×</button>
+                </div>);
+
+          })}
+          </div>
+        }
+
+        <button style={btnGhost} onClick={addCondition}>+ 新增條件</button>
+
+        {/* Preview Result */}
+        {(previewLoading || preview !== null) &&
+        <div style={{ margin: '16px 0', padding: '14px 16px', background: T.bgPage, border: `1px solid ${T.border}` }}>
+            {previewLoading ?
+          <span style={{ color: T.textSecondary, fontSize: 14 }}>計算中...</span> :
+          preview === 0 ?
+          <span style={{ fontSize: 14, color: T.textSecondary }}>目前沒有符合所有條件的顧客/會員，請調整篩選條件。</span> :
+          <span style={{ fontSize: 14, color: T.textPrimary }}>符合條件的顧客/會員共 <strong style={{ fontSize: 18, color: T.blue }}>{preview}</strong> 人（其中會員 {Math.floor(preview * 0.7)} 人可接收優惠券）</span>}
+          </div>
+        }
+
+        <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+          <button style={{ ...btnPrimary, opacity: conditions.length === 0 ? 0.5 : 1 }}
+          disabled={conditions.length === 0} onClick={doPreview}>預覽符合人數</button>
+          <button disabled style={{ ...btnBlue, opacity: 0.4, cursor: 'not-allowed' }} title="此功能為進階電商包專屬，請洽詢升級">
+            發送優惠券
+            <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 600, color: '#fff', background: 'rgba(255,255,255,0.3)', padding: '1px 5px', borderRadius: 2 }}>進階</span>
+          </button>
+          <button disabled style={{ ...btnPlain, opacity: 0.4, cursor: 'not-allowed' }} title="此功能為進階電商包專屬，請洽詢升級">
+            儲存為分眾群組
+            <span style={{ marginLeft: 6, fontSize: 10, fontWeight: 600, color: '#409EFF', background: '#EFF2F7', padding: '1px 5px', borderRadius: 2 }}>進階</span>
+          </button>
+        </div>
+      </MemCard>
+
+      {/* Saved Groups */}
+      <div style={{ background: '#fff', border: `1px solid ${T.border}`, marginBottom: 16 }}>
+        <div onClick={() => setShowSaved((v) => !v)} style={{ padding: '12px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', cursor: 'pointer', borderBottom: showSaved ? `1px solid ${T.border}` : 'none' }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: T.textPrimary }}>已儲存的分眾群組（{savedGroups.length}）</span>
+          <span style={{ color: T.textSecondary, fontSize: 12, transform: showSaved ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</span>
+        </div>
+        {showSaved &&
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+            <thead><tr>{['群組名稱', '條件數', '建立日期', '操作'].map((h) => <th key={h} style={tableThStyle}>{h}</th>)}</tr></thead>
+            <tbody>
+              {savedGroups.map((g, i) =>
+            <tr key={g.id}
+            style={{ background: tableRowBg(i) }}
+            {...tableRowHandlers(i, false)}>
+                  <td style={tableTdStyle}>{g.name}</td>
+                  <td style={tableTdStyle}>{g.condCount} 個條件</td>
+                  <td style={tableTdStyle}>{g.created}</td>
+                  <td style={tableTdStyle}><button style={textLink} onClick={() => showToast(`已套用群組「${g.name}」的條件`, 'info')}>套用</button></td>
+                </tr>
+            )}
+            </tbody>
+          </table>
+        }
+      </div>
+
+      </div>{/* end isPro wrapper */}
+
+      {/* Save Group MemDialog */}
+      <MemDialog open={saveDialog} title="儲存為分眾群組" onClose={() => setSaveDialog(false)} width={400}
+      footer={<>
+          <button style={btnPlain} onClick={() => setSaveDialog(false)}>取消</button>
+          <button style={btnPrimary} onClick={handleSaveGroup}>儲存</button>
+        </>}>
+        <FormRow label="群組名稱" required helper="最多 30 字" error={groupNameError}>
+          <Input value={groupName} onChange={(v) => {setGroupName(v);setGroupNameError('');}} placeholder="請為此分眾群組命名" />
+        </FormRow>
+      </MemDialog>
+    </div>);
+
+}
+
+// ─── SCREEN 7: 黑名單管理 ───────────────────────────────────────────────────
+function BlacklistPage({ onNavigate, showToast }) {
+  const [list, setList] = React.useState(SAMPLE_BLACKLIST);
+  const [confirmDialog, setConfirmDialog] = React.useState(null);
+  const [currentPage, setCurrentPage] = React.useState(1);
+  const [pageSize, setPageSize] = React.useState(20);
+
+  const [isPro, setIsPro] = React.useState(window.__evomni_isPro || false);
+  React.useEffect(() => {
+    const handler = e => setIsPro(e.detail.isPro);
+    window.addEventListener('evomni:planchange', handler);
+    return () => window.removeEventListener('evomni:planchange', handler);
+  }, []);
+
+  // 新增黑名單 dialog 狀態
+  const [addDialog, setAddDialog] = React.useState(false);
+  const [searchQ, setSearchQ] = React.useState('');
+  const [selectedCustomer, setSelectedCustomer] = React.useState(null);
+  const [addReason, setAddReason] = React.useState('');
+  const [addConfirm, setAddConfirm] = React.useState(false);
+  const [addError, setAddError] = React.useState('');
+
+  const blacklistedIds = new Set(list.map((r) => r.id));
+  const searchResults = searchQ.trim().length >= 1
+    ? SAMPLE_CUSTOMERS.filter((c) => {
+        if (blacklistedIds.has(c.id)) return false;
+        const q = searchQ.toLowerCase();
+        return c.name.includes(q) || c.email.toLowerCase().includes(q) || c.phone.includes(q);
+      })
+    : [];
+
+  const resetAddDialog = () => {
+    setSearchQ('');
+    setSelectedCustomer(null);
+    setAddReason('');
+    setAddConfirm(false);
+    setAddError('');
+  };
+
+  const handleAddBlacklist = () => {
+    if (!selectedCustomer) { setAddError('請先搜尋並選擇要加入黑名單的顧客'); return; }
+    if (addReason.trim().length < 10) { setAddError('加入原因至少需填寫 10 個字，請詳細說明原因'); return; }
+    if (!addConfirm) { setAddError('請先勾選確認，再執行此操作'); return; }
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '/');
+    setList((ls) => [...ls, {
+      id: selectedCustomer.id,
+      name: selectedCustomer.name,
+      email: selectedCustomer.email,
+      phone: selectedCustomer.phone.replace(/(\d{4})-(\d{3})-(\d{3})/, '$1-***-$3'),
+      added: today,
+      reason: addReason.trim(),
+      operator: '系統管理員',
+    }]);
+    showToast(`已將 ${selectedCustomer.name} 加入黑名單`, 'warning');
+    setAddDialog(false);
+    resetAddDialog();
+  };
+
+  return (
+    <div data-screen-label="07 黑名單管理">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700, color: T.textPrimary }}>黑名單管理</h1>
+        <button
+          style={{ ...btnDanger, background: isPro ? T.danger : '#C0C4CC', color: '#fff', borderColor: isPro ? T.danger : '#C0C4CC', cursor: isPro ? 'pointer' : 'not-allowed' }}
+          onClick={() => { if (!isPro) return; resetAddDialog(); setAddDialog(true); }}
+          title={isPro ? undefined : '此功能為進階電商包專屬，請洽詢升級'}
+        >
+          + 新增黑名單{!isPro && <span style={{ marginLeft: 6, fontSize: 10, background: 'rgba(255,255,255,0.3)', padding: '1px 5px', borderRadius: 2 }}>進階</span>}
+        </button>
+      </div>
+
+      {!isPro && (
+        <UpgradeLockBanner
+          featureName="黑名單管理"
+          valueProp="封鎖特定顧客的下單權限，防範惡意退貨或疑似詐騙行為"
+          onLearnMore={() => showToast('請前往「全域設定 → 方案狀態」查看升級方案，或聯絡您的營運輔導顧問', 'info')}
+        />
+      )}
+
+      <div style={{ filter: !isPro ? 'blur(3px)' : 'none', pointerEvents: isPro ? 'auto' : 'none' }}>
+      <MemInfoBanner>黑名單會員無法在本商店完成結帳。加入後請留存操作原因，以利日後查核。</MemInfoBanner>
+
+      <div style={{ background: '#fff', borderRadius: 3, boxShadow: '0 2px 12px 0 rgba(0,0,0,0.08)' }}>
+        {list.length === 0 ?
+        <MemEmptyState headline="目前沒有任何黑名單會員" subtext="點擊右上角「新增黑名單」，搜尋會員後加入。"
+        cta="新增黑名單" onCta={() => { resetAddDialog(); setAddDialog(true); }} /> :
+
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+            <thead>
+              <tr>{['姓名', 'Email', '手機', '加入黑名單日期', '加入原因', '操作人', '操作'].map((h) => <th key={h} style={tableThStyle}>{h}</th>)}</tr>
+            </thead>
+            <tbody>
+              {list.slice((currentPage - 1) * pageSize, currentPage * pageSize).map((r, i) =>
+            <tr key={r.id}
+            style={{ background: tableRowBg(i) }}
+            {...tableRowHandlers(i, false)}>
+                  <td style={tableTdStyle}><button onClick={() => onNavigate('customer-detail', SAMPLE_CUSTOMERS.find((c) => c.id === r.id) || SAMPLE_CUSTOMERS[3])} style={textLink}>{r.name}</button></td>
+                  <td style={tableTdStyle}>{r.email}</td>
+                  <td style={tableTdStyle}>{r.phone}</td>
+                  <td style={tableTdStyle}>{r.added}</td>
+                  <td style={tableTdStyle}>
+                    <span title={r.reason} style={{ cursor: 'default' }}>
+                      {r.reason.length > 30 ? r.reason.slice(0, 30) + '…' : r.reason}
+                    </span>
+                  </td>
+                  <td style={tableTdStyle}>{r.operator}</td>
+                  <td style={tableTdStyle}>
+                    <button style={btnPrimary} onClick={() => setConfirmDialog(r)}>解除黑名單</button>
+                  </td>
+                </tr>
+            )}
+            </tbody>
+          </table>
+        }
+        <Pagination
+          total={list.length}
+          page={currentPage}
+          pageSize={pageSize}
+          pageSizes={[20, 50, 100]}
+          onChange={setCurrentPage}
+          onPageSizeChange={ps => { setPageSize(ps); setCurrentPage(1); }}
+          style={{ borderTop: `1px solid ${T.borderLight}`, padding: '10px 12px' }}
+        />
+      </div>
+
+      </div>{/* end opacity wrapper */}
+
+      {/* 新增黑名單 Dialog */}
+      <MemDialog open={addDialog} title="新增黑名單" onClose={() => { setAddDialog(false); resetAddDialog(); }} width={520}
+        footer={<>
+          <button style={btnPlain} onClick={() => { setAddDialog(false); resetAddDialog(); }}>取消</button>
+          <button style={{ ...btnDanger, background: T.danger, color: '#fff', borderColor: T.danger }} onClick={handleAddBlacklist}>確認加入黑名單</button>
+        </>}>
+
+        {/* Step 1: 搜尋顧客 */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontSize: 13, color: T.textRegular, marginBottom: 6 }}>
+            <span style={{ color: T.danger, marginRight: 2 }}>*</span>搜尋顧客（姓名、Email 或手機）
+          </label>
+          <input
+            value={searchQ}
+            onChange={(e) => { setSearchQ(e.target.value); setSelectedCustomer(null); setAddError(''); }}
+            placeholder="輸入關鍵字開始搜尋…"
+            style={{ width: '100%', height: 36, padding: '0 10px', border: `1px solid ${T.border}`, borderRadius: 0, fontSize: 14, boxSizing: 'border-box', outline: 'none' }}
+          />
+
+          {/* 搜尋結果列表 */}
+          {searchQ.trim().length >= 1 && (
+            <div style={{ border: `1px solid ${T.border}`, borderTop: 'none', maxHeight: 200, overflowY: 'auto' }}>
+              {searchResults.length === 0 ? (
+                <div style={{ padding: '12px 14px', fontSize: 13, color: T.gray }}>
+                  {blacklistedIds.size > 0 && SAMPLE_CUSTOMERS.some((c) => {
+                    const q = searchQ.toLowerCase();
+                    return (c.name.includes(q) || c.email.toLowerCase().includes(q) || c.phone.includes(q)) && blacklistedIds.has(c.id);
+                  }) ? '此顧客已在黑名單中' : '找不到符合的顧客'}
+                </div>
+              ) : searchResults.map((c) => (
+                <div key={c.id}
+                  onClick={() => { setSelectedCustomer(c); setSearchQ(c.name); setAddError(''); }}
+                  style={{
+                    padding: '10px 14px', cursor: 'pointer', fontSize: 14,
+                    background: selectedCustomer?.id === c.id ? '#ECF5FF' : '#fff',
+                    borderBottom: `1px solid ${T.borderLight}`,
+                    display: 'flex', flexDirection: 'column', gap: 2,
+                  }}
+                  onMouseEnter={(e) => { if (selectedCustomer?.id !== c.id) e.currentTarget.style.background = '#F5F7FA'; }}
+                  onMouseLeave={(e) => { if (selectedCustomer?.id !== c.id) e.currentTarget.style.background = '#fff'; }}>
+                  <span style={{ fontWeight: 600, color: T.textPrimary }}>{c.name}</span>
+                  <span style={{ fontSize: 12, color: T.gray }}>{c.email} · {c.phone}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* 已選顧客摘要 */}
+        {selectedCustomer && (
+          <div style={{ background: '#FFF8F0', border: `1px solid #E6A23C`, padding: '10px 14px', marginBottom: 16, fontSize: 13 }}>
+            <div style={{ fontWeight: 600, color: T.textPrimary, marginBottom: 4 }}>即將加入黑名單的顧客</div>
+            <div style={{ color: T.textRegular }}>姓名：{selectedCustomer.name}</div>
+            <div style={{ color: T.textRegular }}>Email：{selectedCustomer.email}</div>
+            <div style={{ color: T.textRegular }}>手機：{selectedCustomer.phone}</div>
+          </div>
+        )}
+
+        {/* Step 2: 加入原因 */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={{ display: 'block', fontSize: 13, color: T.textRegular, marginBottom: 6 }}>
+            <span style={{ color: T.danger, marginRight: 2 }}>*</span>加入原因（至少 10 個字）
+          </label>
+          <textarea
+            value={addReason}
+            onChange={(e) => { setAddReason(e.target.value); setAddError(''); }}
+            rows={4}
+            placeholder="請詳細說明將此顧客加入黑名單的原因，例：惡意退貨 X 次、疑似詐騙下單等。此記錄不對消費者顯示，僅供內部查核。"
+            style={{ width: '100%', padding: '8px 10px', border: `1px solid ${T.border}`, borderRadius: 0, fontSize: 14, resize: 'vertical', boxSizing: 'border-box', fontFamily: 'inherit', outline: 'none' }}
+          />
+        </div>
+
+        {/* Step 3: 確認核取方塊 */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, marginBottom: 8 }}>
+          <input type="checkbox" checked={addConfirm} onChange={(e) => { setAddConfirm(e.target.checked); setAddError(''); }}
+            style={{ marginTop: 2, accentColor: T.danger, flexShrink: 0 }} />
+          <span style={{ fontSize: 13, color: T.textRegular, lineHeight: 1.6 }}>
+            我確認此操作。加入黑名單後，該顧客將無法在本商店完成結帳。
+          </span>
+        </div>
+
+        {addError && <p style={{ margin: '8px 0 0', fontSize: 13, color: T.danger }}>{addError}</p>}
+      </MemDialog>
+
+      {/* Confirm Unblacklist */}
+      <MemDialog open={!!confirmDialog} title="解除黑名單確認" onClose={() => setConfirmDialog(null)} width={420}
+      footer={<>
+          <button style={btnPlain} onClick={() => setConfirmDialog(null)}>取消</button>
+          <button style={btnBlue} onClick={() => {
+          setList((ls) => ls.filter((r) => r.id !== confirmDialog.id));
+          showToast(`已解除 ${confirmDialog.name} 的黑名單，該會員現在可以正常下單`);
+          setConfirmDialog(null);
+        }}>確定解除</button>
+        </>}>
+        {confirmDialog &&
+        <p style={{ fontSize: 14, color: T.textRegular, lineHeight: 1.8 }}>
+            確定要解除 <strong>{confirmDialog.name}</strong> 的黑名單？解除後，該會員可以再次在本商店下單。如有疑慮，建議維持黑名單狀態。
+          </p>
+        }
+      </MemDialog>
+    </div>);
+
+}
+
+// ─── SCREEN 8: 會員設定 ─────────────────────────────────────────────────────
+function MemberSettingsPage({ showToast }) {
+  const [settings, setSettings] = React.useState({
+    memberEnabled: true,
+    autoMember: true,
+    referral: true,
+    birthdayDouble: false,
+    verifyMethod: 'email', // 'email' | 'manual'
+  });
+  const [confirmDialog, setConfirmDialog] = React.useState(null); // null | 'disableMember' | 'disableAuto'
+
+  const [isPro, setIsPro] = React.useState(window.__evomni_isPro || false);
+  React.useEffect(() => {
+    const handler = e => setIsPro(e.detail.isPro);
+    window.addEventListener('evomni:planchange', handler);
+    return () => window.removeEventListener('evomni:planchange', handler);
+  }, []);
+
+  // 前台會員可編輯欄位
+  const EDITABLE_FIELDS = [
+    { key:'name',      label:'姓名' },
+    { key:'phone',     label:'電話' },
+    { key:'birthday',  label:'生日' },
+    { key:'gender',    label:'性別' },
+    { key:'company',   label:'公司' },
+    { key:'address',   label:'收件地址' },
+    { key:'newsletter',label:'電子報訂閱偏好' },
+  ];
+  const [editableFields, setEditableFields] = React.useState({
+    name: true, phone: true, birthday: true, gender: false,
+    company: false, address: true, newsletter: true,
+  });
+
+  const handleToggle = (key, val) => {
+    if (key === 'memberEnabled' && !val) { setConfirmDialog('disableMember'); return; }
+    if (key === 'autoMember' && !val) { setConfirmDialog('disableAuto'); return; }
+    setSettings(s => ({ ...s, [key]: val }));
+  };
+
+  const Switch = ({ on, onChange, disabled }) => (
+    <div style={{ display:'flex', flexDirection:'column', alignItems:'center', gap:4 }}>
+      <div onClick={() => !disabled && onChange(!on)}
+        style={{ width:44, height:24, background: on && !disabled ? '#409EFF' : '#C0C4CC', borderRadius:12, position:'relative',
+          cursor: disabled ? 'not-allowed' : 'pointer', transition:'background 0.2s', opacity: disabled ? 0.45 : 1 }}>
+        <div style={{ width:18, height:18, background:'#fff', borderRadius:'50%', position:'absolute', top:3,
+          left: on && !disabled ? 23 : 3, transition:'left 0.2s', boxShadow:'0 1px 3px rgba(0,0,0,0.2)' }} />
+      </div>
+    </div>
+  );
+
+  const SectionTitle = ({ children }) => (
+    <div style={{ fontSize:15, fontWeight:700, color:T.textPrimary, marginBottom:12, paddingBottom:8, borderBottom:`1px solid ${T.border}` }}>{children}</div>
+  );
+
+  const FeatureRow = ({ title, desc, settingKey, locked, disabled }) => {
+    const val = settings[settingKey];
+    return (
+      <div style={{ background:disabled?T.bgPage:'#fff', border:`1px solid ${T.border}`, padding:'16px 20px', marginBottom:10,
+        display:'flex', alignItems:'flex-start', justifyContent:'space-between', gap:24,
+        opacity: disabled ? 0.6 : 1 }}>
+        <div style={{ flex:1 }}>
+          <div style={{ fontSize:14, fontWeight:600, color:T.textPrimary, marginBottom:4 }}>{title}</div>
+          <div style={{ fontSize:13, color:T.textRegular, lineHeight:1.7 }}>{desc}</div>
+          {locked && (
+            <div style={{ marginTop:8, display:'flex', alignItems:'center', gap:8, fontSize:13 }}>
+              <span style={{ background:'#EFF2F7', border:`1px solid #C6D5EB`, padding:'1px 8px', borderRadius:9999, fontSize:11, color:T.blue }}>進階方案</span>
+              <button style={textLink}>了解升級方案</button>
+            </div>
+          )}
+        </div>
+        <Switch on={val} onChange={v => !disabled && !locked && handleToggle(settingKey, v)} disabled={locked || disabled} />
+      </div>
+    );
+  };
+
+  const memberOff = !settings.memberEnabled;
+
+  return (
+    <div data-screen-label="08 會員設定">
+      <div style={{ display:'flex', alignItems:'center', marginBottom:20 }}>
+        <h1 style={{ fontSize:20, fontWeight:700, color:T.textPrimary }}>會員設定</h1>
+      </div>
+
+      <MemInfoBanner>管理會員模組的全局行為設定。所有設定修改後立即生效。</MemInfoBanner>
+
+      {/* ── 1. 會員功能開關 ── */}
+      <div style={{ marginBottom:24 }}>
+        <SectionTitle>會員功能</SectionTitle>
+        <FeatureRow
+          title="啟用會員功能"
+          desc="關閉後，電商前台將不顯示登入與註冊入口，所有訪客以訪客身分結帳。已建立的會員資料不受影響，重新開啟後可繼續使用。"
+          settingKey="memberEnabled" />
+        {memberOff && (
+          <div style={{ background:'#fdf6ec', border:`1px solid #f5dab1`, padding:'10px 16px', fontSize:13, color:T.warning, display:'flex', gap:8, marginTop:-6, marginBottom:10 }}>
+            <span>⚠</span><span>會員功能已關閉，前台登入與註冊入口已隱藏。</span>
+          </div>
+        )}
+      </div>
+
+      {/* ── 2. 會員驗證機制 ── */}
+      <div style={{ marginBottom:24, opacity: memberOff ? 0.45 : 1 }}>
+        <SectionTitle>會員驗證機制</SectionTitle>
+        <div style={{ background:'#fff', border:`1px solid ${T.border}`, padding:'16px 20px' }}>
+          <div style={{ fontSize:13, color:T.textRegular, marginBottom:14 }}>
+            選擇新會員完成申請後的驗證方式。
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+            {[
+              { value:'email', label:'電子郵件驗證', desc:'系統自動發送驗證信，會員點擊連結後帳號即啟用。推薦：快速且自動化。' },
+              { value:'manual', label:'人工審核', desc:'新會員申請後進入待審核狀態，管理員於後台手動核准後帳號才啟用。適合封閉式會員制。' },
+            ].map(opt => (
+              <label key={opt.value} style={{ display:'flex', alignItems:'flex-start', gap:10, cursor: memberOff ? 'not-allowed' : 'pointer',
+                padding:'12px 16px', border:`1px solid ${settings.verifyMethod===opt.value ? T.blue : T.border}`,
+                background: settings.verifyMethod===opt.value ? '#ECF5FF' : '#fff' }}>
+                <input type="radio" value={opt.value} checked={settings.verifyMethod===opt.value}
+                  onChange={() => !memberOff && setSettings(s=>({...s, verifyMethod:opt.value}))}
+                  disabled={memberOff}
+                  style={{ marginTop:2, accentColor:T.blue, flexShrink:0 }} />
+                <div>
+                  <div style={{ fontSize:14, fontWeight:600, color:T.textPrimary, marginBottom:2 }}>{opt.label}</div>
+                  <div style={{ fontSize:13, color:T.textRegular }}>{opt.desc}</div>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 3. 帳號建立 ── */}
+      <div style={{ marginBottom:24, opacity: memberOff ? 0.45 : 1 }}>
+        <SectionTitle>帳號建立設定</SectionTitle>
+        <FeatureRow
+          title="自動成為會員"
+          desc="消費者完成首次購買後，系統自動以購買 Email 建立會員帳號，並寄送帳號開通通知。關閉後，訪客需自行至前台手動註冊。"
+          settingKey="autoMember" disabled={memberOff} />
+      </div>
+
+      {/* ── 4. 前台可編輯欄位 ── */}
+      <div style={{ marginBottom:24, opacity: memberOff ? 0.45 : 1 }}>
+        <SectionTitle>前台會員可編輯資訊</SectionTitle>
+        <div style={{ background:'#fff', border:`1px solid ${T.border}`, padding:'16px 20px' }}>
+          <div style={{ fontSize:13, color:T.textRegular, marginBottom:14 }}>
+            選擇會員在前台個人中心可自行編輯的資料欄位。
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:'10px 24px' }}>
+            {EDITABLE_FIELDS.map(f => (
+              <label key={f.key} style={{ display:'flex', alignItems:'center', gap:8, cursor: memberOff ? 'not-allowed' : 'pointer', fontSize:14 }}>
+                <input type="checkbox" checked={!!editableFields[f.key]}
+                  onChange={() => !memberOff && setEditableFields(fs=>({...fs,[f.key]:!fs[f.key]}))}
+                  disabled={memberOff}
+                  style={{ accentColor:T.primary, width:15, height:15 }} />
+                <span style={{ color:T.textPrimary }}>{f.label}</span>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 5. 推薦 ── */}
+      <div style={{ marginBottom:24, opacity: memberOff ? 0.45 : 1 }}>
+        <SectionTitle>推薦功能設定</SectionTitle>
+        <FeatureRow
+          title="推薦計畫"
+          desc="開啟後，會員個人中心顯示「推薦連結」；被推薦人首購完成後，雙方自動獲得點數獎勵。推薦人與被推薦人獎勵點數請至「點數設定」調整。"
+          settingKey="referral" disabled={memberOff} />
+      </div>
+
+      {/* ── 6. 進階 ── */}
+      <div style={{ marginBottom:24, opacity: memberOff ? 0.45 : 1 }}>
+        <SectionTitle>進階設定</SectionTitle>
+        {!isPro && (
+          <UpgradeLockBanner
+            featureName="生日雙倍點數"
+            valueProp="會員生日月份訂單點數自動 × 2，有效提升生日月份回購率與顧客忠誠度"
+            onLearnMore={() => showToast('請前往「全域設定 → 方案狀態」查看升級方案，或聯絡您的營運輔導顧問', 'info')}
+          />
+        )}
+        <div style={{ filter: !isPro ? 'blur(3px)' : 'none', pointerEvents: isPro ? 'auto' : 'none' }}>
+          <FeatureRow
+            title="生日雙倍點數"
+            desc="開啟後，會員在其生日所在月份完成的訂單，回饋點數自動 × 2。生日賀卡 Email 亦於生日月份第 1 天自動發送。"
+            settingKey="birthdayDouble" locked={!isPro} disabled={memberOff} />
+        </div>
+      </div>
+
+      {/* Confirm: 關閉會員功能 */}
+      <MemDialog open={confirmDialog==='disableMember'} title="確認關閉會員功能？" onClose={() => setConfirmDialog(null)} width={440}
+        footer={<>
+          <button style={btnPlain} onClick={() => setConfirmDialog(null)}>取消</button>
+          <button style={{ ...btnPrimary, background:T.danger, borderColor:T.danger }} onClick={() => { setSettings(s=>({...s,memberEnabled:false})); setConfirmDialog(null); }}>確認關閉</button>
+        </>}>
+        <p style={{ fontSize:14, color:T.textRegular, lineHeight:1.8 }}>
+          關閉後，電商前台將<strong>立即隱藏登入與註冊入口</strong>，訪客只能以訪客身分結帳。<br />已建立的會員資料不受影響，重新開啟後可繼續使用。
+        </p>
+      </MemDialog>
+
+      {/* Confirm: 關閉自動成為會員 */}
+      <MemDialog open={confirmDialog==='disableAuto'} title="確認關閉自動成為會員？" onClose={() => setConfirmDialog(null)} width={420}
+        footer={<>
+          <button style={btnPlain} onClick={() => setConfirmDialog(null)}>取消</button>
+          <button style={{ ...btnPrimary, background:T.danger, borderColor:T.danger }} onClick={() => { setSettings(s=>({...s,autoMember:false})); setConfirmDialog(null); }}>確認關閉</button>
+        </>}>
+        <p style={{ fontSize:14, color:T.textRegular, lineHeight:1.8 }}>
+          關閉後，訪客首購將不再自動建立會員帳號。已建立的會員帳號不受影響。
+        </p>
+      </MemDialog>
+
+      {/* 儲存按鈕 */}
+      <div style={{ display:'flex', justifyContent:'flex-end', paddingBottom:24 }}>
+        <button style={btnBlue} onClick={() => showToast('會員設定已更新，設定立即生效')}>儲存設定</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── SCREEN 9: 通知信管理 ────────────────────────────────────────────────────
+function NotificationsPage({ showToast }) {
+  const NOTIFICATIONS = [
+  { id: 'welcome', name: '歡迎信', desc: '消費者完成 Email 驗證或第三方帳號首次登入後自動發送', plan: 'both', defaultOn: true },
+  { id: 'account_open', name: '帳號開通通知', desc: '首購後系統自動建帳號時發送；需搭配「設定 › 自動成為會員」開啟', plan: 'both', defaultOn: true },
+  { id: 'level_up', name: '升等恭喜通知', desc: '消費者達升等門檻後自動發送，信中含新等級名稱與專屬權益', plan: 'advanced', defaultOn: true },
+  { id: 'level_warn', name: '保級預警通知', desc: '等級距到期日 30 天內且未達保級條件時發送', plan: 'advanced', defaultOn: true },
+  { id: 'level_down', name: '降等通知', desc: '等級到期後未達保級條件，系統自動降等後發送', plan: 'advanced', defaultOn: true },
+  { id: 'points_expire', name: '點數到期提醒', desc: '點數即將到期前發送；提前天數由「點數設定」控制', plan: 'both', defaultOn: true },
+  { id: 'birthday', name: '生日賀卡', desc: '會員生日月份第 1 天發送；需搭配「設定 › 生日雙倍點數」開啟', plan: 'advanced', defaultOn: false },
+  { id: 'referral_ref', name: '推薦獎勵通知（推薦人）', desc: '被推薦人完成首購後，通知推薦人點數已到帳', plan: 'both', defaultOn: true },
+  { id: 'referral_new', name: '推薦獎勵通知（被推薦人）', desc: '首購完成後，通知被推薦人點數已到帳', plan: 'both', defaultOn: true }];
+
+
+  const VARS_BY_TYPE = {
+    default: ['{{member_name}}', '{{shop_name}}'],
+    level_up: ['{{member_name}}', '{{shop_name}}', '{{level_name}}', '{{level_benefits}}'],
+    level_warn: ['{{member_name}}', '{{shop_name}}', '{{level_name}}', '{{days_left}}', '{{required_amount}}'],
+    level_down: ['{{member_name}}', '{{shop_name}}', '{{old_level}}', '{{new_level}}'],
+    points_expire: ['{{member_name}}', '{{shop_name}}', '{{points_amount}}', '{{points_expire_date}}'],
+    birthday: ['{{member_name}}', '{{shop_name}}', '{{birthday_month}}', '{{reward_points}}'],
+    referral_ref: ['{{member_name}}', '{{shop_name}}', '{{reward_points}}', '{{referee_name}}'],
+    referral_new: ['{{member_name}}', '{{shop_name}}', '{{reward_points}}', '{{referrer_name}}']
+  };
+
+  const [switches, setSwitches] = React.useState(
+    Object.fromEntries(NOTIFICATIONS.map((n) => [n.id, n.defaultOn]))
+  );
+  const [drawerOpen, setDrawerOpen] = React.useState(null); // null | notif
+  const [drawerSubject, setDrawerSubject] = React.useState('');
+  const [drawerBody, setDrawerBody] = React.useState('');
+  const [drawerDirty, setDrawerDirty] = React.useState(false);
+  const [closeConfirm, setCloseConfirm] = React.useState(false);
+  const [restoreConfirm, setRestoreConfirm] = React.useState(false);
+
+  const DEFAULT_TEMPLATES = {
+    welcome: { subject: '歡迎加入 {{shop_name}}！', body: '親愛的 {{member_name}}，\n\n感謝您加入 {{shop_name}}！您的帳號已成功建立，即日起可享受會員專屬優惠與服務。\n\n期待與您再次相見！\n\n{{shop_name}} 團隊敬上' },
+    account_open: { subject: '您的 {{shop_name}} 會員帳號已開通', body: '親愛的 {{member_name}}，\n\n感謝您在 {{shop_name}} 完成首次購買！我們已自動為您建立會員帳號。\n\n請至前台使用您的 Email 與初始密碼登入，並盡快修改密碼。\n\n{{shop_name}} 團隊敬上' },
+    level_up: { subject: '恭喜！您已升等為 {{level_name}}', body: '親愛的 {{member_name}}，\n\n恭喜您升等為 {{level_name}}！\n\n您現在可以享受以下專屬權益：\n{{level_benefits}}\n\n感謝您一直以來的支持！\n\n{{shop_name}} 團隊敬上' },
+    level_warn: { subject: '您的 {{level_name}} 等級即將到期', body: '親愛的 {{member_name}}，\n\n您的 {{level_name}} 等級將於 {{days_left}} 天後到期。\n\n請在期限內累計消費達 {{required_amount}}，即可維持您的等級。\n\n加油！{{shop_name}} 團隊敬上' },
+    level_down: { subject: '您的會員等級已調整', body: '親愛的 {{member_name}}，\n\n由於未達到保級條件，您的等級已從 {{old_level}} 調整為 {{new_level}}。\n\n請繼續消費，期待您再次升等！\n\n{{shop_name}} 團隊敬上' },
+    points_expire: { subject: '您有 {{points_amount}} 點即將到期', body: '親愛的 {{member_name}}，\n\n提醒您，您有 {{points_amount}} 點將於 {{points_expire_date}} 到期。\n\n請把握時間使用！\n\n{{shop_name}} 團隊敬上' },
+    birthday: { subject: '{{member_name}} 生日快樂！本月消費享雙倍點數回饋', body: '親愛的 {{member_name}}，\n\n生日快樂！感謝您一直支持 {{shop_name}}。\n\n本月消費享雙倍點數回饋，獻上我們誠摯的祝福！\n\n{{shop_name}} 團隊敬上' },
+    referral_ref: { subject: '您的推薦獎勵 {{reward_points}} 點已到帳', body: '親愛的 {{member_name}}，\n\n您推薦的 {{referee_name}} 已完成首購，推薦獎勵 {{reward_points}} 點已存入您的帳戶。\n\n感謝您的推薦！\n\n{{shop_name}} 團隊敬上' },
+    referral_new: { subject: '歡迎！您的推薦獎勵 {{reward_points}} 點已到帳', body: '親愛的 {{member_name}}，\n\n感謝 {{referrer_name}} 的推薦，您的首購獎勵 {{reward_points}} 點已存入帳戶。\n\n歡迎加入 {{shop_name}}！\n\n{{shop_name}} 團隊敬上' }
+  };
+
+  const openDrawer = (notif) => {
+    const tpl = DEFAULT_TEMPLATES[notif.id] || { subject: '', body: '' };
+    setDrawerSubject(tpl.subject);
+    setDrawerBody(tpl.body);
+    setDrawerDirty(false);
+    setDrawerOpen(notif);
+  };
+
+  const tryCloseDrawer = () => {
+    if (drawerDirty) {setCloseConfirm(true);} else {setDrawerOpen(null);}
+  };
+
+  const PlanTag = ({ plan }) => plan === 'advanced' ?
+  <span style={{ display: 'inline-flex', alignItems: 'center', height: 20, padding: '0 8px', borderRadius: 9999, fontSize: 11, background: '#fdf6ec', border: `1px solid #f5dab1`, color: T.warning }}>進階方案</span> :
+  <span style={{ display: 'inline-flex', alignItems: 'center', height: 20, padding: '0 8px', borderRadius: 9999, fontSize: 11, background: '#ecf5ff', border: `1px solid #b3d8ff`, color: T.blue }}>兩方案</span>;
+
+  const vars = drawerOpen ? VARS_BY_TYPE[drawerOpen.id] || VARS_BY_TYPE.default : [];
+
+  return (
+    <div data-screen-label="09 通知信管理">
+      <div style={{ marginBottom: 20 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700, color: T.textPrimary }}>通知信管理</h1>
+      </div>
+
+      <MemInfoBanner>管理會員相關的自動發信。關閉通知後，對應事件觸發時系統將不發送 Email，直到您重新開啟。</MemInfoBanner>
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {NOTIFICATIONS.map((n) => {
+          const isAdvanced = n.plan === 'advanced';
+          const on = switches[n.id];
+          return (
+            <div key={n.id} style={{ background: '#fff', border: `1px solid ${T.border}`, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 16 }}>
+              {/* Left: name + desc */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                  <span style={{ fontSize: 14, fontWeight: 600, color: T.textPrimary }}>{n.name}</span>
+                  <PlanTag plan={n.plan} />
+                </div>
+                <div style={{ fontSize: 13, color: T.textRegular }}>{n.desc}</div>
+              </div>
+              {/* Right: switch + edit */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexShrink: 0 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                  <div
+                    onClick={() => {
+                      const next = !on;
+                      setSwitches((s) => ({ ...s, [n.id]: next }));
+                      showToast(`${n.name} 已${next ? '開啟，系統將於條件觸發時自動發送' : '關閉，條件觸發時將不發送 Email'}`, next ? 'success' : 'info');
+                    }}
+                    style={{ width: 44, height: 24, background: on ? '#409EFF' : '#C0C4CC', borderRadius: 12, position: 'relative', cursor: 'pointer', transition: 'background 0.2s' }}>
+                    <div style={{ width: 18, height: 18, background: '#fff', borderRadius: '50%', position: 'absolute', top: 3, left: on ? 23 : 3, transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                  </div>
+                </div>
+                <button style={btnGhost} onClick={() => openDrawer(n)}>編輯模板</button>
+              </div>
+            </div>);
+
+        })}
+      </div>
+
+      {/* Template Edit MemDrawer */}
+      <MemDrawer open={!!drawerOpen} title={drawerOpen ? `${drawerOpen.name} — 模板編輯` : ''} onClose={tryCloseDrawer} width={600}>
+        {drawerOpen &&
+        <div>
+            {/* Var chips */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 12, color: T.textSecondary, marginBottom: 6 }}>可用變數（點擊插入）</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {vars.map((v) =>
+              <button key={v} onClick={() => {setDrawerSubject((s) => s + v);setDrawerDirty(true);}}
+              style={{ height: 24, padding: '0 10px', borderRadius: 9999, fontSize: 12, background: '#ecf5ff', border: `1px solid #b3d8ff`, color: T.blue, cursor: 'pointer' }}>{v}</button>
+              )}
+              </div>
+            </div>
+
+            <FormRow label="郵件主旨" required helper={`可使用變數：${vars.slice(0, 2).join('、')}`}>
+              <Input value={drawerSubject} onChange={(v) => {setDrawerSubject(v);setDrawerDirty(true);}} placeholder="請輸入郵件主旨，最多 100 字" />
+            </FormRow>
+
+            <FormRow label="郵件內文" required helper="最多 3,000 字。點擊上方變數按鈕快速插入。">
+              <Textarea value={drawerBody} onChange={(v) => {setDrawerBody(v);setDrawerDirty(true);}} rows={12} placeholder="請輸入郵件內文..." />
+            </FormRow>
+
+            {/* Preview */}
+            <div style={{ background: T.bgPage, border: `1px solid ${T.border}`, padding: 16, marginBottom: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: T.textPrimary, marginBottom: 8 }}>預覽</div>
+              <div style={{ fontSize: 12, color: T.textSecondary, marginBottom: 4 }}>主旨：{drawerSubject.replace('{{member_name}}', '王小明').replace('{{shop_name}}', 'Evomni 商店').replace('{{level_name}}', '金卡 VIP').replace('{{points_amount}}', '1,500').replace('{{reward_points}}', '200') || '（未設定）'}</div>
+              <div style={{ fontSize: 13, color: T.textRegular, lineHeight: 1.7, whiteSpace: 'pre-wrap', maxHeight: 200, overflowY: 'auto' }}>
+                {drawerBody.replace(/{{member_name}}/g, '王小明').replace(/{{shop_name}}/g, 'Evomni 商店').replace(/{{level_name}}/g, '金卡 VIP').replace(/{{points_amount}}/g, '1,500').replace(/{{reward_points}}/g, '200').replace(/{{points_expire_date}}/g, '2026-06-30') || '（未設定）'}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'space-between' }}>
+              <button style={{ ...btnPlain, color: T.danger, borderColor: T.danger }} onClick={() => setRestoreConfirm(true)}>還原為預設模板</button>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button style={btnPlain} onClick={tryCloseDrawer}>取消</button>
+                <button style={btnPrimary} onClick={() => {
+                setDrawerOpen(null);setDrawerDirty(false);
+                showToast(`${drawerOpen.name} 模板已更新`);
+              }}>儲存模板</button>
+              </div>
+            </div>
+          </div>
+        }
+      </MemDrawer>
+
+      {/* Close Confirm */}
+      <MemDialog open={closeConfirm} title="放棄未儲存的變更？" onClose={() => setCloseConfirm(false)} width={380}
+      footer={<>
+          <button style={btnPlain} onClick={() => setCloseConfirm(false)}>繼續編輯</button>
+          <button style={{ ...btnPrimary, background: T.danger, borderColor: T.danger }} onClick={() => {setCloseConfirm(false);setDrawerOpen(null);setDrawerDirty(false);}}>放棄變更</button>
+        </>}>
+        <p style={{ fontSize: 14, color: T.textRegular, lineHeight: 1.7 }}>有尚未儲存的變更，確定要放棄？</p>
+      </MemDialog>
+
+      {/* Restore Confirm */}
+      <MemDialog open={restoreConfirm} title="還原為預設模板" onClose={() => setRestoreConfirm(false)} width={380}
+      footer={<>
+          <button style={btnPlain} onClick={() => setRestoreConfirm(false)}>取消</button>
+          <button style={{ ...btnPrimary, background: T.danger, borderColor: T.danger }} onClick={() => {
+          if (drawerOpen) {
+            const tpl = DEFAULT_TEMPLATES[drawerOpen.id] || { subject: '', body: '' };
+            setDrawerSubject(tpl.subject);setDrawerBody(tpl.body);setDrawerDirty(true);
+          }
+          setRestoreConfirm(false);
+          showToast('已還原為預設模板', 'info');
+        }}>還原預設</button>
+        </>}>
+        <p style={{ fontSize: 14, color: T.textRegular, lineHeight: 1.7 }}>確定要還原為預設模板嗎？目前的自訂內容將會遺失，且無法復原。</p>
+      </MemDialog>
+    </div>);
+
+}
+
+// ─── CUSTOMER SETTINGS HUB ──────────────────────────────────────────────────
+// 左側 tab 導覽 + 右側內容，整合所有顧客/會員相關設定
+function CustomerSettingsHub({ showToast, initialTab }) {
+  const TABS = [
+    { id:'member-settings', label:'會員設定' },
+    { id:'customer-cols',   label:'顧客管理設定' },
+    { id:'member-points',   label:'點數設定' },
+    { id:'member-level',    label:'等級設定' },
+    { id:'member-tags',     label:'標籤管理' },
+    { id:'notifications',   label:'通知信管理' },
+  ];
+  const [activeTab, setActiveTab] = React.useState(initialTab || 'member-settings');
+
+  const renderContent = () => {
+    switch(activeTab) {
+      case 'customer-cols':   return <CustomerSettingsPage showToast={showToast} />;
+      case 'member-points':   return <PointsSettingPage showToast={showToast} />;
+      case 'member-level':    return <MemberLevelPage showToast={showToast} />;
+      case 'member-tags':     return <TagsPage showToast={showToast} />;
+      case 'member-settings': return <MemberSettingsPage showToast={showToast} />;
+      case 'notifications':   return <NotificationsPage showToast={showToast} />;
+      default: return null;
+    }
+  };
+
+  return (
+    <div data-screen-label="設定" style={{ display:'flex', gap:0, minHeight:'calc(100vh - 96px)' }}>
+      {/* Left tab nav */}
+      <div style={{ width:160, flexShrink:0, background:'#fff', border:`1px solid ${T.border}`, borderRight:'none', paddingTop:8 }}>
+        {TABS.map(t => (
+          <div key={t.id} onClick={() => setActiveTab(t.id)}
+            style={{
+              padding:'10px 20px', fontSize:14, cursor:'pointer', userSelect:'none',
+              color: activeTab === t.id ? T.blue : T.textRegular,
+              background: activeTab === t.id ? '#ECF5FF' : 'transparent',
+              borderRight: activeTab === t.id ? `2px solid ${T.blue}` : '2px solid transparent',
+              fontWeight: activeTab === t.id ? 600 : 400,
+            }}
+            onMouseEnter={e => { if(activeTab!==t.id) e.currentTarget.style.background=T.bgPage; }}
+            onMouseLeave={e => { if(activeTab!==t.id) e.currentTarget.style.background='transparent'; }}>
+            {t.label}
+          </div>
+        ))}
+      </div>
+      {/* Right content */}
+      <div style={{ flex:1, background:'#fff', border:`1px solid ${T.border}`, padding:24, minWidth:0 }}>
+        {renderContent()}
+      </div>
+    </div>
+  );
+}
+
+// ─── SCREEN 3 (顧客): 顧客管理設定 ─────────────────────────────────────────
+function CustomerSettingsPage({ showToast }) {
+  const ALL_FIELDS = [
+    { key:'email',       label:'Email',        required:true,  defaultOn:true,  hint:'' },
+    { key:'name',        label:'聯絡人姓名',   required:false, defaultOn:true,  hint:'' },
+    { key:'phone',       label:'電話',         required:false, defaultOn:true,  hint:'' },
+    { key:'type',        label:'身分',         required:false, defaultOn:true,  hint:'' },
+    { key:'joined',      label:'加入日期',     required:false, defaultOn:true,  hint:'' },
+    { key:'lastLogin',   label:'最後登入日期', required:false, defaultOn:true,  hint:'' },
+    { key:'company',     label:'公司',         required:false, defaultOn:false, hint:'' },
+    { key:'totalSpend',  label:'累計消費金額', required:false, defaultOn:false, hint:'（僅會員有資料）' },
+    { key:'buyCount',    label:'購買次數',     required:false, defaultOn:false, hint:'（僅會員有資料）' },
+    { key:'tags',        label:'標籤',         required:false, defaultOn:true,  hint:'' },
+    { key:'action',      label:'操作',         required:true,  defaultOn:true,  hint:'' },
+  ];
+
+  const SORT_FIELDS = [
+    { value:'joined',     label:'加入日期' },
+    { value:'lastLogin',  label:'最後登入日期' },
+    { value:'totalSpend', label:'累計消費金額' },
+    { value:'name',       label:'聯絡人姓名' },
+  ];
+
+  const getSortDirs = (field) => {
+    if (field === 'name') return [{ value:'asc', label:'A → Z' }, { value:'desc', label:'Z → A' }];
+    if (field === 'totalSpend') return [{ value:'desc', label:'由高至低' }, { value:'asc', label:'由低至高' }];
+    return [{ value:'desc', label:'由新至舊' }, { value:'asc', label:'由舊至新' }];
+  };
+
+  const [checked, setChecked] = React.useState(
+    Object.fromEntries(ALL_FIELDS.map(f => [f.key, f.defaultOn]))
+  );
+  const [sortField, setSortField] = React.useState('joined');
+  const [sortDir, setSortDir] = React.useState('desc');
+
+  const checkedCount = Object.values(checked).filter(Boolean).length;
+  const MAX = 8;
+
+  const toggle = (key, required) => {
+    if (required) return;
+    if (!checked[key] && checkedCount >= MAX) {
+      showToast('最多只能選擇 8 個欄位，請先取消勾選其他欄位', 'warning');
+      return;
+    }
+    setChecked(c => ({ ...c, [key]: !c[key] }));
+  };
+
+  return (
+    <div data-screen-label="10 顧客管理設定">
+      <h1 style={{ fontSize:20, fontWeight:700, color:T.textPrimary, marginBottom:20 }}>顧客管理設定</h1>
+
+      {/* 列表欄位設定 */}
+      <MemCard title={
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', width:'100%' }}>
+          <span>列表欄位設定</span>
+          <span style={{ fontSize:13, fontWeight:400, color: checkedCount >= MAX ? T.warning : T.blue }}>已選 {checkedCount} / {MAX} 個欄位</span>
+        </div>
+      }>
+        <div style={{ fontSize:13, color:T.textRegular, marginBottom:16 }}>
+          選擇顧客管理列表中要顯示的欄位，最多可同時顯示 {MAX} 個欄位。
+        </div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:'10px 32px' }}>
+          {ALL_FIELDS.map(f => {
+            const isDisabled = f.required || (!checked[f.key] && checkedCount >= MAX);
+            return (
+              <label key={f.key} style={{ display:'flex', alignItems:'center', gap:10, cursor: f.required ? 'not-allowed' : 'pointer', opacity: isDisabled && !f.required ? 0.4 : 1 }}>
+                <input type="checkbox" checked={!!checked[f.key]} onChange={() => toggle(f.key, f.required)} disabled={f.required}
+                  style={{ accentColor: T.primary, width:16, height:16, cursor: f.required ? 'not-allowed' : 'pointer' }} />
+                <span style={{ fontSize:14, color:T.textPrimary }}>{f.label}</span>
+                {f.required && <span style={{ fontSize:11, color:T.textSecondary, background:T.bgPage, border:`1px solid ${T.border}`, padding:'0 6px', borderRadius:9999 }}>必選</span>}
+                {f.hint && <span style={{ fontSize:12, color:T.textSecondary }}>{f.hint}</span>}
+              </label>
+            );
+          })}
+        </div>
+      </MemCard>
+
+      {/* 預設排序 */}
+      <MemCard title="預設排序">
+        <div style={{ display:'flex', gap:16, alignItems:'center' }}>
+          <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+            <label style={{ fontSize:13, color:T.textRegular }}>排序依據</label>
+            <select value={sortField} onChange={e => { setSortField(e.target.value); setSortDir(getSortDirs(e.target.value)[0].value); }}
+              style={{ height:40, padding:'0 12px', border:`1px solid ${T.border}`, borderRadius:0, fontSize:14, color:T.textPrimary, background:'#fff', width:160 }}>
+              {SORT_FIELDS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+          <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+            <label style={{ fontSize:13, color:T.textRegular }}>排序方向</label>
+            <select value={sortDir} onChange={e => setSortDir(e.target.value)}
+              style={{ height:40, padding:'0 12px', border:`1px solid ${T.border}`, borderRadius:0, fontSize:14, color:T.textPrimary, background:'#fff', width:140 }}>
+              {getSortDirs(sortField).map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            </select>
+          </div>
+        </div>
+      </MemCard>
+
+      <div style={{ display:'flex', justifyContent:'flex-end', paddingBottom:24 }}>
+        <button style={btnBlue} onClick={() => showToast('設定已儲存，顧客管理列表將依新設定顯示')}>儲存設定</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── ROOT APP ───────────────────────────────────────────────────────────────
+const PAGE_META = {
+  'customer-list':         { breadcrumbs: [{ label: '顧客', page: 'customer-management' }, '顧客管理'] },
+  'customer-management':   { breadcrumbs: [{ label: '顧客', page: 'customer-management' }, '顧客管理'] },
+  'customer-settings-hub': { breadcrumbs: [{ label: '顧客', page: 'customer-management' }, '設定'] },
+  'customer-detail':       { breadcrumbs: [{ label: '顧客', page: 'customer-management' }, { label: '顧客管理', page: 'customer-list' }, '顧客詳情'] },
+  'member-segment':        { breadcrumbs: [{ label: '顧客', page: 'customer-management' }, '分眾篩選'] },
+  'member-blacklist':      { breadcrumbs: [{ label: '顧客', page: 'customer-management' }, '黑名單'] },
+  'member-tier':           { breadcrumbs: [{ label: '顧客', page: 'customer-management' }, '設定'] },
+  'member-points':         { breadcrumbs: [{ label: '顧客', page: 'customer-management' }, '設定'] },
+  'member-tags':           { breadcrumbs: [{ label: '顧客', page: 'customer-management' }, '設定'] },
+  'member-settings':       { breadcrumbs: [{ label: '顧客', page: 'customer-management' }, '設定'] },
+  'member-notifications':  { breadcrumbs: [{ label: '顧客', page: 'customer-management' }, '設定'] },
+};
+
+// Pages that live in 產品中心.html
+const PRODUCT_PAGES = new Set([
+  'dashboard','product-list','category-management','inventory-management',
+  'order-list','order-returns','order-invoice',
+  'marketing-promotions','marketing-coupons','marketing-threshold',
+  'marketing-flash','marketing-bundle','marketing-journey','marketing-landing',
+  'analytics-sales','analytics-products','analytics-members','analytics-marketing',
+  'gs-system','gs-permissions','gs-accounts','gs-version','gs-ai-plan',
+  'gs-plan-status','gs-ecommerce-store','gs-payment-logistics','gs-advanced',
+]);
+
+function PageMembers({ currentPage, onNavigate, show }) {
+  const showToast = show || (() => {});
+  const [page, setPage] = React.useState(currentPage || 'customer-list');
+  const [pageData, setPageData] = React.useState(null);
+
+  const MEMBER_PAGE_IDS = new Set([
+    'customer-management','customer-list','customer-detail','customer-settings-hub',
+    'member-tier','member-points','member-tags','member-blacklist',
+    'member-settings','member-notifications','member-segment',
+  ]);
+
+  // Sync internal page state when Sidebar navigates to a different member sub-page
+  React.useEffect(() => {
+    if (currentPage !== 'customer-detail' && MEMBER_PAGE_IDS.has(currentPage)) {
+      setPage(currentPage);
+      setPageData(null);
+    }
+  }, [currentPage]);
+
+  const navigate = (target, data = null) => {
+    if (!MEMBER_PAGE_IDS.has(target)) {
+      onNavigate(target);
+      return;
+    }
+    setPage(target);
+    setPageData(data);
+  };
+
+  const renderPage = () => {
+    switch (page) {
+      case 'customer-list':
+      case 'customer-management':   return <CustomerListPage onNavigate={navigate} showToast={showToast} />;
+      case 'customer-settings-hub': return <CustomerSettingsHub showToast={showToast} />;
+      case 'customer-detail':       return <CustomerDetailPage customer={pageData || SAMPLE_CUSTOMERS[0]} onBack={() => navigate('customer-list')} onNavigate={navigate} showToast={showToast} />;
+      case 'member-segment':        return <SegmentPage showToast={showToast} />;
+      case 'member-tags':           return <CustomerSettingsHub showToast={showToast} initialTab="member-tags" />;
+      case 'member-blacklist':      return <BlacklistPage onNavigate={navigate} showToast={showToast} />;
+      case 'member-tier':           return <CustomerSettingsHub showToast={showToast} initialTab="member-level" />;
+      case 'member-points':         return <CustomerSettingsHub showToast={showToast} initialTab="member-points" />;
+      case 'member-settings':       return <CustomerSettingsHub showToast={showToast} initialTab="member-settings" />;
+      case 'member-notifications':  return <CustomerSettingsHub showToast={showToast} initialTab="notifications" />;
+      default:                      return <CustomerListPage onNavigate={navigate} showToast={showToast} />;
+    }
+  };
+
+  return renderPage();
+}

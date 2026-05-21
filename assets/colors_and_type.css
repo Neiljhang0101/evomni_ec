@@ -1,0 +1,260 @@
+/* ============================================================
+   Evomni Design System — Colors & Typography
+   Based on Element Plus + Tailwind CSS admin backend
+   Last updated: 2026-05-19
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap');
+
+/* ------------------------------------------------------------
+   COLOR TOKENS
+   ------------------------------------------------------------ */
+:root {
+  /* Brand / Primary */
+  --color-primary:      #303133;   /* Dark gray — main buttons, primary text */
+  --color-secondary:    #409EFF;   /* Blue — links, focus, secondary actions */
+
+  /* Brand Mark Gradient (logo only) */
+  --brand-grad-start:   #5B21B6;   /* Deep purple */
+  --brand-grad-mid:     #A855F7;   /* Violet */
+  --brand-grad-end:     #EC4899;   /* Magenta/pink */
+
+  /* Semantic / Status */
+  --color-success:      #67C23A;   /* Green — success, active, available */
+  --color-warning:      #E6A23C;   /* Amber — warning, draft */
+  --color-danger:       #F56C6C;   /* Red — error, delete */
+  --color-info:         #909399;   /* Gray — neutral/info tags */
+
+  /* Text */
+  --text-primary:       #303133;   /* Main body text */
+  --text-regular:       #606266;   /* Secondary / label text */
+  --text-secondary:     #909399;   /* Hint / placeholder text */
+  --text-disabled:      #C0C4CC;   /* Disabled text */
+  --text-inverse:       #FFFFFF;   /* White — on dark backgrounds */
+  --text-link:          #409EFF;   /* Hyperlinks, edit actions */
+  --text-danger:        #F56C6C;   /* Delete/danger text actions */
+
+  /* Borders */
+  --border-base:        #DCDFE6;   /* Standard border / divider */
+  --border-light:       #E4E7ED;   /* Lighter border */
+  --border-extra-light: #EBEEF5;   /* Subtlest border */
+  --border-focus:       #409EFF;   /* Input focus ring */
+  --border-error:       #F56C6C;   /* Input error state */
+
+  /* Backgrounds */
+  --bg-page:            #F5F7FA;   /* Page / layout background */
+  --bg-container:       #FFFFFF;   /* Cards, panels, inputs */
+  --bg-header:          #FFFFFF;   /* Top header background */
+  --bg-sidebar:         #FFFFFF;   /* Left sidebar background */
+  --bg-table-header:    #F5F7FA;   /* Table <thead> background */
+  --bg-table-hover:     #F5F7FA;   /* Table row hover */
+  --bg-disabled:        #F5F7FA;   /* Disabled input background */
+
+  /* Semantic aliases (Element Plus parity) */
+  --el-color-primary:          var(--color-primary);
+  --el-color-success:          var(--color-success);
+  --el-color-warning:          var(--color-warning);
+  --el-color-danger:           var(--color-danger);
+  --el-border-color:           var(--border-base);
+  --el-bg-color:               var(--bg-container);
+  --el-text-color-primary:     var(--text-primary);
+  --el-text-color-regular:     var(--text-regular);
+  --el-text-color-secondary:   var(--text-secondary);
+  --el-text-color-disabled:    var(--text-disabled);
+}
+
+/* ------------------------------------------------------------
+   TYPOGRAPHY TOKENS
+   ------------------------------------------------------------ */
+:root {
+  /* Font Families */
+  --font-sans:   'Noto Sans TC', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
+  --font-mono:   'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+
+  /* Font Sizes */
+  --text-xs:     12px;   /* Helper / caption */
+  --text-sm:     14px;   /* Body / table rows */
+  --text-base:   16px;   /* Section headers (H2) */
+  --text-xl:     20px;   /* Page titles (H1) */
+
+  /* Font Weights */
+  --weight-regular: 400;
+  --weight-medium:  500;
+  --weight-bold:    700;
+
+  /* Line Heights */
+  --leading-tight:  1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.75;
+}
+
+/* ------------------------------------------------------------
+   BASE STYLES
+   ------------------------------------------------------------ */
+body {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-regular);
+  color: var(--text-primary);
+  background-color: var(--bg-page);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ------------------------------------------------------------
+   SEMANTIC TYPOGRAPHY ELEMENTS
+   ------------------------------------------------------------ */
+
+/* Page Title */
+h1, .h1 {
+  font-family: var(--font-sans);
+  font-size: var(--text-xl);     /* 20px */
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+  line-height: var(--leading-tight);
+  margin: 0 0 16px 0;
+}
+
+/* Section / Block Title */
+h2, .h2 {
+  font-family: var(--font-sans);
+  font-size: var(--text-base);   /* 16px */
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+  line-height: var(--leading-tight);
+  margin: 0 0 16px 0;
+}
+
+/* Sub-section Title */
+h3, .h3 {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);     /* 14px */
+  font-weight: var(--weight-bold);
+  color: var(--text-primary);
+  line-height: var(--leading-normal);
+  margin: 0 0 8px 0;
+}
+
+/* Body / Table Text */
+p, .body {
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);     /* 14px */
+  font-weight: var(--weight-regular);
+  color: var(--text-regular);
+  line-height: var(--leading-normal);
+  margin: 0 0 8px 0;
+}
+
+/* Helper / Caption */
+small, .caption {
+  font-family: var(--font-sans);
+  font-size: var(--text-xs);     /* 12px */
+  font-weight: var(--weight-regular);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
+}
+
+/* Link / Action Text */
+a, .link {
+  color: var(--text-link);
+  text-decoration: none;
+  font-size: inherit;
+}
+a:hover, .link:hover {
+  color: #66b1ff;
+}
+
+/* Danger / Delete Action Text */
+.text-danger {
+  color: var(--text-danger);
+}
+
+/* ------------------------------------------------------------
+   SPACING SYSTEM (8px base)
+   ------------------------------------------------------------ */
+:root {
+  --space-1: 8px;
+  --space-2: 16px;
+  --space-3: 24px;
+  --space-4: 32px;
+  --space-5: 40px;
+  --space-6: 48px;
+}
+
+/* ------------------------------------------------------------
+   TABLE STYLE RULES
+   th (header cell): background #F5F7FA, color #303133, fontWeight 700, height 48px, no border
+   td (body cell):   color #606266, height 48px, no border
+   table wrapper:    background #fff, borderRadius 3px, boxShadow 0 2px 12px 0 rgba(0,0,0,0.08)
+   ------------------------------------------------------------ */
+
+/* ------------------------------------------------------------
+   BORDER RADIUS SYSTEM
+   Rules:
+     --radius-none (0px)   → buttons, inputs, selects, date pickers,
+                             modal / dialog inner containers, table wrappers
+     --radius-card (3px)   → content cards, section panels, info boxes,
+                             stat cards, banners, alert / warning boxes,
+                             sidebar hub panels, sub-form sections
+     --radius-pill (9999px)→ tags only (el-tag, status pills)
+     --radius-circle (50%) → avatar circles, dot indicators, icon badges
+   ------------------------------------------------------------ */
+:root {
+  --radius-none:   0px;      /* Buttons, inputs, dialogs — no rounding */
+  --radius-card:   3px;      /* Cards, panels, info boxes */
+  --radius-pill:   9999px;   /* Tags / status pills */
+  --radius-circle: 50%;      /* Avatars, dot indicators */
+}
+
+/* ------------------------------------------------------------
+   LAYOUT CONSTANTS
+   ------------------------------------------------------------ */
+:root {
+  --sidebar-width:       240px;
+  --header-height:        48px;
+  --content-padding:      24px;
+}
+
+/* ------------------------------------------------------------
+   COMPONENT SIZE TOKENS
+   ------------------------------------------------------------ */
+:root {
+  --input-height:        40px;   /* Default input / select / button height */
+  --input-height-sm:     32px;   /* Small variant */
+  --input-height-lg:     48px;   /* Large variant */
+  --sidebar-item-height: 52px;   /* Primary nav item */
+  --sidebar-sub-height:  48px;   /* Secondary nav item */
+}
+
+/* ------------------------------------------------------------
+   COMPONENT RESET OVERRIDES (mirrors Element Plus global)
+   ------------------------------------------------------------ */
+
+/* Interactive form elements — sharp corners */
+.el-button,
+.el-input__inner,
+.el-select,
+.el-date-editor {
+  border-radius: var(--radius-none) !important;
+  height: var(--input-height);
+}
+
+/* Card containers — 3px rounding */
+.el-card {
+  border-radius: var(--radius-card) !important;
+}
+
+/* Tags — pill shape */
+.el-tag {
+  border-radius: var(--radius-pill) !important;
+}
+
+/* ------------------------------------------------------------
+   BORDER RADIUS UTILITY CLASSES
+   ------------------------------------------------------------ */
+
+/* Apply to any card / panel / info box in JSX inline styles or className */
+.ds-card    { border-radius: var(--radius-card) !important; }
+.ds-pill    { border-radius: var(--radius-pill) !important; }
+.ds-circle  { border-radius: var(--radius-circle) !important; }
+.ds-square  { border-radius: var(--radius-none) !important; }

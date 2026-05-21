@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: #fff; padding: 20px; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; }
+  .field { display: flex; flex-direction: column; gap: 4px; }
+  .label { font-size: 12px; color: #606266; }
+  input, select {
+    height: 40px; padding: 0 12px;
+    border: 1px solid #DCDFE6; border-radius: 0;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px; color: #303133;
+    background: #fff; outline: none; width: 160px;
+  }
+  input::placeholder { color: #C0C4CC; }
+  input:focus { border-color: #409EFF; }
+  input.error { border-color: #F56C6C; }
+  input:disabled { background: #F5F7FA; color: #C0C4CC; cursor: not-allowed; }
+  .helper { font-size: 12px; color: #909399; }
+  .err-msg { font-size: 12px; color: #F56C6C; }
+</style>
+</head>
+<body>
+<div class="row">
+  <div class="field">
+    <div class="label">Default</div>
+    <input placeholder="請輸入關鍵字">
+  </div>
+  <div class="field">
+    <div class="label">With helper</div>
+    <input value="文章標題範例">
+    <div class="helper">建議長度為 10-30 字</div>
+  </div>
+  <div class="field">
+    <div class="label">Error state</div>
+    <input class="error" value="wrong@">
+    <div class="err-msg">電子郵件格式不正確</div>
+  </div>
+  <div class="field">
+    <div class="label">Disabled</div>
+    <input disabled value="不可編輯">
+  </div>
+  <div class="field">
+    <div class="label">Select</div>
+    <select><option>請選擇分類</option><option>最新消息</option><option>活動公告</option></select>
+  </div>
+</div>
+</body>
+</html>

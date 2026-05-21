@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: #fff; padding: 20px; }
+  .row { display: flex; gap: 12px; flex-wrap: wrap; }
+  .swatch { display: flex; flex-direction: column; gap: 6px; }
+  .chip { width: 100px; height: 64px; }
+  .name { font-size: 11px; font-weight: 700; color: #303133; }
+  .val  { font-size: 11px; color: #909399; font-family: monospace; }
+  .grad { background: linear-gradient(135deg, #5B21B6, #A855F7, #EC4899); }
+</style>
+</head>
+<body>
+<div class="row">
+  <div class="swatch">
+    <div class="chip" style="background:#303133"></div>
+    <div class="name">Primary</div>
+    <div class="val">#303133</div>
+  </div>
+  <div class="swatch">
+    <div class="chip" style="background:#409EFF"></div>
+    <div class="name">Secondary</div>
+    <div class="val">#409EFF</div>
+  </div>
+  <div class="swatch">
+    <div class="chip grad"></div>
+    <div class="name">Brand Gradient</div>
+    <div class="val">#5B21B6 → #EC4899</div>
+  </div>
+  <div class="swatch">
+    <div class="chip" style="background:#F5F7FA; border:1px solid #DCDFE6"></div>
+    <div class="name">BG Page</div>
+    <div class="val">#F5F7FA</div>
+  </div>
+  <div class="swatch">
+    <div class="chip" style="background:#FFFFFF; border:1px solid #DCDFE6"></div>
+    <div class="name">BG Container</div>
+    <div class="val">#FFFFFF</div>
+  </div>
+  <div class="swatch">
+    <div class="chip" style="background:#DCDFE6"></div>
+    <div class="name">Border</div>
+    <div class="val">#DCDFE6</div>
+  </div>
+</div>
+</body>
+</html>

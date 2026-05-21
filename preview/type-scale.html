@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: #fff; padding: 20px; }
+  .row { display: flex; flex-direction: column; gap: 14px; }
+  .item { display: flex; align-items: baseline; gap: 16px; border-bottom: 1px solid #EBEEF5; padding-bottom: 10px; }
+  .label { font-size: 11px; color: #909399; width: 160px; flex-shrink: 0; font-family: monospace; }
+  .sample { color: #303133; font-family: 'Noto Sans TC', sans-serif; }
+  .font-tag { font-size: 10px; color: #C0C4CC; font-family: monospace; margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="row">
+  <div class="item">
+    <div class="label">H1 · 20px · 700</div>
+    <div class="sample" style="font-size:20px;font-weight:700">產品管理 Page Title</div>
+  </div>
+  <div class="item">
+    <div class="label">H2 · 16px · 700</div>
+    <div class="sample" style="font-size:16px;font-weight:700">搜尋條件 Section Title</div>
+  </div>
+  <div class="item">
+    <div class="label">Body · 14px · 400</div>
+    <div class="sample" style="font-size:14px;font-weight:400">一般內文與表格文字 Body Text</div>
+  </div>
+  <div class="item">
+    <div class="label">Caption · 12px · 400</div>
+    <div class="sample" style="font-size:12px;font-weight:400;color:#909399">輔助說明文字，建議長度為 10-30 字 Helper Text</div>
+  </div>
+</div>
+<div class="font-tag">思源黑體 (Source Han Sans TC) · via Google Fonts: Noto Sans TC</div>
+</body>
+</html>

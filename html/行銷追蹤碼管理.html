@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>行銷追蹤碼管理 — Evomni Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, #root { height: 100%; }
+    body { font-family: 'Noto Sans TC', sans-serif; font-size: 14px; color: #303133; background: #F5F7FA; -webkit-font-smoothing: antialiased; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-thumb { background: #DCDFE6; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    input[type="radio"], input[type="checkbox"] { accent-color: #409EFF; }
+    input::placeholder, textarea::placeholder { color: #909399; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel" src="../components/Sidebar.jsx"></script>
+  <script type="text/babel" src="../components/Header.jsx"></script>
+  <script type="text/babel" src="../components/SharedUI.jsx"></script>
+
+  <script type="text/babel">
+
+    // ── Local helpers ────────────────────────────────────────────
+
+    function StatusTag({ status }) {
+      const conf = {
+        enabled:  { label: '已啟用', bg: '#F0F9EB', color: '#67C23A', border: '#C2E7B0' },
+        disabled: { label: '未啟用', bg: '#F5F5F5', color: '#909399', border: '#E5E5E5' },
+        pending:  { label: '設定中', bg: '#ECF5FF', color: '#409EFF', border: '#B3D8FF' },
+      };
+      const c = conf[status] || conf.disabled;
+      return (
+        <span style={{
+          display: 'inline-flex', alignItems: 'center',
+          padding: '2px 8px', fontSize: 12, lineHeight: '18px',
+          background: c.bg, color: c.color, border: `1px solid ${c.border}`,
+        }}>
+          {c.label}
+        </span>
+      );
+    }
+
+    function Tip({ text }) {
+      const [show, setShow] = React.useState(false);
+      return (
+        <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+          <span
+            onMouseEnter={() => setShow(true)}
+            onMouseLeave={() => setShow(false)}
+            style={{ cursor: 'help', color: '#C0C4CC', lineHeight: 0, display: 'flex' }}
+          >
+            <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+              <circle cx="7.5" cy="7.5" r="6.5" stroke="currentColor" strokeWidth="1.3"/>
+              <path d="M6.3 5.8c0-.66.54-1.2 1.2-1.2s1.2.54 1.2 1.2c0 .88-.9 1.3-.9 2.1H7.2c0-1 .9-1.42.9-2.1 0-.38-.31-.7-.7-.7s-.7.32-.7.7H6.3z" fill="currentColor"/>
+              <rect x="7" y="9.5" width=".8" height=".8" fill="currentColor"/>
+            </svg>
+          </span>
+          {show && (
+            <div style={{
+              position: 'absolute', bottom: 'calc(100% + 6px)', left: '50%',
+              transform: 'translateX(-50%)', background: '#303133', color: '#fff',
+              fontSize: 12, padding: '8px 10px', maxWidth: 300, width: 240,
+              lineHeight: 1.7, zIndex: 1000, pointerEvents: 'none', whiteSpace: 'pre-line',
+            }}>
+              {text}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ── Brand icons ──────────────────────────────────────────────
+
+    function GA4Icon() {
+      return (
+        <div style={{ width: 32, height: 32, background: '#F9AB00', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <rect x="2" y="8" width="3" height="8" fill="white" opacity="0.85"/>
+            <rect x="7.5" y="4" width="3" height="12" fill="white"/>
+            <rect x="13" y="1" width="3" height="15" fill="white" opacity="0.7"/>
+          </svg>
+        </div>
+      );
+    }
+
+    function MetaIcon() {
+      return (
+        <div style={{ width: 32, height: 32, background: '#1877F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <svg width="11" height="19" viewBox="0 0 11 19" fill="white">
+            <path d="M7 10.5V19H4V10.5H1V7.5h3V5.5C4 3 5.5 1.5 8 1.5c1 0 1.8.1 2 .2V4.5H8.5C7.4 4.5 7 5 7 6V7.5h3L9.5 10.5H7Z"/>
+          </svg>
+        </div>
+      );
+    }
+
+    function CAPIIcon() {
+      return (
+        <div style={{ width: 32, height: 32, background: '#0866FF', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <svg width="18" height="16" viewBox="0 0 18 16" fill="none">
+            <rect x="1" y="1" width="16" height="5" stroke="white" strokeWidth="1.3"/>
+            <rect x="1" y="10" width="16" height="5" stroke="white" strokeWidth="1.3"/>
+            <circle cx="14" cy="3.5" r="1" fill="white"/>
+            <circle cx="14" cy="12.5" r="1" fill="white"/>
+            <path d="M5 6v4" stroke="white" strokeWidth="1.3" strokeLinecap="round"/>
+          </svg>
+        </div>
+      );
+    }
+
+    function GTMIcon() {
+      return (
+        <div style={{ width: 32, height: 32, background: '#4285F4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <svg width="18" height="16" viewBox="0 0 18 16" fill="none">
+            <rect x="1" y="4" width="8" height="8" stroke="white" strokeWidth="1.3"/>
+            <path d="M11 8h6M14 5l3 3-3 3" stroke="white" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+      );
+    }
+
+    // ── Inline alert banner ──────────────────────────────────────
+
+    function InlineAlert({ type, children }) {
+      const conf = {
+        info:    { bg: '#EBF5FF', border: '#B3D8FF', color: '#606266' },
+        warning: { bg: '#FDF6EC', border: '#FAD9A1', color: '#606266' },
+      };
+      const c = conf[type] || conf.info;
+      return (
+        <div style={{
+          background: c.bg, border: `1px solid ${c.border}`,
+          padding: '12px 14px', marginBottom: 16,
+          fontSize: 13, color: c.color, lineHeight: 1.7,
+        }}>
+          {children}
+        </div>
+      );
+    }
+
+    // ── Tool Card ────────────────────────────────────────────────
+
+    function ToolCard({ icon, title, status, onToggle, expanded, disabled, disabledNote, children }) {
+      return (
+        <div style={{
+          background: disabled ? '#FAFAFA' : '#fff',
+          border: '1px solid #DCDFE6',
+          marginBottom: 12,
+          opacity: disabled ? 0.55 : 1,
+          transition: 'opacity 0.2s',
+        }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            padding: '0 20px', minHeight: 64,
+            borderBottom: (expanded && !disabled) ? '1px solid #DCDFE6' : 'none',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1 }}>
+              {icon}
+              <div>
+                <div style={{ fontSize: 15, fontWeight: 500, color: '#303133' }}>{title}</div>
+                {disabled && disabledNote && (
+                  <div style={{ fontSize: 12, color: '#909399', marginTop: 3 }}>{disabledNote}</div>
+                )}
+              </div>
+              <StatusTag status={status} />
+            </div>
+            <Switch checked={!disabled && expanded} onChange={disabled ? undefined : onToggle} disabled={disabled} />
+          </div>
+          {expanded && !disabled && (
+            <div style={{ padding: '20px 24px 24px' }}>
+              {children}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ── Form helpers ─────────────────────────────────────────────
+
+    function FieldRow({ label, tip, error, helperText, children }) {
+      return (
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+            <span style={{ fontSize: 13, color: '#606266', fontWeight: 500 }}>{label}</span>
+            {tip && <Tip text={tip} />}
+          </div>
+          {children}
+          {error && <div style={{ fontSize: 12, color: '#F56C6C', marginTop: 5 }}>{error}</div>}
+          {!error && helperText && <div style={{ fontSize: 12, color: '#909399', marginTop: 5 }}>{helperText}</div>}
+        </div>
+      );
+    }
+
+    function SaveBtn({ onClick, disabled }) {
+      return (
+        <button
+          onClick={disabled ? undefined : onClick}
+          disabled={disabled}
+          style={{
+            background: disabled ? '#C0C4CC' : '#303133',
+            color: '#fff', border: 'none',
+            padding: '8px 20px', fontSize: 14, fontWeight: 500,
+            cursor: disabled ? 'not-allowed' : 'pointer',
+            fontFamily: 'inherit', marginTop: 4,
+          }}
+          onMouseEnter={e => { if (!disabled) e.currentTarget.style.background = '#1d1f20'; }}
+          onMouseLeave={e => { if (!disabled) e.currentTarget.style.background = '#303133'; }}
+        >
+          儲存此設定
+        </button>
+      );
+    }
+
+    // ── Event Stats Table ────────────────────────────────────────
+
+    const EVENTS = [
+      { name: '產品頁瀏覽',   ga4: 'view_item',         pixel: 'ViewContent',          count: 1234 },
+      { name: '加入購物車',   ga4: 'add_to_cart',       pixel: 'AddToCart',            count: 456  },
+      { name: '開始結帳',     ga4: 'begin_checkout',    pixel: 'InitiateCheckout',     count: 123  },
+      { name: '完成購買',     ga4: 'purchase',          pixel: 'Purchase',             count: 89   },
+      { name: '站內搜尋',     ga4: 'search',            pixel: 'Search',               count: 678  },
+      { name: '完成會員註冊', ga4: 'sign_up',           pixel: 'CompleteRegistration', count: 34   },
+      { name: '加入心願清單', ga4: 'add_to_wishlist',   pixel: 'AddToWishlist',        count: 67   },
+    ];
+
+    function EventTable({ ga4Saved, pixelSaved }) {
+      const [sortDesc, setSortDesc] = React.useState(true);
+      const anyEnabled = ga4Saved || pixelSaved;
+
+      if (!anyEnabled) {
+        return (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: '#909399', border: '1px solid #EBEEF5', background: '#FAFAFA' }}>
+            <div style={{ fontSize: 15, fontWeight: 500, marginBottom: 8, color: '#C0C4CC' }}>尚未啟用任何追蹤工具</div>
+            <div style={{ fontSize: 13 }}>啟用追蹤工具後，事件觸發統計將顯示於此。</div>
+          </div>
+        );
+      }
+
+      const rows = [...EVENTS].sort((a, b) => sortDesc ? b.count - a.count : a.count - b.count);
+
+      return (
+        <>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 6 }}>
+            <span style={{ fontSize: 11, color: '#C0C4CC' }}>資料更新至 2026/05/15 10:00</span>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', border: '1px solid #DCDFE6' }}>
+            <thead>
+              <tr style={{ background: '#F5F7FA' }}>
+                {['事件名稱', '對應 GA4 事件', '對應 FB 像素（Pixel）事件'].map(h => (
+                  <th key={h} style={{ padding: '10px 14px', fontSize: 12, fontWeight: 500, color: '#606266', borderBottom: '1px solid #DCDFE6', textAlign: 'left', whiteSpace: 'nowrap' }}>
+                    {h}
+                  </th>
+                ))}
+                <th
+                  onClick={() => setSortDesc(d => !d)}
+                  style={{ padding: '10px 14px', fontSize: 12, fontWeight: 500, color: '#409EFF', borderBottom: '1px solid #DCDFE6', textAlign: 'left', whiteSpace: 'nowrap', cursor: 'pointer', userSelect: 'none' }}
+                >
+                  近 7 天觸發次數 {sortDesc ? '↓' : '↑'}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((ev, i) => (
+                <tr key={ev.name} style={{ background: i % 2 === 0 ? '#fff' : '#FAFAFA' }}>
+                  <td style={{ padding: '10px 14px', fontSize: 13, color: '#303133', borderBottom: '1px solid #F2F2F2' }}>{ev.name}</td>
+                  <td style={{ padding: '10px 14px', fontSize: 12, color: ga4Saved ? '#303133' : '#C0C4CC', borderBottom: '1px solid #F2F2F2', fontFamily: 'monospace' }}>
+                    {ga4Saved ? ev.ga4 : '未啟用'}
+                  </td>
+                  <td style={{ padding: '10px 14px', fontSize: 12, color: pixelSaved ? '#303133' : '#C0C4CC', borderBottom: '1px solid #F2F2F2', fontFamily: 'monospace' }}>
+                    {pixelSaved ? ev.pixel : '未啟用'}
+                  </td>
+                  <td style={{ padding: '10px 14px', fontSize: 13, color: '#303133', borderBottom: '1px solid #F2F2F2' }}>
+                    {ev.count.toLocaleString()} 次
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      );
+    }
+
+    // ── Demo presets ─────────────────────────────────────────────
+
+    const INIT = {
+      ga4:   { on: false, saved: false, measurementId: '', trackArticles: false, idError: '' },
+      pixel: { on: false, saved: false, pixelId: '', currency: 'TWD', idError: '' },
+      capi:  { on: false, saved: false, token: '', tokenSaved: false, tokenError: '' },
+      gtm:   { on: false, saved: false, containerId: '', idError: '' },
+    };
+
+    function mk(patch) {
+      return {
+        ga4:   { ...INIT.ga4,   ...(patch.ga4   || {}) },
+        pixel: { ...INIT.pixel, ...(patch.pixel  || {}) },
+        capi:  { ...INIT.capi,  ...(patch.capi   || {}) },
+        gtm:   { ...INIT.gtm,   ...(patch.gtm    || {}) },
+      };
+    }
+
+    const PRESETS = [
+      { label: '初始狀態',         state: mk({}) },
+      { label: 'GA4 展開中',       state: mk({ ga4: { on: true } }) },
+      { label: 'GA4 已啟用',       state: mk({ ga4: { on: true, saved: true, measurementId: 'G-ABC123456' } }) },
+      { label: 'Pixel 已啟用 + CAPI 設定中', state: mk({
+        ga4:   { on: true, saved: true, measurementId: 'G-ABC123456' },
+        pixel: { on: true, saved: true, pixelId: '1234567890123456' },
+        capi:  { on: true },
+      }) },
+      { label: 'GTM 衝突警示',     state: mk({
+        ga4:   { on: true, saved: true, measurementId: 'G-ABC123456' },
+        pixel: { on: true, saved: true, pixelId: '1234567890123456' },
+        gtm:   { on: true },
+      }) },
+      { label: '全部已啟用',       state: mk({
+        ga4:   { on: true, saved: true, measurementId: 'G-ABC123456', trackArticles: true },
+        pixel: { on: true, saved: true, pixelId: '1234567890123456' },
+        capi:  { on: true, saved: true, tokenSaved: true, token: 'EAAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx' },
+        gtm:   { on: false },
+      }) },
+    ];
+
+    function DemoNav({ current, onChange }) {
+      return (
+        <div style={{
+          background: '#fff', borderBottom: '1px solid #DCDFE6',
+          padding: '8px 24px', display: 'flex', alignItems: 'center', gap: 8,
+          flexShrink: 0, flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: 12, color: '#909399', marginRight: 4, whiteSpace: 'nowrap' }}>示範狀態：</span>
+          {PRESETS.map((p, i) => (
+            <button
+              key={i}
+              onClick={() => onChange(i)}
+              style={{
+                padding: '4px 12px', fontSize: 12,
+                border: `1px solid ${current === i ? '#409EFF' : '#DCDFE6'}`,
+                background: current === i ? '#ECF5FF' : '#fff',
+                color: current === i ? '#409EFF' : '#606266',
+                cursor: 'pointer', fontFamily: 'inherit',
+              }}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    // ── Validation ───────────────────────────────────────────────
+
+    function valGA4(id) {
+      if (!id.trim()) return '請填入 Measurement ID 才能啟用 GA4 追蹤';
+      if (!/^G-[A-Z0-9]+$/i.test(id.trim())) return '請輸入正確的 GA4 Measurement ID 格式，應為 G- 開頭後接字母數字（例：G-ABC123456）';
+      return '';
+    }
+    function valPixel(id) {
+      if (!id.trim()) return '請填入 Meta Pixel ID 才能啟用像素追蹤';
+      if (!/^\d{15,16}$/.test(id.trim())) return 'Pixel ID 應為 15-16 位的純數字，請確認後重新輸入';
+      return '';
+    }
+    function valToken(t) {
+      if (!t.trim()) return '請填入存取權杖（Access Token）才能啟用 Conversion API（FB 伺服器轉換 API）';
+      if (t.trim().length < 50) return '存取權杖（Access Token）格式異常，請確認是否完整複製';
+      return '';
+    }
+    function valGTM(id) {
+      if (!id.trim()) return '請填入 Container ID 才能啟用 GTM';
+      if (!/^GTM-[A-Z0-9]{4,8}$/i.test(id.trim())) return '請輸入正確的 GTM Container ID，格式應為 GTM- 開頭（例：GTM-ABC1234）';
+      return '';
+    }
+
+    // ── App ──────────────────────────────────────────────────────
+
+    const TOOL_NAMES = {
+      ga4:   'Google Analytics 4',
+      pixel: 'Meta Pixel',
+      capi:  'Meta Conversion API（FB 轉換 API）',
+      gtm:   'Google Tag Manager',
+    };
+
+    const TOOL_DIALOG_NAMES = {
+      ga4:   'Google Analytics 4',
+      pixel: 'Meta Pixel',
+      capi:  'Conversion API',
+      gtm:   'Google Tag Manager',
+    };
+
+    const CURRENCY_OPTIONS = [
+      { value: 'TWD', label: 'TWD — 新台幣' },
+      { value: 'USD', label: 'USD — 美元' },
+      { value: 'HKD', label: 'HKD — 港幣' },
+    ];
+
+    function App() {
+      const [demoIdx, setDemoIdx]               = React.useState(0);
+      const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+      const [currentPage, setCurrentPage]       = React.useState('gs-tracking');
+      const { toasts, show: showToast }         = useToast();
+      const [tools, setTools]                   = React.useState({ ...INIT });
+      const [confirmDialog, setConfirmDialog]   = React.useState({ open: false, tool: null });
+
+      function applyDemo(idx) {
+        setDemoIdx(idx);
+        setTools(PRESETS[idx].state);
+        setConfirmDialog({ open: false, tool: null });
+      }
+
+      function upd(key, patch) {
+        setTools(prev => ({ ...prev, [key]: { ...prev[key], ...patch } }));
+      }
+
+      function getStatus(key) {
+        const t = tools[key];
+        if (!t.on) return 'disabled';
+        return t.saved ? 'enabled' : 'pending';
+      }
+
+      // Switch toggle — if already saved and on, ask for confirmation first
+      function handleToggle(key) {
+        const t = tools[key];
+        if (t.saved && t.on) {
+          setConfirmDialog({ open: true, tool: key });
+        } else {
+          upd(key, { on: !t.on });
+        }
+      }
+
+      function handleConfirmDisable() {
+        const key = confirmDialog.tool;
+        if (key === 'pixel') {
+          setTools(prev => ({
+            ...prev,
+            pixel: { ...prev.pixel, on: false, saved: false },
+            capi:  { ...prev.capi, on: false, saved: false, tokenSaved: false, token: '' },
+          }));
+          showToast(`Meta Pixel 及 ${TOOL_NAMES.capi} 已停用`, 'success');
+        } else {
+          upd(key, { on: false, saved: false });
+          showToast(`${TOOL_NAMES[key]} 已停用`, 'success');
+        }
+        setConfirmDialog({ open: false, tool: null });
+      }
+
+      function handleCancelDisable() {
+        setConfirmDialog({ open: false, tool: null });
+      }
+
+      function saveGA4() {
+        const err = valGA4(tools.ga4.measurementId);
+        if (err) { upd('ga4', { idError: err }); return; }
+        upd('ga4', { idError: '', saved: true });
+        showToast('GA4 設定已儲存，追蹤碼將於頁面重新整理後在前台生效', 'success');
+      }
+
+      function savePixel() {
+        const err = valPixel(tools.pixel.pixelId);
+        if (err) { upd('pixel', { idError: err }); return; }
+        upd('pixel', { idError: '', saved: true });
+        showToast('Meta Pixel 設定已儲存', 'success');
+      }
+
+      function saveCAPI() {
+        const err = valToken(tools.capi.token);
+        if (err) { upd('capi', { tokenError: err }); return; }
+        upd('capi', { tokenError: '', saved: true, tokenSaved: true });
+        showToast(`${TOOL_NAMES.capi} 設定已儲存，伺服器端事件追蹤已啟用`, 'success');
+      }
+
+      function saveGTM() {
+        const err = valGTM(tools.gtm.containerId);
+        if (err) { upd('gtm', { idError: err }); return; }
+        upd('gtm', { idError: '', saved: true });
+        const hasConflict = tools.ga4.saved || tools.pixel.saved;
+        showToast(
+          hasConflict
+            ? 'GTM 設定已儲存。請注意：系統偵測到可能的重複載入，請查看頁面警示說明。'
+            : 'GTM 設定已儲存，Tag Manager 代碼將在前台生效',
+          hasConflict ? 'warning' : 'success'
+        );
+      }
+
+      const capiDisabled = !tools.pixel.saved;
+      const gtmConflict  = tools.gtm.on && (tools.ga4.saved || tools.pixel.saved);
+
+      return (
+        <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+
+          <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} collapsed={sidebarCollapsed} />
+
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+            <Header
+              onToggleSidebar={() => setSidebarCollapsed(c => !c)}
+            />
+
+            <DemoNav current={demoIdx} onChange={applyDemo} />
+
+            <main style={{ flex: 1, overflow: 'auto', padding: '32px 40px', background: '#F5F7FA' }}>
+              <div style={{ maxWidth: 760 }}>
+
+                {/* Page title */}
+                <div style={{ marginBottom: 20 }}>
+                  <h1 style={{ fontSize: 20, fontWeight: 700, color: '#303133', marginBottom: 6 }}>行銷追蹤碼管理</h1>
+                  <p style={{ fontSize: 14, color: '#606266', lineHeight: 1.7 }}>
+                    在此設定 GA4、Meta Pixel、GTM 等行銷追蹤工具。填入 ID 後系統將自動安裝追蹤碼，無需手動埋設程式碼。
+                  </p>
+                </div>
+
+                {/* Top callout */}
+                <InlineAlert type="info">
+                  <strong>注意：</strong>
+                  若您先前已在網站 &lt;head&gt; 手動埋設過 GA4 或 FB 像素（Pixel）追蹤碼，請先移除，避免重複觸發導致數據失真。
+                </InlineAlert>
+
+                {/* ── GA4 Card ── */}
+                <ToolCard
+                  icon={<GA4Icon />}
+                  title="Google Analytics 4"
+                  status={getStatus('ga4')}
+                  onToggle={() => handleToggle('ga4')}
+                  expanded={tools.ga4.on}
+                >
+                  <FieldRow
+                    label="Measurement ID"
+                    tip={"在 Google Analytics 後台 > 管理 > 資料串流中取得。\n格式為 G- 開頭後接字母與數字。"}
+                    error={tools.ga4.idError}
+                  >
+                    <EInput
+                      value={tools.ga4.measurementId}
+                      onChange={v => upd('ga4', { measurementId: v, idError: '', saved: false })}
+                      placeholder="G-XXXXXXXXXX"
+                      width="100%"
+                    />
+                  </FieldRow>
+
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 20 }}>
+                    <div style={{ marginTop: 1 }}>
+                      <Switch
+                        checked={tools.ga4.trackArticles}
+                        onChange={v => upd('ga4', { trackArticles: v })}
+                      />
+                    </div>
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 500, color: '#303133', marginBottom: 3 }}>追蹤文章頁</div>
+                      <div style={{ fontSize: 12, color: '#909399', lineHeight: 1.6 }}>
+                        適合有內容行銷策略的商家，開啟後可追蹤部落格文章的瀏覽數據
+                      </div>
+                    </div>
+                  </div>
+
+                  <SaveBtn onClick={saveGA4} disabled={!tools.ga4.measurementId.trim()} />
+                </ToolCard>
+
+                {/* ── Meta Pixel Card ── */}
+                <ToolCard
+                  icon={<MetaIcon />}
+                  title="Meta（Facebook）Pixel"
+                  status={getStatus('pixel')}
+                  onToggle={() => handleToggle('pixel')}
+                  expanded={tools.pixel.on}
+                >
+                  <FieldRow
+                    label="Pixel ID"
+                    tip={"在 Meta Events Manager > 資料來源中取得您的 Pixel ID。\n格式為 15-16 位純數字。"}
+                    error={tools.pixel.idError}
+                  >
+                    <EInput
+                      value={tools.pixel.pixelId}
+                      onChange={v => upd('pixel', { pixelId: v, idError: '', saved: false })}
+                      placeholder="例：1234567890123456"
+                      width="100%"
+                    />
+                  </FieldRow>
+
+                  <FieldRow
+                    label="幣別"
+                    helperText="將帶入所有含金額事件的 currency 參數，如 Purchase、ViewContent"
+                  >
+                    <ESelect
+                      value={tools.pixel.currency}
+                      onChange={v => upd('pixel', { currency: v })}
+                      options={CURRENCY_OPTIONS}
+                      width="200px"
+                    />
+                  </FieldRow>
+
+                  <SaveBtn onClick={savePixel} disabled={!tools.pixel.pixelId.trim()} />
+                </ToolCard>
+
+                {/* ── FB CAPI Card ── */}
+                <ToolCard
+                  icon={<CAPIIcon />}
+                  title={TOOL_NAMES.capi}
+                  status={capiDisabled ? 'disabled' : getStatus('capi')}
+                  onToggle={() => handleToggle('capi')}
+                  expanded={!capiDisabled && tools.capi.on}
+                  disabled={capiDisabled}
+                  disabledNote={`需先啟用並儲存 Meta Pixel 設定，才能使用 ${TOOL_NAMES.capi}`}
+                >
+                  {/* CAPI explanation block */}
+                  <div style={{
+                    background: '#F5F7FA', border: '1px solid #EBEEF5',
+                    padding: '14px 16px', marginBottom: 20,
+                    fontSize: 13, color: '#606266', lineHeight: 1.8,
+                  }}>
+                    <div style={{ fontWeight: 500, color: '#303133', marginBottom: 6 }}>
+                      關於 Conversion API（FB 伺服器轉換 API）
+                    </div>
+                    <div>iOS 14 後 Safari 封鎖 Cookie，部分轉換事件無法透過瀏覽器像素捕捉。</div>
+                    <div>Conversion API 從伺服器端傳送事件，可補回遺失的轉換數據。</div>
+                    <div>系統會自動為每個事件加上相同的 event_id，Meta 將自動去除重複。</div>
+                    <div>您可在 Meta Events Manager 觀察「比對率」是否達到 70% 以上。</div>
+                  </div>
+
+                  <FieldRow
+                    label="存取權杖（Access Token）"
+                    tip={"在 Meta Events Manager > 設定 > Conversions API > 產生存取權杖中取得。\n權杖通常為 100 字元以上的長字串。"}
+                    error={tools.capi.tokenError}
+                  >
+                    {tools.capi.tokenSaved ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div style={{
+                          flex: 1, padding: '8px 12px',
+                          border: '1px solid #DCDFE6', background: '#F5F7FA',
+                          fontSize: 14, color: '#909399', letterSpacing: 3,
+                        }}>
+                          &bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;（已設定）
+                        </div>
+                        <button
+                          onClick={() => upd('capi', { tokenSaved: false, saved: false, token: '', tokenError: '' })}
+                          style={{
+                            background: 'none', border: '1px solid #DCDFE6',
+                            padding: '8px 14px', fontSize: 13, color: '#606266',
+                            cursor: 'pointer', fontFamily: 'inherit',
+                          }}
+                        >
+                          重新設定
+                        </button>
+                      </div>
+                    ) : (
+                      <PasswordInput
+                        value={tools.capi.token}
+                        onChange={v => upd('capi', { token: v, tokenError: '', saved: false })}
+                        placeholder="貼入您的 Meta Business 存取權杖（Access Token）"
+                      />
+                    )}
+                  </FieldRow>
+
+                  {!tools.capi.tokenSaved && <SaveBtn onClick={saveCAPI} disabled={!tools.capi.token.trim()} />}
+                </ToolCard>
+
+                {/* ── GTM Card ── */}
+                <ToolCard
+                  icon={<GTMIcon />}
+                  title="Google Tag Manager"
+                  status={getStatus('gtm')}
+                  onToggle={() => handleToggle('gtm')}
+                  expanded={tools.gtm.on}
+                >
+                  {/* Conflict warning — only when GA4 or Pixel is also saved */}
+                  {gtmConflict && (
+                    <InlineAlert type="warning">
+                      <strong>注意：</strong>您同時啟用了 GTM 與 GA4 / Meta Pixel。
+                      如果 GTM 容器內也安裝了相同工具，事件將重複觸發，導致數據失真。
+                      <br />
+                      建議：擇一方式使用，避免同時透過本系統與 GTM 安裝相同追蹤碼。
+                    </InlineAlert>
+                  )}
+
+                  <FieldRow
+                    label="Container ID"
+                    tip={"在 Google Tag Manager 後台，點擊右上角的 Container ID 即可複製。\n格式為 GTM- 開頭後接 4-8 位英數字。"}
+                    error={tools.gtm.idError}
+                  >
+                    <EInput
+                      value={tools.gtm.containerId}
+                      onChange={v => upd('gtm', { containerId: v, idError: '', saved: false })}
+                      placeholder="GTM-XXXXXXX"
+                      width="100%"
+                    />
+                  </FieldRow>
+
+                  <div style={{ fontSize: 12, color: '#909399', marginBottom: 16, lineHeight: 1.7 }}>
+                    啟用 GTM 後，您可以在 Google Tag Manager 後台自行安裝其他第三方工具（如 Hotjar、Microsoft Clarity 等），無需每次聯繫工程師。
+                  </div>
+
+                  <SaveBtn onClick={saveGTM} disabled={!tools.gtm.containerId.trim()} />
+                </ToolCard>
+
+                {/* ── Event Stats Table ── */}
+                <div style={{ background: '#fff', border: '1px solid #DCDFE6', padding: '24px', marginTop: 8 }}>
+                  <h2 style={{ fontSize: 16, fontWeight: 700, color: '#303133', marginBottom: 8 }}>近 7 天事件觸發統計</h2>
+                  <p style={{ fontSize: 13, color: '#606266', marginBottom: 16, lineHeight: 1.7 }}>
+                    以下為系統記錄的事件觸發次數，供您確認追蹤碼設定是否生效。
+                    實際數據請以 GA4 / Meta Events Manager 後台為準，本統計每小時更新一次。
+                  </p>
+                  <EventTable ga4Saved={tools.ga4.saved} pixelSaved={tools.pixel.saved} />
+                </div>
+
+              </div>
+            </main>
+          </div>
+
+          <ToastStack toasts={toasts} />
+
+          {/* Disable confirmation dialog */}
+          <Dialog
+            open={confirmDialog.open}
+            title={`確認停用 ${TOOL_DIALOG_NAMES[confirmDialog.tool] || ''}？`}
+            onConfirm={handleConfirmDisable}
+            onCancel={handleCancelDisable}
+            confirmText="確認停用"
+            cancelText="取消"
+            confirmDanger={true}
+          >
+            <p style={{ color: '#606266', lineHeight: 1.7 }}>
+              關閉後，追蹤碼將從您的商店前台移除。歷史數據不受影響，日後隨時可重新啟用。
+            </p>
+            {confirmDialog.tool === 'pixel' && (tools.capi.on || tools.capi.saved) && (
+              <p style={{ marginTop: 10, color: '#E6A23C', fontSize: 13, lineHeight: 1.7 }}>
+                注意：停用 Meta Pixel 後，Meta Conversion API（FB 轉換 API）也將同步停用。
+              </p>
+            )}
+          </Dialog>
+
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>

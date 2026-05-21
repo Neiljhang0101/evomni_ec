@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evomni — 產品中心</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { height: 100%; }
+  body {
+    font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif;
+    font-size: 14px;
+    background: #F2F3F5;
+    color: #303133;
+  }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: #DCDFE6; border-radius: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+
+  input, select, textarea, button {
+    font-family: 'Noto Sans TC', -apple-system, sans-serif;
+  }
+  input[type="checkbox"], input[type="radio"] { cursor: pointer; }
+  a { text-decoration: none; }
+
+  /* Remove number input spinners */
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- Design system components -->
+<script type="text/babel" src="../components/Sidebar.jsx"></script>
+<script type="text/babel" src="../components/Header.jsx"></script>
+<script type="text/babel" src="../components/PageHeader.jsx"></script>
+<script type="text/babel" src="../components/StatusTag.jsx"></script>
+<script type="text/babel" src="../components/DataTable.jsx"></script>
+<script type="text/babel" src="../components/SearchForm.jsx"></script>
+
+<!-- Page components -->
+<script type="text/babel" src="../components/LocaleTabs.jsx"></script>
+<script type="text/babel" src="../components/CsvImportDialog.jsx"></script>
+<script type="text/babel" src="../components/ProductListPage.jsx"></script>
+<script type="text/babel" src="../components/AddEditProductPage.jsx"></script>
+<script type="text/babel" src="../components/CategoryManagementPage.jsx"></script>
+<script type="text/babel" src="../components/InventoryManagementPage.jsx"></script>
+
+<script type="text/babel">
+// ─── Shared style tokens (re-exported for pages that need them) ────────────
+// These are declared in ProductListPage.jsx and shared via window
+
+// ─── Placeholder pages ────────────────────────────────────────────────────
+function PlaceholderPage({ title }) {
+  return (
+    <div>
+      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>{title}</h1>
+      <div style={{ background: '#fff', border: '1px solid #DCDFE6', padding: 48, textAlign: 'center', color: '#909399', fontSize: 14 }}>
+        此頁面功能開發中
+      </div>
+    </div>
+  );
+}
+
+// ─── Dashboard ────────────────────────────────────────────────────────────
+function DashboardPage({ onNavigate }) {
+  const stats = [
+    { label: '產品總數', value: '128', sub: '+3 本週新增', color: '#409EFF' },
+    { label: '低庫存產品', value: '5', sub: '需要補貨', color: '#F56C6C' },
+    { label: '本月銷售額', value: 'NT$ 128,900', sub: '較上月 +12%', color: '#67C23A' },
+    { label: '待處理貨到通知', value: '23', sub: '位訂閱者', color: '#E6A23C' },
+  ];
+  return (
+    <div>
+      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>儀表板</h1>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 16, marginBottom: 24 }}>
+        {stats.map(s => (
+          <div key={s.label} style={{ background: '#fff', border: '1px solid #DCDFE6', padding: 24 }}>
+            <div style={{ fontSize: 12, color: '#909399', marginBottom: 8 }}>{s.label}</div>
+            <div style={{ fontSize: 26, fontWeight: 700, color: s.color, marginBottom: 4 }}>{s.value}</div>
+            <div style={{ fontSize: 12, color: '#909399' }}>{s.sub}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+        <div style={{ background: '#fff', border: '1px solid #DCDFE6', padding: 24 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>快速前往</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+            {[
+              { label: '產品管理', desc: '瀏覽所有產品', page: 'product-list' },
+              { label: '新增產品', desc: '建立新產品', page: 'product-add' },
+              { label: '產品分類', desc: '管理分類樹狀結構', page: 'category-management' },
+              { label: '庫存管理', desc: '查看庫存與通知', page: 'inventory-management' },
+            ].map(item => (
+              <div key={item.page} onClick={() => onNavigate(item.page)}
+                style={{ padding: '14px 16px', border: '1px solid #DCDFE6', cursor: 'pointer', background: '#fff' }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = '#409EFF'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = '#DCDFE6'}
+              >
+                <div style={{ fontWeight: 600, marginBottom: 4, color: '#303133' }}>{item.label}</div>
+                <div style={{ fontSize: 12, color: '#909399' }}>{item.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div style={{ background: '#fff', border: '1px solid #DCDFE6', padding: 24 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>低庫存警示</div>
+          {[
+            { name: '夏日純棉T恤 / 紅色 M', stock: 3 },
+            { name: '輕量慢跑鞋 / 黑色 38', stock: 2 },
+            { name: '羊毛混紡圍巾 / 深灰', stock: 4 },
+          ].map((item, i) => (
+            <div key={i} style={{ padding: '8px 0', borderBottom: '1px solid #EBEEF5', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 13, color: '#606266' }}>{item.name}</span>
+              <span style={{ fontSize: 13, color: '#F56C6C', fontWeight: 600 }}>⚠ {item.stock}</span>
+            </div>
+          ))}
+          <button onClick={() => onNavigate('inventory-management')} style={{ marginTop: 12, ...window.textBtn('#409EFF'), fontSize: 13 }}>查看全部 →</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Page & Navigation Map ─────────────────────────────────────────────────
+const PAGE_MAP = {
+  'dashboard':             { component: DashboardPage,              breadcrumbs: ['儀表板'],                                                                                                                  navGroup: 'dashboard' },
+  'product-list':          { component: ProductListPage,            breadcrumbs: [{ label: '產品中心', page: 'dashboard' }, '產品管理'],                                                                       navGroup: 'product-list' },
+  'product-add':           { component: (p) => <AddEditProductPage {...p} mode="add" />,  breadcrumbs: [{ label: '產品中心', page: 'dashboard' }, { label: '產品管理', page: 'product-list' }, '新增產品'],    navGroup: 'product-list' },
+  'product-edit':          { component: (p) => <AddEditProductPage {...p} mode="edit" />, breadcrumbs: [{ label: '產品中心', page: 'dashboard' }, { label: '產品管理', page: 'product-list' }, '編輯產品'],   navGroup: 'product-list' },
+  'category-management':   { component: CategoryManagementPage,     breadcrumbs: [{ label: '產品中心', page: 'dashboard' }, '產品分類'],                                                                       navGroup: 'category-management' },
+  'inventory-management':  { component: InventoryManagementPage,    breadcrumbs: [{ label: '產品中心', page: 'dashboard' }, '庫存管理'],                                                                       navGroup: 'inventory-management' },
+};
+
+// ─── Root App ──────────────────────────────────────────────────────────────
+function App() {
+  const [currentPage, setCurrentPage] = React.useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('page') || localStorage.getItem('evomni-page') || 'product-list';
+  });
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+
+  // Pages that live in 會員管理後台.html
+  const MEMBER_PAGES = new Set([
+    'customer-management','customer-list','customer-detail','customer-settings-hub',
+    'member-tier','member-points','member-tags','member-blacklist',
+    'member-settings','member-notifications','member-segment',
+  ]);
+
+  const navigate = (page) => {
+    if (MEMBER_PAGES.has(page)) {
+      window.location.href = '會員管理後台.html?page=' + page;
+      return;
+    }
+    setCurrentPage(page);
+    localStorage.setItem('evomni-page', page);
+  };
+
+  const route = PAGE_MAP[currentPage] || PAGE_MAP['product-list'];
+  const PageComponent = route.component;
+
+  // Build breadcrumb with click handlers
+  const breadcrumbs = route.breadcrumbs;
+
+  return (
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      <Sidebar
+        currentPage={route.navGroup || currentPage}
+        onNavigate={navigate}
+        collapsed={sidebarCollapsed}
+      />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+        <Header
+          onNavigate={navigate}
+          onToggleSidebar={() => setSidebarCollapsed(c => !c)}
+        />
+        <main style={{ flex: 1, overflowY: 'auto', padding: 40, background: '#F2F3F5' }}>
+          <PageComponent onNavigate={navigate} />
+        </main>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

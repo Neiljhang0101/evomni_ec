@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: #fff; padding: 20px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 40px; padding: 0 16px;
+    font-family: 'Noto Sans TC', sans-serif;
+    font-size: 14px; cursor: pointer;
+    border-radius: 0; border: 1px solid transparent;
+    transition: all 0.2s;
+  }
+  .btn-primary { background: #303133; color: #fff; border-color: #303133; }
+  .btn-create  { background: #409EFF; color: #fff; border-color: #409EFF; }
+  .btn-plain { background: #fff; color: #303133; border-color: #DCDFE6; }
+  .btn-danger { background: #F56C6C; color: #fff; border-color: #F56C6C; }
+  .btn-text-blue { background: none; color: #409EFF; border: none; padding: 0 8px; }
+  .btn-text-red { background: none; color: #F56C6C; border: none; padding: 0 8px; }
+  .btn-disabled { background: #F5F7FA; color: #C0C4CC; border-color: #DCDFE6; cursor: not-allowed; }
+  .divider { width: 1px; height: 24px; background: #DCDFE6; margin: 0 4px; }
+</style>
+</head>
+<body>
+<div class="row">
+  <button class="btn btn-primary">搜尋</button>
+  <button class="btn btn-create">+ 新增產品</button>
+  <button class="btn btn-plain">清除</button>
+  <button class="btn btn-danger">刪除</button>
+  <div class="divider"></div>
+  <button class="btn btn-text-blue">編輯</button>
+  <button class="btn btn-text-red">刪除</button>
+  <div class="divider"></div>
+  <button class="btn btn-disabled" disabled>停用狀態</button>
+</div>
+</body>
+</html>

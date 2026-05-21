@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evomni — 金物流串接設定</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { height: 100%; }
+  body { font-family: 'Noto Sans TC', -apple-system, sans-serif; font-size: 14px; background: #F5F7FA; color: #303133; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: #DCDFE6; border-radius: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  input[type="radio"], input[type="checkbox"] { accent-color: #409EFF; }
+  a { color: #409EFF; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  table { table-layout: fixed; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="../components/Sidebar.jsx"></script>
+<script type="text/babel" src="../components/Header.jsx"></script>
+<script type="text/babel" src="../components/StatusTag.jsx"></script>
+<script type="text/babel" src="../components/SharedUI.jsx"></script>
+<script type="text/babel" src="../components/HubScreen.jsx"></script>
+<script type="text/babel" src="../components/VendorAutoScreen.jsx"></script>
+<script type="text/babel" src="../components/VendorOtherScreens.jsx"></script>
+<script type="text/babel" src="../components/UtilScreens.jsx"></script>
+<script type="text/babel" src="../components/FreightSettingsScreen.jsx"></script>
+
+<script type="text/babel">
+// ─── App ────────────────────────────────────────────────────────────────────
+function App() {
+  const [activeNav, setActiveNav] = React.useState('第三方金流');
+  const [vendorData, setVendorData] = React.useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+
+  const VENDOR_CATEGORIES = ['第三方金流', '銀行金流', '第三方物流', '通訊串接'];
+
+  // Compute per-category enabled count and error flag from HUB_VENDORS (loaded from HubScreen.jsx)
+  const getCategoryMeta = (cat) => {
+    const vendors = (window.HUB_VENDORS || {})[cat] || [];
+    return {
+      enabledCount: vendors.filter(v => v.status === '已啟用').length,
+      hasError: vendors.some(v => v.status === '連線異常'),
+    };
+  };
+
+  const NAV_LEFT = VENDOR_CATEGORIES.map(c => ({ id: c, label: c, ...getCategoryMeta(c) }));
+  const NAV_RIGHT = [
+    { id: 'temp-freight',   label: '溫層運費設定' },
+    { id: 'weight-freight', label: '重量運費設定' },
+    { id: 'invoice',        label: '電子發票設定' },
+    { id: 'webhook',        label: 'Webhook 管理' },
+  ];
+
+  const navigate = (pg) => {
+    if (pg === 'gs-payment-logistics') {
+      setActiveNav('第三方金流');
+      setVendorData(null);
+    }
+  };
+
+  const openVendor = (vendor) => setVendorData(vendor);
+  const backToHub  = () => setVendorData(null);
+
+  const renderContent = () => {
+    if (vendorData) {
+      const { screen } = vendorData;
+      const wrap = (child) => <div style={{ padding: 24 }}>{child}</div>;
+      if (screen === 'vendor-auto')   return wrap(<VendorAutoScreen   vendor={vendorData} onBack={backToHub} />);
+      if (screen === 'vendor-bank')   return wrap(<VendorBankScreen   vendor={vendorData} onBack={backToHub} />);
+      if (screen === 'vendor-manual') return wrap(<VendorManualScreen vendor={vendorData} onBack={backToHub} />);
+      if (screen === 'vendor-semi')   return wrap(<VendorSemiScreen   vendor={vendorData} onBack={backToHub} />);
+      if (screen === 'recurring')     return wrap(<RecurringScreen    onBack={backToHub} />);
+      if (screen === 'vendor-lineoa') return wrap(<LineOAScreen       onBack={backToHub} />);
+    }
+
+    if (VENDOR_CATEGORIES.includes(activeNav)) {
+      return <VendorCategoryPanel category={activeNav} onOpenVendor={openVendor} />;
+    }
+
+    switch (activeNav) {
+      case 'temp-freight':   return <TempRulesPanel />;
+      case 'weight-freight': return <WeightRulesPanel />;
+      case 'invoice':        return <div style={{ padding: 24 }}><InvoiceScreen /></div>;
+      case 'webhook':        return <div style={{ padding: 24 }}><WebhookScreen /></div>;
+      default: return null;
+    }
+  };
+
+  // Left nav item renderer
+  const renderNavItem = (item) => {
+    const isActive = activeNav === item.id;
+    const isVendorCat = item.enabledCount !== undefined;
+    return (
+      <div key={item.id}
+        onClick={() => { setActiveNav(item.id); setVendorData(null); }}
+        style={{
+          padding: '10px 20px 10px 16px', fontSize: 14, cursor: 'pointer', userSelect: 'none',
+          color: isActive ? '#409EFF' : (isVendorCat && item.hasError ? '#F56C6C' : '#606266'),
+          background: isActive ? '#ECF5FF' : 'transparent',
+          borderRight: isActive ? '2px solid #409EFF' : '2px solid transparent',
+          fontWeight: isActive ? 600 : 400,
+          transition: 'background 0.15s, color 0.15s',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 6,
+        }}
+        onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = '#F5F7FA'; }}
+        onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}>
+        <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
+        {isVendorCat && item.hasError && (
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: '#F56C6C', flexShrink: 0 }} title="有廠商連線異常" />
+        )}
+        {isVendorCat && !item.hasError && item.enabledCount > 0 && (
+          <span style={{ fontSize: 11, color: isActive ? '#409EFF' : '#909399', fontWeight: 400, flexShrink: 0 }}>{item.enabledCount}</span>
+        )}
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      <Sidebar
+        currentPage="gs-payment-logistics"
+        onNavigate={navigate}
+        collapsed={sidebarCollapsed}
+      />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <Header onToggleSidebar={() => setSidebarCollapsed(c => !c)} breadcrumbs={[]} />
+        <main style={{ flex: 1, overflowY: 'auto', background: '#F5F7FA', padding: 40 }}>
+
+          <PageHeader
+            title="金物流串接"
+            breadcrumbs={['全域設定', '金物流串接']}
+          />
+
+          {/* Two-column layout — mirrors CustomerSettingsHub */}
+          <div style={{ display: 'flex', gap: 0, minHeight: 'calc(100vh - 200px)' }}>
+
+            {/* Left vertical nav (160px) */}
+            <div style={{ width: 160, flexShrink: 0, background: '#fff', border: '1px solid #DCDFE6', borderRight: 'none', paddingTop: 8 }}>
+              <div style={{ padding: '6px 20px 4px', fontSize: 11, fontWeight: 700, color: '#C0C4CC', letterSpacing: '0.5px' }}>廠商串接</div>
+              {NAV_LEFT.map(renderNavItem)}
+
+              <div style={{ height: 1, background: '#EBEEF5', margin: '8px 0' }} />
+              <div style={{ padding: '4px 20px 4px', fontSize: 11, fontWeight: 700, color: '#C0C4CC', letterSpacing: '0.5px' }}>功能設定</div>
+              {NAV_RIGHT.map(renderNavItem)}
+            </div>
+
+            {/* Right content panel */}
+            <div style={{ flex: 1, background: '#fff', border: '1px solid #DCDFE6', minWidth: 0 }}>
+              {renderContent()}
+            </div>
+
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+
+<template id="__bundler_thumbnail">
+  <svg viewBox="0 0 80 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="80" height="56" fill="#F5F7FA"/>
+    <rect x="0" y="0" width="20" height="56" fill="#fff" stroke="#DCDFE6" stroke-width="0.5"/>
+    <rect x="2" y="8" width="16" height="4" rx="1" fill="#5B21B6" opacity="0.7"/>
+    <rect x="2" y="16" width="12" height="2" rx="1" fill="#DCDFE6"/>
+    <rect x="2" y="20" width="14" height="2" rx="1" fill="#DCDFE6"/>
+    <rect x="2" y="24" width="10" height="2" rx="1" fill="#409EFF" opacity="0.8"/>
+    <rect x="0" y="0" width="80" height="8" fill="#fff" stroke="#DCDFE6" stroke-width="0.5"/>
+    <!-- left inner nav -->
+    <rect x="22" y="10" width="14" height="46" fill="#fff" stroke="#DCDFE6" stroke-width="0.5"/>
+    <rect x="22" y="18" width="14" height="6" fill="#ECF5FF"/>
+    <rect x="23" y="19" width="12" height="4" rx="0" fill="#409EFF" opacity="0.3"/>
+    <!-- right content -->
+    <rect x="36" y="10" width="42" height="46" fill="#fff" stroke="#DCDFE6" stroke-width="0.5"/>
+    <rect x="38" y="14" width="16" height="3" rx="0" fill="#409EFF" opacity="0.5"/>
+    <rect x="38" y="20" width="38" height="8" rx="0" fill="#F5F7FA"/>
+    <rect x="38" y="30" width="38" height="8" rx="0" fill="#F5F7FA"/>
+    <rect x="38" y="40" width="38" height="8" rx="0" fill="#F5F7FA"/>
+  </svg>
+</template>
+</body>
+</html>

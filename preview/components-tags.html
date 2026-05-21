@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: #fff; padding: 20px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .tag {
+    display: inline-flex; align-items: center; height: 22px;
+    padding: 0 12px; border-radius: 9999px;
+    font-size: 12px; font-weight: 400; border: 1px solid transparent;
+  }
+  .tag-success { background: #f0f9eb; color: #67C23A; border-color: #c2e7b0; }
+  .tag-warning { background: #fdf6ec; color: #E6A23C; border-color: #f5dab1; }
+  .tag-danger  { background: #fef0f0; color: #F56C6C; border-color: #fbc4c4; }
+  .tag-info    { background: #f4f4f5; color: #909399; border-color: #d3d4d6; }
+  .tag-primary { background: #ecf5ff; color: #409EFF; border-color: #b3d8ff; }
+  .item { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+  .name { font-size: 10px; color: #909399; }
+</style>
+</head>
+<body>
+<div class="row">
+  <div class="item"><div class="tag tag-success">啟用</div><div class="name">success</div></div>
+  <div class="item"><div class="tag tag-info">停用</div><div class="name">info</div></div>
+  <div class="item"><div class="tag tag-warning">草稿</div><div class="name">warning</div></div>
+  <div class="item"><div class="tag tag-danger">已刪除</div><div class="name">danger</div></div>
+  <div class="item"><div class="tag tag-primary">子產品</div><div class="name">primary</div></div>
+  <div class="item"><div class="tag tag-success">可選用</div><div class="name">available</div></div>
+</div>
+</body>
+</html>

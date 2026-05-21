@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evomni Admin — UI Kit</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { height: 100%; }
+  body { font-family: 'Noto Sans TC', -apple-system, sans-serif; font-size: 14px; background: #F5F7FA; color: #303133; }
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: #DCDFE6; }
+  ::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="../../components/Sidebar.jsx"></script>
+<script type="text/babel" src="../../components/Header.jsx"></script>
+<script type="text/babel" src="../../components/StatusTag.jsx"></script>
+<script type="text/babel" src="../../components/DataTable.jsx"></script>
+<script type="text/babel" src="../../components/SearchForm.jsx"></script>
+
+<script type="text/babel">
+// ─── Sample Data ───────────────────────────────────────────────────────────
+const PRODUCTS = [
+  { id: '#348', title: '—', price: '', category: '', status: 'active', created: '2026-04-10 01:58:54' },
+  { id: '#335', title: '—', price: '', category: '', status: 'active', created: '2026-04-07 06:33:31' },
+  { id: '#333', title: '—', price: '', category: '', status: 'active', created: '2026-03-31 10:41:45' },
+  { id: '#328', title: '香菜貢丸湯', price: 'NT$ 500', category: '', status: 'active', created: '2026-03-31 06:56:28' },
+  { id: '#327', title: '—', price: '', category: '', status: 'active', created: '2026-03-30 10:00:05' },
+  { id: '#326', title: '探索測試智慧手錶 Smart Watch Pro', price: '', category: '子產品', status: 'active', created: '2026-03-20 03:35:59' },
+  { id: '#312', title: '—', price: '', category: '', status: 'active', created: '2026-03-16 06:32:24' },
+  { id: '#311', title: '測試產品 Test Product', price: 'NT$ 1,200', category: '子產品', status: 'active', created: '2026-03-12 06:37:23' },
+];
+
+const ARTICLES = [
+  { id: '#021', title: '2026 春季新品上架公告', category: '最新消息', status: 'active', created: '2026-04-05 10:00:00' },
+  { id: '#020', title: '母親節活動開跑囉！', category: '活動公告', status: 'active', created: '2026-04-01 08:30:00' },
+  { id: '#019', title: '系統維護通知', category: '最新消息', status: 'inactive', created: '2026-03-28 14:00:00' },
+  { id: '#018', title: '品牌故事：我們如何開始', category: '品牌故事', status: 'draft', created: '2026-03-20 09:00:00' },
+];
+
+const MEMBERS = [
+  { id: '#M001', name: '王小明', email: 'wang@example.com', status: 'active', joined: '2025-12-01' },
+  { id: '#M002', name: '李美玲', email: 'li@example.com', status: 'active', joined: '2026-01-15' },
+  { id: '#M003', name: '陳大偉', email: 'chen@example.com', status: 'inactive', joined: '2026-02-20' },
+];
+
+// ─── Page: Dashboard ───────────────────────────────────────────────────────
+function DashboardPage() {
+  const stats = [
+    { label: '總產品數', value: '128', color: '#409EFF' },
+    { label: '本月訂單', value: '47', color: '#67C23A' },
+    { label: '活躍會員', value: '1,284', color: '#E6A23C' },
+    { label: '本月營收', value: 'NT$ 38,900', color: '#F56C6C' },
+  ];
+  return (
+    <div>
+      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>儀表板</h1>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16, marginBottom: 24 }}>
+        {stats.map(s => (
+          <div key={s.label} style={{ background: '#fff', border: '1px solid #DCDFE6', padding: 24 }}>
+            <div style={{ fontSize: 12, color: '#909399', marginBottom: 8 }}>{s.label}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: s.color }}>{s.value}</div>
+          </div>
+        ))}
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16 }}>
+        <div style={{ background: '#fff', border: '1px solid #DCDFE6', padding: 24 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>近期訂單</div>
+          <div style={{ color: '#909399', fontSize: 14, textAlign: 'center', padding: '40px 0' }}>圖表區塊（整合中）</div>
+        </div>
+        <div style={{ background: '#fff', border: '1px solid #DCDFE6', padding: 24 }}>
+          <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 16 }}>快速操作</div>
+          {['新增產品', '新增文章', '查看訂單', '匯出報表'].map(action => (
+            <div key={action} style={{
+              padding: '10px 0', borderBottom: '1px solid #EBEEF5', color: '#409EFF',
+              cursor: 'pointer', fontSize: 14,
+            }}>{action} →</div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Page: Product List ────────────────────────────────────────────────────
+function ProductListPage() {
+  const [data, setData] = React.useState(PRODUCTS);
+  const [toast, setToast] = React.useState(null);
+
+  const showToast = (msg, type = 'success') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 2500);
+  };
+
+  const columns = [
+    { key: 'title', label: '產品/型號', minWidth: 200, render: (v, row) => (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={{ width: 36, height: 36, background: '#F5F7FA', border: '1px solid #DCDFE6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#C0C4CC', fontSize: 16, flexShrink: 0 }}>◫</div>
+        <div>
+          <div style={{ color: '#303133' }}>{v || '—'}</div>
+          {row.category && <StatusTag type="primary">{row.category}</StatusTag>}
+        </div>
+      </div>
+    )},
+    { key: 'id', label: 'ID', width: 80 },
+    { key: 'price', label: '價格', width: 120 },
+    { key: 'category', label: '分類', width: 120, render: () => '—' },
+    { key: 'status', label: '狀態', width: 100, render: v => <StatusTag type={v === 'active' ? 'success' : 'info'}>{v === 'active' ? '可選用' : '停用'}</StatusTag> },
+    { key: 'created', label: '建立日期', width: 170 },
+  ];
+
+  return (
+    <div style={{ position: 'relative' }}>
+      {toast && (
+        <div style={{
+          position: 'fixed', top: 64, right: 24, zIndex: 999,
+          background: toast.type === 'success' ? '#f0f9eb' : '#fef0f0',
+          border: `1px solid ${toast.type === 'success' ? '#c2e7b0' : '#fbc4c4'}`,
+          color: toast.type === 'success' ? '#67C23A' : '#F56C6C',
+          padding: '10px 20px', fontSize: 14,
+        }}>{toast.msg}</div>
+      )}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700, whiteSpace: 'nowrap' }}>產品管理</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+          <span style={{ color: '#909399', cursor: 'pointer' }}>產品</span>
+          <span style={{ color: '#C0C4CC', fontSize: 12 }}>/</span>
+          <span style={{ color: '#303133' }}>產品管理</span>
+        </div>
+      </div>
+
+      <SearchForm
+        fields={[
+          { key: 'keyword', label: '關鍵字', type: 'text', placeholder: '產品名稱、簡介、SKU', width: 160 },
+          { key: 'category', label: '分類', type: 'select', options: [{ label: '請選擇分類', value: '' }] },
+          { key: 'price_min', label: '最低售價', type: 'text', placeholder: '最低', width: 80 },
+          { key: 'price_max', label: '最高售價', type: 'text', placeholder: '最高', width: 80 },
+          { key: 'status', label: '狀態', type: 'select', options: [{ label: '狀態', value: '' }, { label: '可選用', value: 'active' }, { label: '停用', value: 'inactive' }] },
+          { key: 'created', label: '建立日期', type: 'daterange' },
+        ]}
+        onSearch={() => showToast('搜尋完成')}
+        onReset={() => {}}
+      />
+
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16, justifyContent: 'flex-end' }}>
+        <button style={plainBtn} onClick={() => showToast('已匯入', 'success')}>匯入</button>
+        <button style={createBtn} onClick={() => showToast('新增產品功能開發中', 'info')}>+ 新增產品</button>
+      </div>
+
+      <div style={{ background: '#fff', border: '1px solid #DCDFE6' }}>
+        <DataTable
+          columns={columns}
+          data={data}
+          onEdit={row => showToast(`編輯：${row.id}`)}
+          onDelete={row => { setData(d => d.filter(r => r.id !== row.id)); showToast(`已刪除 ${row.id}`, 'danger'); }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ─── Page: Article List ────────────────────────────────────────────────────
+function ArticleListPage() {
+  const [data, setData] = React.useState(ARTICLES);
+  const statusMap = { active: ['啟用', 'success'], inactive: ['停用', 'info'], draft: ['草稿', 'warning'] };
+  const columns = [
+    { key: 'id', label: 'ID', width: 80 },
+    { key: 'title', label: '標題', minWidth: 200 },
+    { key: 'category', label: '分類', width: 120 },
+    { key: 'status', label: '狀態', width: 100, render: v => { const [l, t] = statusMap[v] || ['—', 'info']; return <StatusTag type={t}>{l}</StatusTag>; } },
+    { key: 'created', label: '建立日期', width: 170 },
+  ];
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700, whiteSpace: 'nowrap' }}>文章管理</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+          <span style={{ color: '#909399', cursor: 'pointer' }}>文章</span>
+          <span style={{ color: '#C0C4CC', fontSize: 12 }}>/</span>
+          <span style={{ color: '#303133' }}>文章列表</span>
+        </div>
+      </div>
+      <SearchForm fields={[
+        { key: 'keyword', label: '文章標題', type: 'text' },
+        { key: 'status', label: '狀態', type: 'select', options: [{ label: '啟用', value: 'active' }, { label: '停用', value: 'inactive' }, { label: '草稿', value: 'draft' }] },
+      ]} />
+      <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+        <button style={createBtn}>+ 新增文章</button>
+        <button style={{ ...plainBtn, marginLeft: 'auto' }}>批次刪除</button>
+      </div>
+      <div style={{ background: '#fff', border: '1px solid #DCDFE6' }}>
+        <DataTable columns={columns} data={data}
+          onEdit={row => alert(`編輯：${row.title}`)}
+          onDelete={row => setData(d => d.filter(r => r.id !== row.id))} />
+      </div>
+    </div>
+  );
+}
+
+// ─── Page: Members ─────────────────────────────────────────────────────────
+function MembersPage() {
+  const [data] = React.useState(MEMBERS);
+  const columns = [
+    { key: 'id', label: 'ID', width: 80 },
+    { key: 'name', label: '姓名', width: 120 },
+    { key: 'email', label: '電子郵件', minWidth: 200 },
+    { key: 'status', label: '狀態', width: 100, render: v => <StatusTag type={v === 'active' ? 'success' : 'info'}>{v === 'active' ? '啟用' : '停用'}</StatusTag> },
+    { key: 'joined', label: '加入日期', width: 140 },
+  ];
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700, whiteSpace: 'nowrap' }}>群友管理</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+          <span style={{ color: '#909399', cursor: 'pointer' }}>群友</span>
+          <span style={{ color: '#C0C4CC', fontSize: 12 }}>/</span>
+          <span style={{ color: '#303133' }}>群友管理</span>
+        </div>
+      </div>
+      <SearchForm fields={[
+        { key: 'name', label: '姓名', type: 'text' },
+        { key: 'email', label: '電子郵件', type: 'text' },
+        { key: 'status', label: '狀態', type: 'select', options: [{ label: '啟用', value: 'active' }, { label: '停用', value: 'inactive' }] },
+      ]} />
+      <div style={{ background: '#fff', border: '1px solid #DCDFE6' }}>
+        <DataTable columns={columns} data={data} />
+      </div>
+    </div>
+  );
+}
+
+// ─── Page: Global Settings ──────────────────────────────────────────────────
+function GlobalSettingsPage() {
+  const [siteName, setSiteName] = React.useState('Evomni 電商平台');
+  const [saved, setSaved] = React.useState(false);
+
+  const save = () => { setSaved(true); setTimeout(() => setSaved(false), 2000); };
+
+  return (
+    <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+        <h1 style={{ fontSize: 20, fontWeight: 700, whiteSpace: 'nowrap' }}>全域設定</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13 }}>
+          <span style={{ color: '#909399', cursor: 'pointer' }}>首頁</span>
+          <span style={{ color: '#C0C4CC', fontSize: 12 }}>/</span>
+          <span style={{ color: '#303133' }}>全域設定</span>
+        </div>
+      </div>
+      <div style={{ background: '#fff', border: '1px solid #DCDFE6', padding: 24, maxWidth: 560 }}>
+        <div style={{ fontSize: 16, fontWeight: 700, marginBottom: 20 }}>基本設定</div>
+        {[
+          { label: '網站名稱', val: siteName, onChange: setSiteName, helper: '顯示於瀏覽器標籤與社群分享' },
+          { label: '聯絡信箱', val: 'contact@evomni.com', helper: '接收客戶詢問的電子郵件' },
+          { label: '客服電話', val: '02-1234-5678', helper: '' },
+        ].map((f, i) => (
+          <div key={i} style={{ marginBottom: 20 }}>
+            <label style={{ display: 'block', fontSize: 13, color: '#606266', marginBottom: 6 }}>{f.label}</label>
+            <input
+              defaultValue={f.val}
+              onChange={f.onChange ? e => f.onChange(e.target.value) : undefined}
+              style={{ width: '100%', height: 40, padding: '0 10px', border: '1px solid #DCDFE6', borderRadius: 0, fontSize: 14, color: '#303133', outline: 'none' }}
+              onFocus={e => e.target.style.borderColor = '#409EFF'}
+              onBlur={e => e.target.style.borderColor = '#DCDFE6'}
+            />
+            {f.helper && <div style={{ fontSize: 12, color: '#909399', marginTop: 4 }}>{f.helper}</div>}
+          </div>
+        ))}
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button style={plainBtn}>取消</button>
+          <button style={primaryBtn} onClick={save}>{saved ? '✓ 已儲存' : '確定儲存'}</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Button Styles ─────────────────────────────────────────────────────────
+const primaryBtn = {
+  height: 40, padding: '0 16px', background: '#303133', color: '#fff',
+  border: '1px solid #303133', borderRadius: 0, cursor: 'pointer',
+  fontFamily: 'Noto Sans TC, sans-serif', fontSize: 14,
+};
+const createBtn = {
+  height: 40, padding: '0 16px', background: '#409EFF', color: '#fff',
+  border: '1px solid #409EFF', borderRadius: 0, cursor: 'pointer',
+  fontFamily: 'Noto Sans TC, sans-serif', fontSize: 14,
+};
+const plainBtn = {
+  height: 40, padding: '0 16px', background: '#fff', color: '#303133',
+  border: '1px solid #DCDFE6', borderRadius: 0, cursor: 'pointer',
+  fontFamily: 'Noto Sans TC, sans-serif', fontSize: 14,
+};
+
+// ─── Page Router ───────────────────────────────────────────────────────────
+const PAGE_MAP = {
+  'dashboard': { component: DashboardPage, breadcrumbs: ['首頁', '儀表板'] },
+  'product-list': { component: ProductListPage, breadcrumbs: ['首頁', '產品', '產品管理'] },
+  'category': { component: () => <PlaceholderPage title="分類管理" />, breadcrumbs: ['首頁', '產品', '分類管理'] },
+  'settings': { component: () => <PlaceholderPage title="設定" />, breadcrumbs: ['首頁', '產品', '設定'] },
+  'article-list': { component: ArticleListPage, breadcrumbs: ['首頁', '文章', '文章列表'] },
+  'article-new': { component: () => <PlaceholderPage title="新增文章" />, breadcrumbs: ['首頁', '文章', '新增文章'] },
+  'members': { component: MembersPage, breadcrumbs: ['首頁', '群友'] },
+  'analytics': { component: () => <PlaceholderPage title="數據中心" />, breadcrumbs: ['首頁', '數據中心'] },
+  'courses': { component: () => <PlaceholderPage title="課題庫" />, breadcrumbs: ['首頁', '課題庫'] },
+  'forms': { component: () => <PlaceholderPage title="表單批告" />, breadcrumbs: ['首頁', '表單批告'] },
+  'subscriptions': { component: () => <PlaceholderPage title="訂閱管理" />, breadcrumbs: ['首頁', '訂閱管理'] },
+  'marketing': { component: () => <PlaceholderPage title="行銷管理" />, breadcrumbs: ['首頁', '行銷管理'] },
+  'global-settings': { component: GlobalSettingsPage, breadcrumbs: ['首頁', '全域設定'] },
+};
+
+function PlaceholderPage({ title }) {
+  return (
+    <div>
+      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>{title}</h1>
+      <div style={{ background: '#fff', border: '1px solid #DCDFE6', padding: 48, textAlign: 'center', color: '#909399', fontSize: 14 }}>
+        此頁面功能開發中
+      </div>
+    </div>
+  );
+}
+
+// ─── Root App ──────────────────────────────────────────────────────────────
+function App() {
+  const [currentPage, setCurrentPage] = React.useState('product-list');
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+
+  const route = PAGE_MAP[currentPage] || PAGE_MAP['dashboard'];
+  const PageComponent = route.component;
+
+  return (
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      <Sidebar
+        currentPage={currentPage}
+        onNavigate={setCurrentPage}
+        collapsed={sidebarCollapsed}
+      />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <Header
+          breadcrumbs={route.breadcrumbs}
+          onToggleSidebar={() => setSidebarCollapsed(c => !c)}
+        />
+        <main style={{ flex: 1, overflowY: 'auto', padding: 24 }}>
+          <PageComponent />
+        </main>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

@@ -1,0 +1,828 @@
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function FreightBc({ items }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 20, fontSize: 13 }}>
+      {items.map((item, i) => (
+        <React.Fragment key={i}>
+          {i > 0 && <span style={{ color: '#C0C4CC' }}>/</span>}
+          <span style={{ color: i < items.length - 1 ? '#909399' : '#303133' }}>{item}</span>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+}
+
+function FreightNTInput({ value, onChange, placeholder, disabled }) {
+  return (
+    <div style={{ display: 'flex' }}>
+      <span style={{ height: 36, padding: '0 10px', background: '#F5F7FA', border: '1px solid #DCDFE6', borderRight: 'none', display: 'flex', alignItems: 'center', fontSize: 13, color: '#909399', flexShrink: 0 }}>NT$</span>
+      <input type="number" min={0} value={value} onChange={e => onChange?.(e.target.value)} placeholder={placeholder} disabled={disabled}
+        style={{ width: '100%', height: 36, padding: '0 10px', border: '1px solid #DCDFE6', borderRadius: 0, fontSize: 14, outline: 'none', background: disabled ? '#F5F7FA' : '#fff', fontFamily: 'Noto Sans TC,sans-serif', color: '#303133' }} />
+    </div>
+  );
+}
+
+function FreightTip({ content }) {
+  const [show, setShow] = React.useState(false);
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', marginLeft: 6, verticalAlign: 'middle' }}
+      onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
+      <span style={{ width: 16, height: 16, borderRadius: '50%', background: '#C0C4CC', color: '#fff', fontSize: 11, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'help', fontWeight: 700, flexShrink: 0 }}>i</span>
+      {show && (
+        <div style={{ position: 'absolute', left: '100%', top: '50%', transform: 'translateY(-50%)', marginLeft: 8, background: '#303133', color: '#fff', borderRadius: 4, padding: '10px 14px', fontSize: 12, width: 280, lineHeight: 1.6, zIndex: 1000, pointerEvents: 'none' }}>
+          {content}
+        </div>
+      )}
+    </span>
+  );
+}
+
+function FreightDemoNav({ current, onChange }) {
+  const items = [
+    { id: 'screen1', label: 'S1 產品運送設定' },
+    { id: 'screen2', label: 'S2 溫層運費規則' },
+    { id: 'screen3', label: 'S3 重量運費規則' },
+    { id: 'screen4', label: 'S4 購物車混溫層' },
+    { id: 'screen5', label: 'S5 結帳運費顯示' },
+  ];
+  return (
+    <div style={{ display: 'flex', gap: 8, marginBottom: 24, flexWrap: 'wrap' }}>
+      {items.map(item => (
+        <button key={item.id} onClick={() => onChange(item.id)}
+          style={{ height: 32, padding: '0 14px', background: current === item.id ? '#303133' : '#fff', color: current === item.id ? '#fff' : '#606266', border: `1px solid ${current === item.id ? '#303133' : '#DCDFE6'}`, borderRadius: 0, cursor: 'pointer', fontSize: 13, fontFamily: 'Noto Sans TC,sans-serif' }}>
+          {item.label}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function FreightStickyFooter({ onCancel, onSave, saving }) {
+  return (
+    <div style={{ position: 'sticky', bottom: 0, background: '#fff', borderTop: '1px solid #DCDFE6', padding: '0 24px', height: 60, display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8, zIndex: 100 }}>
+      <button style={sharedBtns.plain} onClick={onCancel}>取消</button>
+      <button style={{ ...sharedBtns.create, opacity: saving ? 0.7 : 1 }} onClick={onSave} disabled={saving}>
+        {saving ? '儲存中…' : '儲存設定'}
+      </button>
+    </div>
+  );
+}
+
+// ─── Screen 1: 產品編輯 — 運送設定區塊 ───────────────────────────────────────
+
+function FreightScreen1({ toast }) {
+  const [tempType, setTempType] = React.useState('normal');
+  const [showBadge, setShowBadge] = React.useState(false);
+  const [weight, setWeight] = React.useState('');
+  const [weightUnit, setWeightUnit] = React.useState('g');
+  const weightPricingEnabled = true;
+
+  return (
+    <div>
+      <FreightBc items={['產品中心', '產品管理', '編輯產品']} />
+      <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 24 }}>編輯產品</h1>
+
+      <SectionCard title="基本資訊" collapsible defaultOpen={false}>
+        <p style={{ color: '#909399', fontSize: 13 }}>產品名稱、分類、描述等（略，非本次原型重點）</p>
+      </SectionCard>
+
+      <SectionCard title="定價與庫存" collapsible defaultOpen={false}>
+        <p style={{ color: '#909399', fontSize: 13 }}>定價、產品庫存單位（SKU）、庫存數量等（略）</p>
+      </SectionCard>
+
+      <SectionCard title="運送設定">
+        <FormField
+          label={<span>溫層屬性 <FreightTip content="溫層屬性影響結帳時的運費計算。選擇「冷藏」或「冷凍」後，消費者結帳時系統將自動套用對應的低溫配送費率，而非一般運費。冷藏/冷凍產品需要特殊低溫物流，運費通常較高。" /></span>}
+          helper="影響結帳時的運費計算。請選擇產品需要的配送溫度。"
+        >
+          <RadioGroup
+            value={tempType}
+            onChange={setTempType}
+            options={[
+              { value: 'normal', label: '常溫' },
+              { value: 'cold',   label: '冷藏（7°C 以下）' },
+              { value: 'frozen', label: '冷凍（-18°C 以下）' },
+            ]}
+          />
+        </FormField>
+
+        {tempType !== 'normal' && (
+          <FormField
+            label="前台溫層標示"
+            helper={`開啟後，產品頁會顯示溫層圖示（${tempType === 'frozen' ? '冷凍' : '冷藏'}）。僅冷藏或冷凍產品適用。`}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Switch checked={showBadge} onChange={setShowBadge} />
+              <span style={{ fontSize: 13, color: '#909399' }}>
+                {showBadge
+                  ? `顯示溫層圖示於產品頁（${tempType === 'frozen' ? '冷凍' : '冷藏'}）`
+                  : '不顯示溫層圖示'}
+              </span>
+            </div>
+          </FormField>
+        )}
+
+        <FormField
+          label="產品重量"
+          helper="若您的商店啟用重量計費，建議填寫此欄位。未填寫時將套用系統預設重量。"
+        >
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input type="number" min={0} value={weight} onChange={e => setWeight(e.target.value)} placeholder="例：500"
+              style={{ width: 160, height: 36, padding: '0 10px', border: '1px solid #DCDFE6', borderRadius: 0, fontSize: 14, outline: 'none', fontFamily: 'Noto Sans TC,sans-serif', color: '#303133' }} />
+            <select value={weightUnit} onChange={e => setWeightUnit(e.target.value)}
+              style={{ height: 36, padding: '0 10px', border: '1px solid #DCDFE6', borderRadius: 0, fontSize: 14, outline: 'none', fontFamily: 'Noto Sans TC,sans-serif', background: '#fff', color: '#303133', cursor: 'pointer' }}>
+              <option value="g">公克 (g)</option>
+              <option value="kg">公斤 (kg)</option>
+            </select>
+          </div>
+        </FormField>
+
+        {weightPricingEnabled && !weight && (
+          <div style={{ background: '#FDF6EC', border: '1px solid #f5dab1', borderRadius: 3, padding: '10px 14px', display: 'flex', gap: 10, alignItems: 'flex-start', marginTop: 4 }}>
+            <svg style={{ flexShrink: 0, marginTop: 1 }} width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 1L13 13H1L7 1Z" stroke="#E6A23C" strokeWidth="1.4" strokeLinejoin="round"/>
+              <line x1="7" y1="5.5" x2="7" y2="8.5" stroke="#E6A23C" strokeWidth="1.4" strokeLinecap="round"/>
+              <circle cx="7" cy="10.5" r="0.6" fill="#E6A23C"/>
+            </svg>
+            <span style={{ fontSize: 13, color: '#8B6914', lineHeight: 1.5 }}>此產品尚未設定重量。若您已啟用重量運費，系統將以預設重量計算此產品的運費，可能導致費用不準確。</span>
+          </div>
+        )}
+      </SectionCard>
+
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 8 }}>
+        <button style={sharedBtns.plain}>取消</button>
+        <button style={sharedBtns.primary} onClick={() => toast.show('產品運送設定已儲存', 'success')}>儲存</button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Reusable: Temperature Panel Fields ───────────────────────────────────────
+
+function TempPanelFields({ type, enabled, form, onForm }) {
+  const isFrozen = type === 'frozen';
+  const typeName  = isFrozen ? '冷凍' : '冷藏';
+  return (
+    <div>
+      {isFrozen && enabled && (
+        <div style={{ background: '#FDF6EC', border: '1px solid #f5dab1', borderRadius: 3, padding: '10px 14px', fontSize: 13, color: '#8B6914', marginBottom: 16, lineHeight: 1.5 }}>
+          冷凍配送費用通常高於冷藏，建議設定較高的基礎運費以反映實際物流成本。
+        </div>
+      )}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 24px', opacity: enabled ? 1 : 0.55 }}>
+        <FormField label="本島基礎運費" required helper="消費者選擇本島地址時的配送費。">
+          <FreightNTInput value={form.islandBase} onChange={v => onForm({ ...form, islandBase: v })} placeholder={isFrozen ? '例：200' : '例：150'} disabled={!enabled} />
+        </FormField>
+        <FormField label="離島基礎運費" required helper="消費者選擇離島地址（澎湖、金門、馬祖）時的配送費。">
+          <FreightNTInput value={form.remoteBase} onChange={v => onForm({ ...form, remoteBase: v })} placeholder={isFrozen ? '例：350' : '例：250'} disabled={!enabled} />
+        </FormField>
+        <FormField label="本島免運門檻" helper="訂單金額達此金額時，本島運費免收。填 0 代表不設免運。">
+          <FreightNTInput value={form.islandFree} onChange={v => onForm({ ...form, islandFree: v })} placeholder="例：1500" disabled={!enabled} />
+        </FormField>
+        <FormField label="離島免運門檻" helper="訂單金額達此金額時，離島運費免收。填 0 代表不設免運。">
+          <FreightNTInput value={form.remoteFree} onChange={v => onForm({ ...form, remoteFree: v })} placeholder="例：2500" disabled={!enabled} />
+        </FormField>
+      </div>
+      <FormField label="前台說明文字" helper={`選填。顯示在前台結帳頁的運費說明區。最多 50 字（已輸入 ${(form.customText || '').length} 字）。`}>
+        <input type="text" value={form.customText || ''}
+          onChange={e => e.target.value.length <= 50 && onForm({ ...form, customText: e.target.value })}
+          placeholder={`例：${typeName}產品採低溫宅配，運費 NT$${isFrozen ? '200' : '150'} 起`}
+          disabled={!enabled}
+          style={{ width: '100%', height: 36, padding: '0 10px', border: '1px solid #DCDFE6', borderRadius: 0, fontSize: 14, outline: 'none', background: enabled ? '#fff' : '#F5F7FA', fontFamily: 'Noto Sans TC,sans-serif', opacity: enabled ? 1 : 0.55 }} />
+      </FormField>
+    </div>
+  );
+}
+
+// ─── Screen 2: 溫層運費規則 Tab ───────────────────────────────────────────────
+
+function FreightScreen2({ onNavigate, toast }) {
+  const [coldRefEnabled, setColdRefEnabled] = React.useState(false);
+  const [coldFrzEnabled, setColdFrzEnabled] = React.useState(false);
+  const emptyForm = { islandBase: '', remoteBase: '', islandFree: '', remoteFree: '', customText: '' };
+  const [coldRefForm, setColdRefForm] = React.useState(emptyForm);
+  const [coldFrzForm, setColdFrzForm] = React.useState(emptyForm);
+  const [saving, setSaving] = React.useState(false);
+  const [showCancel, setShowCancel] = React.useState(false);
+
+  const handleSave = () => {
+    if (coldRefEnabled && (!coldRefForm.islandBase || !coldRefForm.remoteBase)) {
+      toast.show('冷藏設定：請填寫本島及離島基礎運費', 'error');
+      return;
+    }
+    if (coldFrzEnabled && (!coldFrzForm.islandBase || !coldFrzForm.remoteBase)) {
+      toast.show('冷凍設定：請填寫本島及離島基礎運費', 'error');
+      return;
+    }
+    setSaving(true);
+    setTimeout(() => { setSaving(false); toast.show('溫層運費設定已儲存，將套用至所有新訂單', 'success'); }, 1200);
+  };
+
+  return (
+    <div>
+      <FreightBc items={['全域設定', '金物流串接', '物流與運費設定']} />
+
+      <div style={{ background: '#fff', border: '1px solid #DCDFE6', borderRadius: 3 }}>
+        <ETabs
+          tabs={[{ id: 'temp', label: '溫層運費規則' }, { id: 'weight', label: '重量運費規則' }]}
+          active="temp"
+          onChange={t => t === 'weight' && onNavigate('screen3')}
+          style={{ padding: '0 24px' }}
+        />
+
+        <div style={{ padding: 24 }}>
+          <div style={{ background: '#ECF5FF', border: '1px solid #b3d8ff', borderRadius: 3, padding: '10px 16px', display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, marginBottom: 24 }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+              <circle cx="7" cy="7" r="6" stroke="#409EFF" strokeWidth="1.2"/><line x1="7" y1="6" x2="7" y2="10" stroke="#409EFF" strokeWidth="1.2" strokeLinecap="round"/><circle cx="7" cy="4.5" r="0.6" fill="#409EFF"/>
+            </svg>
+            <span style={{ color: '#606266', lineHeight: 1.6 }}>設定不同溫層產品的運費規則。結帳時，系統依訂單中最高溫層自動套用對應費率。若您的產品無需溫層管理，可略過此設定。</span>
+          </div>
+
+          <SectionCard title="常溫設定" collapsible>
+            <p style={{ fontSize: 13, color: '#606266', lineHeight: 1.6 }}>
+              常溫產品使用一般運費設定（目前基礎運費：NT$ 60）。如需修改常溫運費，請前往
+              <a href="#" style={{ marginLeft: 4 }}>一般運費設定 →</a>
+            </p>
+          </SectionCard>
+
+          <SectionCard title="冷藏設定" collapsible>
+            <FormField label="啟用冷藏運費" helper={coldRefEnabled ? '' : '未啟用時，冷藏產品套用一般常溫運費。'}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Switch checked={coldRefEnabled} onChange={setColdRefEnabled} />
+                <span style={{ fontSize: 13, color: '#909399' }}>
+                  {coldRefEnabled ? '已啟用冷藏費率' : '未啟用，冷藏產品套用常溫費率'}
+                </span>
+              </div>
+            </FormField>
+            <TempPanelFields type="cold" enabled={coldRefEnabled} form={coldRefForm} onForm={setColdRefForm} />
+          </SectionCard>
+
+          <SectionCard title="冷凍設定" collapsible>
+            <FormField label="啟用冷凍運費" helper={coldFrzEnabled ? '' : '未啟用時，冷凍產品套用一般常溫運費。'}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Switch checked={coldFrzEnabled} onChange={setColdFrzEnabled} />
+                <span style={{ fontSize: 13, color: '#909399' }}>
+                  {coldFrzEnabled ? '已啟用冷凍費率' : '未啟用，冷凍產品套用常溫費率'}
+                </span>
+              </div>
+            </FormField>
+            <TempPanelFields type="frozen" enabled={coldFrzEnabled} form={coldFrzForm} onForm={setColdFrzForm} />
+          </SectionCard>
+        </div>
+      </div>
+
+      <FreightStickyFooter onCancel={() => setShowCancel(true)} onSave={handleSave} saving={saving} />
+
+      <Dialog open={showCancel} title="確認放棄變更"
+        onCancel={() => setShowCancel(false)}
+        onConfirm={() => setShowCancel(false)}
+        confirmText="確定放棄" cancelText="繼續編輯" confirmDanger>
+        確定放棄未儲存的變更？所有未儲存的費率設定將恢復至上次儲存的值。
+      </Dialog>
+    </div>
+  );
+}
+
+// ─── Screen 3: 重量運費規則 Tab ───────────────────────────────────────────────
+
+function FreightScreen3({ onNavigate, toast }) {
+  const [enabled, setEnabled]       = React.useState(false);
+  const [weightUnit, setWeightUnit] = React.useState('kg');
+  const [defWeight, setDefWeight]   = React.useState('');
+  const [coexist, setCoexist]       = React.useState('higher');
+  const [tiers, setTiers]           = React.useState([{ id: 1, min: 0, max: '', islandFee: '', remoteFee: '' }]);
+  const [saving, setSaving]         = React.useState(false);
+  const [showCancel, setShowCancel] = React.useState(false);
+  const ul = weightUnit === 'kg' ? 'kg' : 'g';
+
+  const addTier = () => {
+    const last = tiers[tiers.length - 1];
+    const newMin = last.max !== '' ? Number(last.max) : '';
+    setTiers(prev => [...prev, { id: Date.now(), min: newMin, max: '', islandFee: '', remoteFee: '' }]);
+  };
+
+  const deleteTier = (id) => {
+    if (tiers.length <= 1) return;
+    const idx = tiers.findIndex(t => t.id === id);
+    const next = tiers.filter(t => t.id !== id);
+    for (let i = idx; i < next.length; i++) {
+      next[i] = { ...next[i], min: i === 0 ? 0 : (next[i-1].max !== '' ? Number(next[i-1].max) : '') };
+    }
+    setTiers(next);
+  };
+
+  const updateTier = (id, field, value) => {
+    const idx = tiers.findIndex(t => t.id === id);
+    const next = [...tiers];
+    next[idx] = { ...next[idx], [field]: value };
+    if (field === 'max' && idx + 1 < next.length) {
+      next[idx + 1] = { ...next[idx + 1], min: value !== '' ? Number(value) : '' };
+    }
+    setTiers(next);
+  };
+
+  const handleSave = () => {
+    if (enabled) {
+      if (!defWeight || Number(defWeight) <= 0) {
+        toast.show('請填寫產品未設定重量時的預設重量（需大於 0）', 'error');
+        return;
+      }
+      if (tiers.length === 0) {
+        toast.show('請至少設定一個費率階梯，才能儲存重量運費設定', 'error');
+        return;
+      }
+      for (let i = 0; i < tiers.length; i++) {
+        const t = tiers[i];
+        if (t.islandFee === '' || t.remoteFee === '') {
+          toast.show(`第 ${i + 1} 行費率：請填寫本島及離島運費`, 'error');
+          return;
+        }
+      }
+      const lastTier = tiers[tiers.length - 1];
+      if (lastTier.max !== '0' && lastTier.max !== 0 && lastTier.max !== '') {
+        toast.show('最後一個費率階梯的重量上限必須填 0（代表無上限）', 'error');
+        return;
+      }
+    }
+    setSaving(true);
+    setTimeout(() => { setSaving(false); toast.show('重量運費設定已儲存，將套用至所有新訂單', 'success'); }, 1200);
+  };
+
+  const thS = { padding: '10px 12px', textAlign: 'left', background: '#F5F7FA', borderBottom: '1px solid #DCDFE6', fontSize: EvoDS.font.listMin, fontWeight: 700, color: '#303133', whiteSpace: 'nowrap' };
+  const tdS = { padding: '8px 8px', borderBottom: '1px solid #DCDFE6', verticalAlign: 'middle' };
+  const readonlyInput = { width: 80, height: 32, padding: '0 8px', border: '1px solid #DCDFE6', borderRadius: 0, fontSize: 13, background: '#F5F7FA', color: '#909399', fontFamily: 'Noto Sans TC,sans-serif', outline: 'none' };
+  const editInput    = { height: 32, padding: '0 8px', border: '1px solid #DCDFE6', borderRadius: 0, fontSize: 13, color: '#303133', fontFamily: 'Noto Sans TC,sans-serif', outline: 'none' };
+  const ntPrefix     = { height: 32, padding: '0 8px', background: '#F5F7FA', border: '1px solid #DCDFE6', borderRight: 'none', display: 'flex', alignItems: 'center', fontSize: 12, color: '#909399', flexShrink: 0 };
+
+  return (
+    <div>
+      <FreightBc items={['全域設定', '金物流串接', '物流與運費設定']} />
+
+      <div style={{ background: '#fff', border: '1px solid #DCDFE6', marginBottom: 0, borderRadius: 3 }}>
+        <ETabs
+          tabs={[{ id: 'temp', label: '溫層運費規則' }, { id: 'weight', label: '重量運費規則' }]}
+          active="weight"
+          onChange={t => t === 'temp' && onNavigate('screen2')}
+          style={{ padding: '0 24px' }}
+        />
+
+        <div style={{ padding: 24 }}>
+          <div style={{ background: '#ECF5FF', border: '1px solid #b3d8ff', borderRadius: 3, padding: '10px 16px', display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, marginBottom: 24 }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+              <circle cx="7" cy="7" r="6" stroke="#409EFF" strokeWidth="1.2"/><line x1="7" y1="6" x2="7" y2="10" stroke="#409EFF" strokeWidth="1.2" strokeLinecap="round"/><circle cx="7" cy="4.5" r="0.6" fill="#409EFF"/>
+            </svg>
+            <span style={{ color: '#606266', lineHeight: 1.6 }}>設定依產品總重量計費的運費規則。結帳時，系統加總購物車內所有產品的重量（重量 × 數量），查找對應費率階梯並自動計算運費。</span>
+          </div>
+
+          <SectionCard title="全域設定">
+            <FormField label="啟用重量運費" helper="啟用後，系統將依產品重量計算運費，而非固定費率。">
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <Switch checked={enabled} onChange={setEnabled} />
+                <span style={{ fontSize: 13, color: '#909399' }}>{enabled ? '已啟用重量運費' : '未啟用'}</span>
+              </div>
+            </FormField>
+
+            <FormField label="重量單位" helper="整個商店統一使用同一單位。產品重量欄位的填寫單位也會跟著改變。">
+              <div style={{ opacity: enabled ? 1 : 0.55, pointerEvents: enabled ? 'auto' : 'none' }}>
+                <RadioGroup value={weightUnit} onChange={setWeightUnit}
+                  options={[{ value: 'g', label: '公克 (g)' }, { value: 'kg', label: '公斤 (kg)' }]} />
+              </div>
+            </FormField>
+
+            <FormField label={`產品未設定重量時的預設重量（${ul}）`}
+              helper={`產品未填重量時，系統以此預設值計算重量費率。建議填入您產品的平均重量。`}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input type="number" min={0.01} step={0.01} value={defWeight} onChange={e => setDefWeight(e.target.value)} placeholder="例：500"
+                  disabled={!enabled}
+                  style={{ width: 160, height: 36, padding: '0 10px', border: '1px solid #DCDFE6', borderRadius: 0, fontSize: 14, outline: 'none', background: enabled ? '#fff' : '#F5F7FA', fontFamily: 'Noto Sans TC,sans-serif', color: '#303133', opacity: enabled ? 1 : 0.6 }} />
+                <span style={{ fontSize: 13, color: '#606266', opacity: enabled ? 1 : 0.6 }}>{ul}</span>
+              </div>
+            </FormField>
+
+            <FormField
+              label={<span>當重量運費與一般運費並存時 <FreightTip content="當您同時設定了一般運費（例如固定 NT$60）和重量運費（例如 5kg 以上 NT$200），系統需要決定以哪個為準。建議選擇「取兩者較高值」，確保大型產品的運費不低於實際物流成本。" /></span>}
+              helper="若產品同時符合一般運費和重量運費，系統依此規則決定最終運費。">
+              <div style={{ opacity: enabled ? 1 : 0.55, pointerEvents: enabled ? 'auto' : 'none' }}>
+                <RadioGroup value={coexist} onChange={setCoexist} vertical
+                  options={[
+                    { value: 'higher', label: '取兩者較高值（確保運費不低於成本）' },
+                    { value: 'weight', label: '使用重量運費（忽略一般費率）' },
+                    { value: 'normal', label: '使用一般運費（忽略重量費率）' },
+                  ]} />
+              </div>
+            </FormField>
+          </SectionCard>
+
+          <div style={{ background: '#f5f0ff', border: '1px solid #e0d5ff', borderRadius: 3, padding: '16px 20px', marginBottom: 16 }}>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#5B21B6', marginBottom: 12 }}>費率設定範例（僅供參考）</p>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+              <thead>
+                <tr>{['重量範圍', '本島運費', '離島運費'].map(h => (
+                  <th key={h} style={{ textAlign: 'left', padding: '6px 12px', fontSize: 14, fontWeight: 700, color: '#5B21B6', borderBottom: '1px solid #e0d5ff' }}>{h}</th>
+                ))}</tr>
+              </thead>
+              <tbody>
+                {[['0 – 1 kg', 'NT$100', 'NT$200'], ['1 – 5 kg', 'NT$180', 'NT$320'], ['5 – 15 kg', 'NT$300', 'NT$500'], ['15 kg 以上', 'NT$500', 'NT$800']].map(([r, i, o], idx) => (
+                  <tr key={idx}>{[r, i, o].map((v, j) => (
+                    <td key={j} style={{ padding: '6px 12px', fontSize: 12, color: '#6D28D9', borderBottom: idx < 3 ? '1px solid #ece8ff' : 'none' }}>{v}</td>
+                  ))}</tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <SectionCard title="重量費率階梯">
+            {!enabled ? (
+              <p style={{ color: '#C0C4CC', fontSize: 13, textAlign: 'center', padding: '20px 0' }}>請先啟用重量運費後，再設定費率階梯。</p>
+            ) : tiers.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+                <p style={{ fontSize: 15, fontWeight: 700, marginBottom: 8 }}>尚未設定任何費率階梯</p>
+                <p style={{ fontSize: 13, color: '#909399', marginBottom: 20 }}>至少需要一個費率階梯，重量計費才能正常運作。</p>
+                <button style={sharedBtns.create} onClick={addTier}>+ 新增費率階梯</button>
+              </div>
+            ) : (
+              <>
+                <div style={{ overflowX: 'auto', marginBottom: 12 }}>
+                  <table style={{ borderCollapse: 'collapse', minWidth: 580, width: '100%', fontSize: 14 }}>
+                    <thead>
+                      <tr>
+                        <th style={thS}>下限（{ul}）</th>
+                        <th style={thS}>
+                          上限（{ul}）
+                          <span style={{ fontSize: 11, color: '#909399', fontWeight: 400, marginLeft: 4 }}>填 0 = 無上限</span>
+                        </th>
+                        <th style={thS}>本島運費 (NT$)</th>
+                        <th style={thS}>離島運費 (NT$)</th>
+                        <th style={{ ...thS, width: 68, textAlign: 'center' }}>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tiers.map((tier, idx) => (
+                        <tr key={tier.id}>
+                          <td style={tdS}>
+                            <input readOnly value={tier.min === '' ? '—' : tier.min} style={readonlyInput} />
+                          </td>
+                          <td style={tdS}>
+                            <input type="number" min={0} value={tier.max}
+                              onChange={e => updateTier(tier.id, 'max', e.target.value)}
+                              placeholder={idx === tiers.length - 1 ? '0（無上限）' : ''}
+                              style={{ ...editInput, width: 130 }} />
+                          </td>
+                          <td style={tdS}>
+                            <div style={{ display: 'flex' }}>
+                              <span style={ntPrefix}>NT$</span>
+                              <input type="number" min={0} value={tier.islandFee} onChange={e => updateTier(tier.id, 'islandFee', e.target.value)}
+                                style={{ ...editInput, width: 80 }} />
+                            </div>
+                          </td>
+                          <td style={tdS}>
+                            <div style={{ display: 'flex' }}>
+                              <span style={ntPrefix}>NT$</span>
+                              <input type="number" min={0} value={tier.remoteFee} onChange={e => updateTier(tier.id, 'remoteFee', e.target.value)}
+                                style={{ ...editInput, width: 80 }} />
+                            </div>
+                          </td>
+                          <td style={{ ...tdS, textAlign: 'center' }}>
+                            {tiers.length === 1
+                              ? <FreightTip content="至少需要保留一個費率階梯">
+                                  <span>
+                                    <button disabled style={{ height: 30, padding: '0 8px', background: 'none', color: '#C0C4CC', border: '1px solid #EBEEF5', borderRadius: 0, fontSize: 12, fontFamily: 'Noto Sans TC,sans-serif', cursor: 'not-allowed' }}>刪除</button>
+                                  </span>
+                                </FreightTip>
+                              : <button onClick={() => deleteTier(tier.id)} style={{ height: 30, padding: '0 8px', background: 'none', color: '#F56C6C', border: '1px solid #fbc4c4', borderRadius: 0, fontSize: 12, fontFamily: 'Noto Sans TC,sans-serif', cursor: 'pointer' }}>刪除</button>
+                            }
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <button onClick={addTier} style={{ ...sharedBtns.plain, borderColor: '#409EFF', color: '#409EFF' }}>+ 新增費率階梯</button>
+              </>
+            )}
+          </SectionCard>
+        </div>
+      </div>
+
+      <FreightStickyFooter onCancel={() => setShowCancel(true)} onSave={handleSave} saving={saving} />
+
+      <Dialog open={showCancel} title="確認放棄變更"
+        onCancel={() => setShowCancel(false)}
+        onConfirm={() => setShowCancel(false)}
+        confirmText="確定放棄" cancelText="繼續編輯" confirmDanger>
+        確定放棄未儲存的變更？所有未儲存的費率設定將恢復至上次儲存的值。
+      </Dialog>
+    </div>
+  );
+}
+
+// ─── Screen 4: 前台購物車 — 混溫層警示 ───────────────────────────────────────
+
+function FreightScreen4() {
+  const [cartState, setCartState] = React.useState('mixed-cold');
+  const [showSplit, setShowSplit]  = React.useState(false);
+
+  const itemsByState = {
+    normal:       [
+      { id: 1, name: '芒果乾', temp: 'normal', qty: 2, price: 280 },
+      { id: 2, name: '腰果禮盒', temp: 'normal', qty: 1, price: 480 },
+      { id: 3, name: '燕麥片', temp: 'normal', qty: 3, price: 120 },
+    ],
+    'mixed-cold': [
+      { id: 1, name: '芒果乾', temp: 'normal', qty: 2, price: 280 },
+      { id: 2, name: '有機花椰菜', temp: 'cold', qty: 1, price: 150 },
+      { id: 3, name: '新鮮草莓', temp: 'cold', qty: 2, price: 220 },
+    ],
+    'mixed-frozen': [
+      { id: 1, name: '芒果乾', temp: 'normal', qty: 2, price: 280 },
+      { id: 2, name: '有機花椰菜', temp: 'cold', qty: 1, price: 150 },
+      { id: 3, name: '草莓冰淇淋', temp: 'frozen', qty: 1, price: 380 },
+    ],
+  };
+
+  const items = itemsByState[cartState];
+  const hasWarning = cartState !== 'normal';
+  const hasFrozen  = cartState === 'mixed-frozen';
+
+  const tempBadge = (temp) => {
+    if (temp === 'frozen') return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#ecf5ff', color: '#409EFF', border: '1px solid #b3d8ff', padding: '1px 6px', fontSize: 11 }}>冷凍</span>;
+    if (temp === 'cold')   return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 3, background: '#f0f7ff', color: '#66b1ff', border: '1px solid #c6e2ff', padding: '1px 6px', fontSize: 11 }}>冷藏</span>;
+    return null;
+  };
+
+  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+
+  return (
+    <div>
+      <div style={{ background: '#FEF6E4', border: '1px solid #F5C37F', borderRadius: 3, padding: '10px 16px', marginBottom: 20, fontSize: 13, color: '#B45309', display: 'flex', alignItems: 'center', gap: 8 }}>
+        消費者前台頁面預覽 — 以下模擬消費者看到的購物車介面
+      </div>
+
+      <div style={{ marginBottom: 20 }}>
+        <span style={{ fontSize: 13, color: '#606266', marginRight: 12 }}>切換購物車狀態：</span>
+        {[
+          { id: 'normal',       label: '單溫層（無警示）' },
+          { id: 'mixed-cold',   label: '混溫層（含冷藏）' },
+          { id: 'mixed-frozen', label: '混溫層（含冷凍）' },
+        ].map(s => (
+          <button key={s.id} onClick={() => setCartState(s.id)}
+            style={{ height: 30, padding: '0 12px', background: cartState === s.id ? '#409EFF' : '#fff', color: cartState === s.id ? '#fff' : '#606266', border: `1px solid ${cartState === s.id ? '#409EFF' : '#DCDFE6'}`, borderRadius: 0, cursor: 'pointer', fontSize: 12, fontFamily: 'Noto Sans TC,sans-serif', marginRight: 8 }}>
+            {s.label}
+          </button>
+        ))}
+      </div>
+
+      <div style={{ background: '#fff', border: '1px solid #DCDFE6', borderRadius: 3, padding: 24, maxWidth: 680 }}>
+        <h2 style={{ fontSize: 18, fontWeight: 700, marginBottom: 20, borderBottom: '1px solid #DCDFE6', paddingBottom: 16 }}>
+          購物車（{items.length} 件產品）
+        </h2>
+
+        {items.map(item => (
+          <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: 16, padding: '14px 0', borderBottom: '1px solid #F5F7FA' }}>
+            <div style={{ width: 64, height: 64, background: '#F5F7FA', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, color: '#909399', flexShrink: 0, position: 'relative' }}>
+              {item.name.charAt(0)}
+              {item.temp !== 'normal' && (
+                <span style={{ position: 'absolute', top: 0, right: 0, background: item.temp === 'frozen' ? '#409EFF' : '#66b1ff', color: '#fff', fontSize: 9, padding: '1px 3px', lineHeight: '14px' }}>
+                  {item.temp === 'frozen' ? '冷凍' : '冷藏'}
+                </span>
+              )}
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 14, fontWeight: 500 }}>{item.name}</span>
+                {tempBadge(item.temp)}
+              </div>
+              <span style={{ fontSize: 13, color: '#909399' }}>數量：{item.qty}</span>
+            </div>
+            <span style={{ fontSize: 14, fontWeight: 700 }}>NT$ {(item.price * item.qty).toLocaleString()}</span>
+          </div>
+        ))}
+
+        {hasWarning && (
+          <div style={{ background: '#FDF6EC', border: '1px solid #f5dab1', padding: '14px 16px', margin: '20px 0', borderRadius: 3 }}>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontSize: 14, fontWeight: 700, color: '#E6A23C', marginBottom: 6 }}>您的購物車包含不同溫層的產品</p>
+                <p style={{ fontSize: 13, color: '#8B6914', lineHeight: 1.7 }}>
+                  {hasFrozen
+                    ? '購物車內同時有常溫與冷凍產品。系統將依最高溫層（冷凍）計算運費。如需分開配送，建議分批結帳，分別選擇適合的物流方式。'
+                    : '購物車內同時有常溫與冷藏產品。系統將依最高溫層（冷藏）計算運費。如需分開配送，建議分批結帳，分別選擇適合的物流方式。'}
+                </p>
+                <button onClick={() => setShowSplit(true)}
+                  style={{ marginTop: 12, height: 32, padding: '0 14px', background: 'none', color: '#E6A23C', border: '1px solid #E6A23C', borderRadius: 0, cursor: 'pointer', fontSize: 13, fontFamily: 'Noto Sans TC,sans-serif' }}>
+                  分拆購物車
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div style={{ background: '#F5F7FA', padding: '10px 14px', marginBottom: 20, borderRadius: 3, fontSize: 13, color: '#909399', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" stroke="#909399" strokeWidth="1.3"/>
+            <line x1="7" y1="6" x2="7" y2="10" stroke="#909399" strokeWidth="1.3" strokeLinecap="round"/>
+            <circle cx="7" cy="4" r="0.5" fill="#909399"/>
+          </svg>
+          實際運費將於選擇物流方式後顯示
+        </div>
+
+        <div style={{ borderTop: '1px solid #DCDFE6', paddingTop: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, fontSize: 13, color: '#606266' }}>
+            <span>產品小計</span><span>NT$ {subtotal.toLocaleString()}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20, fontSize: 13, color: '#909399' }}>
+            <span>運費</span><span>待選擇物流後計算</span>
+          </div>
+          <button style={{ width: '100%', height: 44, background: '#303133', color: '#fff', border: 'none', borderRadius: 0, cursor: 'pointer', fontSize: 15, fontWeight: 700, fontFamily: 'Noto Sans TC,sans-serif' }}>
+            前往結帳 →
+          </button>
+        </div>
+      </div>
+
+      <Dialog open={showSplit} title="分拆購物車"
+        onCancel={() => setShowSplit(false)}
+        onConfirm={() => setShowSplit(false)}
+        confirmText="確定分拆" cancelText="取消" confirmDanger>
+        系統將依溫層將購物車拆成兩筆訂單，一筆常溫、一筆冷藏/冷凍。分拆後需分別完成結帳。確定要繼續嗎？
+      </Dialog>
+    </div>
+  );
+}
+
+// ─── Screen 5: 前台結帳頁 — 運費顯示區塊 ─────────────────────────────────────
+
+function FreightScreen5() {
+  const [method, setMethod]     = React.useState('');
+  const [region, setRegion]     = React.useState('');
+  const [scenario, setScenario] = React.useState('cold');
+  const [feeState, setFeeState] = React.useState('none');
+
+  React.useEffect(() => {
+    if (method && region) {
+      setFeeState('calculating');
+      const t = setTimeout(() => setFeeState(scenario), 1400);
+      return () => clearTimeout(t);
+    } else {
+      setFeeState('none');
+    }
+  }, [method, region, scenario]);
+
+  const feeMap = {
+    none:        { fee: null,         note: null },
+    calculating: { fee: '計算中…',   note: null },
+    cold:        { fee: 'NT$ 150',    note: '冷藏產品低溫配送', custom: '冷藏產品採低溫宅配，運費 NT$150 起' },
+    frozen:      { fee: 'NT$ 200',    note: '冷凍產品低溫配送', custom: '冷凍產品採低溫宅配，運費 NT$200 起' },
+    weight:      { fee: 'NT$ 180',    note: '產品總重量 3.2 公斤（依重量費率計算）', custom: null, weightWarning: true },
+    free:        { fee: 'NT$ 0',      note: '訂單金額達免運門檻，運費免收' },
+  };
+
+  const feeAmountMap = { cold: 150, frozen: 200, weight: 180, free: 0 };
+  const { fee, note, custom, weightWarning } = feeMap[feeState] || {};
+  const isCalculated = feeState !== 'none' && feeState !== 'calculating';
+  const feeAmt       = feeAmountMap[feeState];
+  const subtotal     = 1350;
+
+  const selectStyle = { width: '100%', height: 36, padding: '0 10px', border: '1px solid #DCDFE6', borderRadius: 0, fontSize: 14, outline: 'none', fontFamily: 'Noto Sans TC,sans-serif', background: '#fff', color: '#303133' };
+
+  return (
+    <div>
+      <div style={{ background: '#FEF6E4', border: '1px solid #F5C37F', borderRadius: 3, padding: '10px 16px', marginBottom: 20, fontSize: 13, color: '#B45309', display: 'flex', alignItems: 'center', gap: 8 }}>
+        消費者前台頁面預覽 — 模擬結帳頁的運費顯示區塊
+      </div>
+
+      <div style={{ background: '#fff', border: '1px solid #DCDFE6', borderRadius: 3, padding: '14px 20px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 13, color: '#606266', fontWeight: 700, whiteSpace: 'nowrap' }}>運費情境：</span>
+        {[
+          { id: 'cold',   label: '冷藏溫層費率' },
+          { id: 'frozen', label: '冷凍溫層費率' },
+          { id: 'weight', label: '依重量計費' },
+          { id: 'free',   label: '達免運門檻' },
+        ].map(s => (
+          <button key={s.id} onClick={() => setScenario(s.id)}
+            style={{ height: 30, padding: '0 12px', background: scenario === s.id ? '#409EFF' : '#fff', color: scenario === s.id ? '#fff' : '#606266', border: `1px solid ${scenario === s.id ? '#409EFF' : '#DCDFE6'}`, borderRadius: 0, cursor: 'pointer', fontSize: 12, fontFamily: 'Noto Sans TC,sans-serif' }}>
+            {s.label}
+          </button>
+        ))}
+        <span style={{ fontSize: 12, color: '#909399' }}>（選完後再選物流方式觸發計算）</span>
+      </div>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: 20, alignItems: 'start' }}>
+        <div>
+          <div style={{ background: '#fff', border: '1px solid #DCDFE6', borderRadius: 3, padding: 24, marginBottom: 16 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>收件資訊</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              {['姓名', '電話'].map(l => (
+                <div key={l}>
+                  <label style={{ display: 'block', fontSize: 13, color: '#606266', marginBottom: 6 }}>{l}</label>
+                  <div style={{ height: 36, background: '#F5F7FA', border: '1px solid #DCDFE6' }} />
+                </div>
+              ))}
+              <div style={{ gridColumn: '1 / -1' }}>
+                <label style={{ display: 'block', fontSize: 13, color: '#606266', marginBottom: 6 }}>地址</label>
+                <div style={{ height: 36, background: '#F5F7FA', border: '1px solid #DCDFE6' }} />
+              </div>
+            </div>
+          </div>
+
+          <div style={{ background: '#fff', border: '1px solid #DCDFE6', borderRadius: 3, padding: 24 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 16 }}>選擇物流方式</h3>
+            <div style={{ marginBottom: 14 }}>
+              <label style={{ display: 'block', fontSize: 13, color: '#606266', marginBottom: 6 }}>物流方式</label>
+              <select value={method} onChange={e => setMethod(e.target.value)} style={selectStyle}>
+                <option value="">請選擇物流方式</option>
+                <option value="home">宅配到府</option>
+                <option value="cold-home">低溫宅配</option>
+                <option value="store">超商取貨</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: 13, color: '#606266', marginBottom: 6 }}>配送縣市</label>
+              <select value={region} onChange={e => setRegion(e.target.value)} style={selectStyle}>
+                <option value="">請選擇縣市</option>
+                <option value="taipei">臺北市（本島）</option>
+                <option value="penghu">澎湖縣（離島）</option>
+                <option value="kinmen">金門縣（離島）</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ background: '#fff', border: '1px solid #DCDFE6', borderRadius: 3, padding: 24 }}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, marginBottom: 20, borderBottom: '1px solid #DCDFE6', paddingBottom: 12 }}>費用明細</h3>
+
+          {weightWarning && isCalculated && (
+            <div style={{ background: '#FDF6EC', border: '1px solid #f5dab1', borderRadius: 3, padding: '10px 14px', marginBottom: 16, fontSize: 13, color: '#8B6914', lineHeight: 1.5 }}>
+              此訂單包含未設定重量的產品，運費以最低費率計算，可能與實際物流成本有差異。
+            </div>
+          )}
+
+          <div style={{ marginBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 12 }}>
+              <span style={{ fontSize: 13, color: '#606266' }}>產品小計</span>
+              <span style={{ fontSize: 13, fontWeight: 700 }}>NT$ {subtotal.toLocaleString()}</span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <span style={{ fontSize: 13, color: '#606266' }}>運費</span>
+              <div style={{ textAlign: 'right', maxWidth: 200 }}>
+                {feeState === 'none' && (
+                  <span style={{ fontSize: 13, color: '#C0C4CC' }}>請先選擇物流方式與配送地址</span>
+                )}
+                {feeState === 'calculating' && (
+                  <span style={{ fontSize: 13, color: '#409EFF' }}>計算中…</span>
+                )}
+                {isCalculated && (
+                  <>
+                    <span style={{ fontSize: 15, fontWeight: 700, color: feeState === 'free' ? '#67C23A' : '#303133' }}>{fee}</span>
+                    {note && <p style={{ fontSize: 12, color: '#909399', marginTop: 4, lineHeight: 1.5 }}>{note}</p>}
+                    {custom && <p style={{ fontSize: 11, color: '#C0C4CC', marginTop: 3, lineHeight: 1.5 }}>{custom}</p>}
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ borderTop: '2px solid #303133', paddingTop: 16, marginBottom: 20 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <span style={{ fontSize: 15, fontWeight: 700 }}>應付總額</span>
+              <span style={{ fontSize: 16, fontWeight: 700 }}>
+                {isCalculated ? `NT$ ${(subtotal + (feeAmt ?? 0)).toLocaleString()}` : '—'}
+              </span>
+            </div>
+          </div>
+
+          <button disabled={!isCalculated || feeState === 'calculating'}
+            style={{ width: '100%', height: 44, background: isCalculated ? '#303133' : '#C0C4CC', color: '#fff', border: 'none', borderRadius: 0, cursor: isCalculated ? 'pointer' : 'not-allowed', fontSize: 15, fontWeight: 700, fontFamily: 'Noto Sans TC,sans-serif' }}>
+            確認訂單
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── PageFreight ──────────────────────────────────────────────────────────────
+
+function PageFreight({ currentPage, onNavigate, show }) {
+  const [screen, setScreen] = React.useState(currentPage === 'gs-weight-freight' ? 'screen3' : 'screen2');
+  const toast = { show: show || (() => {}), toasts: [] };
+
+  const renderScreen = () => {
+    switch (screen) {
+      case 'screen1': return <FreightScreen1 toast={toast} />;
+      case 'screen2': return <FreightScreen2 onNavigate={setScreen} toast={toast} />;
+      case 'screen3': return <FreightScreen3 onNavigate={setScreen} toast={toast} />;
+      case 'screen4': return <FreightScreen4 />;
+      case 'screen5': return <FreightScreen5 />;
+      default: return null;
+    }
+  };
+
+  return (
+    <div>
+      <FreightDemoNav current={screen} onChange={setScreen} />
+      {renderScreen()}
+    </div>
+  );
+}

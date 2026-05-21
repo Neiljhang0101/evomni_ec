@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Noto Sans TC', sans-serif; background: #fff; padding: 24px; }
+  .pagination { display: flex; align-items: center; gap: 6px; font-size: 14px; color: #606266; flex-wrap: wrap; }
+  .total { margin-right: 8px; color: #606266; }
+  .page-size { display: flex; align-items: center; gap: 6px; margin-right: 8px; }
+  select { height: 32px; padding: 0 6px; border: 1px solid #DCDFE6; border-radius: 0; font-size: 13px; color: #606266; }
+  .btn { width: 32px; height: 32px; border: 1px solid #DCDFE6; background: #fff; border-radius: 0; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; color: #303133; }
+  .btn:hover { color: #409EFF; border-color: #409EFF; }
+  .btn.active { background: #303133; color: #fff; border-color: #303133; }
+  .jumper { display: flex; align-items: center; gap: 6px; margin-left: 8px; }
+  .jumper input { width: 44px; height: 32px; border: 1px solid #DCDFE6; border-radius: 0; text-align: center; font-size: 14px; color: #303133; }
+</style>
+</head>
+<body>
+<div class="pagination">
+  <span class="total">共 86 條</span>
+  <div class="page-size">
+    <select><option>10 條/頁</option><option>20 條/頁</option><option>50 條/頁</option></select>
+  </div>
+  <button class="btn">‹</button>
+  <button class="btn active">1</button>
+  <button class="btn">2</button>
+  <button class="btn">3</button>
+  <button class="btn">4</button>
+  <button class="btn">5</button>
+  <button class="btn">›</button>
+  <div class="jumper">前往 <input value="1"> 頁</div>
+</div>
+</body>
+</html>

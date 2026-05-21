@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evomni 後台管理系統 — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { height: 100%; }
+  body { font-family: 'Noto Sans TC', -apple-system, BlinkMacSystemFont, sans-serif; font-size: 14px; background: #F5F7FA; color: #303133; -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-thumb { background: #DCDFE6; border-radius: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  input, select, textarea, button { font-family: 'Noto Sans TC', -apple-system, sans-serif; }
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; }
+  input[type=number] { -moz-appearance: textfield; }
+  input[type="radio"], input[type="checkbox"] { accent-color: #409EFF; cursor: pointer; }
+  input::placeholder, textarea::placeholder { color: #909399; }
+  a { text-decoration: none; }
+  table { border-collapse: collapse; }
+  @keyframes evo-spin    { to { transform: rotate(360deg); } }
+  @keyframes evo-shimmer { 0%,100%{opacity:1} 50%{opacity:.45} }
+  @keyframes evo-modal-in { from{opacity:0;transform:scale(.96) translateY(-8px)} to{opacity:1;transform:scale(1) translateY(0)} }
+  @keyframes evo-toast-in { from{opacity:0;transform:translateX(12px)} to{opacity:1;transform:translateX(0)} }
+  @keyframes evo-drawer-in { from{transform:translateX(100%)} to{transform:translateX(0)} }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<!-- 共用 Mock 資料與狀態對照表 -->
+<script type="text/babel" src="components/MockData.jsx"></script>
+
+<!-- 設計系統：導覽、頂欄、共用元件 -->
+<script type="text/babel" src="components/Sidebar.jsx"></script>
+<script type="text/babel" src="components/Header.jsx"></script>
+<script type="text/babel" src="components/StatusTag.jsx"></script>
+<!-- Unified dialog / modal / drawer — must load before SharedUI and all page components -->
+<script type="text/babel" src="components/Dialog.jsx"></script>
+<script type="text/babel" src="components/SharedUI.jsx"></script>
+<!-- Shared.jsx 覆蓋 SharedUI 的 useToast，提供 { show, Toast } 介面 -->
+<script type="text/babel" src="components/Shared.jsx"></script>
+<!-- PageHeader.jsx 覆蓋 Shared.jsx 的 PageHeader，補上 onBack 支援 -->
+<script type="text/babel" src="components/PageHeader.jsx"></script>
+
+<!-- 共用分頁元件 -->
+<script type="text/babel" src="components/Pagination.jsx"></script>
+<!-- 共用頁簽搜尋列元件 -->
+<script type="text/babel" src="components/TabSearchBar.jsx"></script>
+
+<!-- 產品模組元件 -->
+<script type="text/babel" src="components/DataTable.jsx"></script>
+<script type="text/babel" src="components/SearchForm.jsx"></script>
+<script type="text/babel" src="components/LocaleTabs.jsx"></script>
+<script type="text/babel" src="components/CsvImportDialog.jsx"></script>
+<script type="text/babel" src="components/ProductListPage.jsx"></script>
+<script type="text/babel" src="components/AddEditProductPage.jsx"></script>
+<script type="text/babel" src="components/CategoryManagementPage.jsx"></script>
+<script type="text/babel" src="components/InventoryManagementPage.jsx"></script>
+
+<!-- 訂單模組元件（Screen 元件各自內含 AdminLayout） -->
+<script type="text/babel" src="components/Screen1.jsx"></script>
+<script type="text/babel" src="components/Screen2.jsx"></script>
+<script type="text/babel" src="components/Screen3.jsx"></script>
+<script type="text/babel" src="components/Screen4.jsx"></script>
+<script type="text/babel" src="components/Screen67.jsx"></script>
+
+<!-- 金物流模組元件 -->
+<script type="text/babel" src="components/HubScreen.jsx"></script>
+<script type="text/babel" src="components/VendorAutoScreen.jsx"></script>
+<script type="text/babel" src="components/VendorOtherScreens.jsx"></script>
+<script type="text/babel" src="components/UtilScreens.jsx"></script>
+<script type="text/babel" src="components/FreightSettingsScreen.jsx"></script>
+
+<!-- 頁面模組（各對應一個原始 HTML prototype） -->
+<script type="text/babel" src="components/pages/PageDashboard.jsx"></script>
+<script type="text/babel" src="components/pages/PageProducts.jsx"></script>
+<script type="text/babel" src="components/pages/PageOrders.jsx"></script>
+<script type="text/babel" src="components/pages/PageMembers.jsx"></script>
+<script type="text/babel" src="components/pages/PageMarketing.jsx"></script>
+<script type="text/babel" src="components/pages/PageAnalytics.jsx"></script>
+<script type="text/babel" src="components/pages/PagePayment.jsx"></script>
+<script type="text/babel" src="components/pages/PageMSL.jsx"></script>
+<script type="text/babel" src="components/pages/PageNewsletter.jsx"></script>
+<script type="text/babel" src="components/pages/PageFreight.jsx"></script>
+<script type="text/babel" src="components/pages/PagePlan.jsx"></script>
+<script type="text/babel" src="components/pages/PageThirdPartyLogin.jsx"></script>
+<script type="text/babel" src="components/pages/PageAdTools.jsx"></script>
+<script type="text/babel" src="components/pages/PageTracking.jsx"></script>
+
+<!-- 統一 App -->
+<script type="text/babel">
+
+// 補充 Sidebar NAV_GROUP_MAP 中尚未涵蓋的頁面 ID
+// 值必須是 SidebarData 的 GROUP id（'products','marketing','global-settings' 等）
+Object.assign(NAV_GROUP_MAP, {
+  // 產品模組子頁
+  'product-dashboard': 'products',
+  'product-add':       'products',
+  'product-edit':      'products',
+
+  // 行銷模組子頁（coupon/promotion → marketing-promotions 群組；journey → marketing-journey 群組）
+  'gift-items':       'marketing',
+  'gift-item-new':    'marketing',
+  'gift-item-edit':   'marketing',
+  'coupon-list':      'marketing',
+  'coupon-new':       'marketing',
+  'coupon-edit':      'marketing',
+  'promotion-list':   'marketing',
+  'promotion-new':    'marketing',
+  'journey-overview': 'marketing',
+  'journey-cart':     'marketing',
+  'journey-sleep':    'marketing',
+  'journey-loss':     'marketing',
+  'journey-post':     'marketing',
+  'journey-expiry':   'marketing',
+
+  // 全域設定子頁
+  'gs-newsletter-flydove':   'global-settings',
+  'gs-temp-freight':         'global-settings',
+  'gs-weight-freight':       'global-settings',
+  'gs-third-party-login':    'global-settings',
+  'line-oa':                 'global-settings',
+  'gs-cart-timeout':         'global-settings',
+  'gs-stock-alert':          'global-settings',
+  'gs-member-verification':  'global-settings',
+});
+
+// ─── 頁面群組：決定每個 pageId 屬於哪個模組 ─────────────────────────────────
+const PRODUCTS_PAGES = new Set([
+  'product-dashboard','product-list','product-add','product-edit',
+  'category-management','inventory-management',
+]);
+const ORDER_PAGES = new Set([
+  'order-list','order-detail','order-returns','rma-list','rma-detail',
+  'guest-query','guest-result','guest-rma','create-order','order-invoice','order-settings',
+]);
+const MEMBER_PAGES = new Set([
+  'customer-management','customer-list','customer-detail','customer-settings-hub',
+  'member-tier','member-points','member-tags','member-blacklist',
+  'member-settings','member-notifications','member-segment',
+]);
+const MARKETING_PAGES = new Set([
+  'marketing-promotions','coupon-list','coupon-new','coupon-edit',
+  'promotion-list','promotion-new','freeship-new','gift-new','flash-sale-new','bundle-new',
+  'gift-items','gift-item-new','gift-item-edit',
+  'marketing-journey','journey-overview',
+  'journey-cart','journey-sleep','journey-loss','journey-post','journey-expiry',
+  'push-logs','marketing-landing',
+  'lp-create-step1','lp-create-step2','lp-create-step3','lp-create-step4',
+  'marketing-landing-v2','lp-detail-v2',
+]);
+const ANALYTICS_PAGES = new Set([
+  'analytics-sales','analytics-products','analytics-members','analytics-marketing',
+]);
+const PAYMENT_PAGES = new Set([
+  'gs-payment-logistics','payment-hub','invoice-settings','webhook-mgmt',
+  'vendor-auto','vendor-bank','vendor-manual','vendor-semi','recurring',
+]);
+
+// ─── 統一 App ─────────────────────────────────────────────────────────────────
+function App() {
+  const [currentPage, setCurrentPage] = React.useState('dashboard');
+  const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
+  const { show, Toast } = useToast();
+
+  const navigate = React.useCallback((page) => {
+    setCurrentPage(page);
+  }, []);
+
+  // 訂單模組有自己的 AdminLayout（含 Sidebar+Header），在最外層渲染
+  if (ORDER_PAGES.has(currentPage)) {
+    return <PageOrders currentPage={currentPage} onNavigate={navigate} />;
+  }
+
+  const renderContent = () => {
+    if (currentPage === 'dashboard') {
+      return <PageDashboard onNavigate={navigate} />;
+    }
+    if (PRODUCTS_PAGES.has(currentPage)) {
+      return <PageProducts currentPage={currentPage} onNavigate={navigate} />;
+    }
+    if (MEMBER_PAGES.has(currentPage)) {
+      return <PageMembers currentPage={currentPage} onNavigate={navigate} show={show} />;
+    }
+    if (MARKETING_PAGES.has(currentPage)) {
+      return <PageMarketing currentPage={currentPage} onNavigate={navigate} show={show} />;
+    }
+    if (ANALYTICS_PAGES.has(currentPage)) {
+      return <PageAnalytics currentPage={currentPage} onNavigate={navigate} show={show} />;
+    }
+    if (PAYMENT_PAGES.has(currentPage)) {
+      return <PagePayment currentPage={currentPage} onNavigate={navigate} show={show} />;
+    }
+    if (currentPage === 'gs-msl') {
+      return <PageMSL onNavigate={navigate} show={show} />;
+    }
+    if (currentPage === 'gs-newsletter' || currentPage === 'gs-newsletter-flydove') {
+      return <PageNewsletter currentPage={currentPage} onNavigate={navigate} show={show} />;
+    }
+    if (currentPage === 'gs-plan-status' || currentPage === 'gs-version') {
+      return <PagePlan currentPage={currentPage} onNavigate={navigate} show={show} />;
+    }
+    if (['gs-advanced','gs-third-party-login','line-oa','gs-cart-timeout','gs-stock-alert','gs-member-verification'].includes(currentPage)) {
+      return <PageAdvanced currentPage={currentPage} onNavigate={navigate} show={show} />;
+    }
+    if (currentPage === 'marketing-ad-tools') {
+      return <PageAdTools onNavigate={navigate} show={show} />;
+    }
+    if (currentPage === 'gs-tracking') {
+      return <PageTracking onNavigate={navigate} show={show} />;
+    }
+    if (currentPage === 'gs-temp-freight' || currentPage === 'gs-weight-freight') {
+      return <PageFreight currentPage={currentPage} onNavigate={navigate} show={show} />;
+    }
+    // 未整合的頁面顯示佔位提示
+    return (
+      <div style={{ textAlign: 'center', padding: '80px 24px', color: '#909399' }}>
+        <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#F5F7FA', border: '2px solid #EBEEF5', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
+          ○
+        </div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: '#606266', marginBottom: 6 }}>{currentPage}</div>
+        <div style={{ fontSize: 13 }}>此功能即將推出，敬請期待</div>
+      </div>
+    );
+  };
+
+  return (
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+      <Sidebar currentPage={currentPage} onNavigate={navigate} collapsed={sidebarCollapsed} />
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+        <Header onNavigate={navigate} onToggleSidebar={() => setSidebarCollapsed(c => !c)} />
+        <main style={{ flex: 1, overflowY: 'auto', padding: 40, background: '#F5F7FA' }}>
+          {renderContent()}
+        </main>
+      </div>
+      <Toast />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
