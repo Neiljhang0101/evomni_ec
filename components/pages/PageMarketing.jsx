@@ -285,6 +285,12 @@ function UnifiedDiscountListPage({ onNavigate, show }) {
   return (
     <div>
       <PageHeader title="優惠活動" breadcrumbs={['行銷中心', '優惠活動']} />
+      <div style={{ background: '#ECF5FF', border: '1px solid #b3d8ff', borderRadius: 3, padding: '10px 16px', display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, marginBottom: 16 }}>
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+          <circle cx="7" cy="7" r="6" stroke="#409EFF" strokeWidth="1.2"/><line x1="7" y1="6" x2="7" y2="10" stroke="#409EFF" strokeWidth="1.2" strokeLinecap="round"/><circle cx="7" cy="4.5" r="0.6" fill="#409EFF"/>
+        </svg>
+        <span style={{ color: '#606266', lineHeight: 1.8 }}>系統依照固定優先序自動套用各層折扣（產品折扣→訂單折扣→贈品→優惠券→點數），同一層取最優惠者，跨層可疊加。<a href="html/優惠計算流程圖.html" target="_blank" rel="noopener noreferrer" style={{ color: '#409EFF', textDecoration: 'none' }} onMouseEnter={e => e.currentTarget.style.textDecoration='underline'} onMouseLeave={e => e.currentTarget.style.textDecoration='none'}>查看完整優惠計算流程圖</a></span>
+      </div>
       <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 16 }}>
         <EvoBtn variant="secondary">匯出報表</EvoBtn>
         <EvoBtn variant="primary" onClick={() => setTypePickerOpen(true)}>＋ 新增優惠</EvoBtn>
@@ -417,9 +423,22 @@ function CouponListPage({ onNavigate, show }) {
         </svg>
         <span style={{ color: '#606266', lineHeight: 1.8 }}><strong style={{ color: '#303133' }}>優惠券 vs 促銷活動的差別：</strong>優惠券需要消費者在結帳時輸入專屬代碼才能使用。促銷活動則是自動套用，消費者達到條件（如滿額、滿件）就直接享有折扣，不需輸入任何代碼。</span>
       </div>
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 16 }}>
-        <EvoBtn variant="secondary">匯出報表</EvoBtn>
-        <EvoBtn variant="primary" onClick={() => onNavigate('coupon-new')}>＋ 新增優惠券</EvoBtn>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <a href="html/優惠計算流程圖.html" target="_blank" rel="noopener noreferrer"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#409EFF', textDecoration: 'none', fontWeight: 500 }}
+          onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+          onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" stroke="#409EFF" strokeWidth="1.4"/>
+            <path d="M7 6.5v3.5" stroke="#409EFF" strokeWidth="1.4" strokeLinecap="round"/>
+            <circle cx="7" cy="4.5" r="0.75" fill="#409EFF"/>
+          </svg>
+          了解優惠計算優先序
+        </a>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <EvoBtn variant="secondary">匯出報表</EvoBtn>
+          <EvoBtn variant="primary" onClick={() => onNavigate('coupon-new')}>＋ 新增優惠券</EvoBtn>
+        </div>
       </div>
       <TabSearchBar
         tabs={[

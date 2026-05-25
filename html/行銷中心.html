@@ -44,6 +44,9 @@ const MARKETING_NAV_MAP = {
   'coupon-edit':      'marketing-promotions',
   'promotion-list':   'marketing-promotions',
   'promotion-new':    'marketing-promotions',
+  'gift-new':         'marketing-promotions',
+  'flash-new':        'marketing-promotions',
+  'bundle-new':       'marketing-promotions',
   'journey-overview': 'marketing-journey',
   'journey-cart':     'marketing-journey',
   'journey-sleep':    'marketing-journey',
@@ -219,9 +222,22 @@ function CouponListPage({ onNavigate, show }) {
   return (
     <div>
       <PageHeader title="優惠券管理" breadcrumbs={['行銷中心', '優惠活動', '優惠券管理']} />
-      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 16 }}>
-        <EvoBtn variant="secondary">匯出報表</EvoBtn>
-        <EvoBtn variant="primary" onClick={() => onNavigate('coupon-new')}>＋ 新增優惠券</EvoBtn>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <a href="優惠計算流程圖.html" target="_blank" rel="noopener noreferrer"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#409EFF', textDecoration: 'none', fontWeight: 500 }}
+          onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
+          onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <circle cx="7" cy="7" r="6" stroke="#409EFF" strokeWidth="1.4"/>
+            <path d="M7 6.5v3.5" stroke="#409EFF" strokeWidth="1.4" strokeLinecap="round"/>
+            <circle cx="7" cy="4.5" r="0.75" fill="#409EFF"/>
+          </svg>
+          了解優惠計算優先序
+        </a>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <EvoBtn variant="secondary">匯出報表</EvoBtn>
+          <EvoBtn variant="primary" onClick={() => onNavigate('coupon-new')}>＋ 新增優惠券</EvoBtn>
+        </div>
       </div>
       <SectionCard title="">
         <ETabs
@@ -315,6 +331,69 @@ function CouponListPage({ onNavigate, show }) {
   );
 }
 
+// ─── Mock product catalogue (used in multi-select search) ────────────────────
+const MOCK_PRODUCTS = [
+  { value: 'p1', label: '水光精華 EX' },
+  { value: 'p2', label: '超保濕乳液 3件組' },
+  { value: 'p3', label: '全效防曬噴霧 SPF50' },
+  { value: 'p4', label: '安瓶精華液 5ml' },
+  { value: 'p5', label: '膠原蛋白面膜 10片' },
+  { value: 'p6', label: '煥白精華液 30ml' },
+  { value: 'p7', label: '緊緻眼霜 15g' },
+  { value: 'p8', label: '溫和卸妝油 200ml' },
+];
+
+// ─── TagMultiSelect：帶搜尋的多選標籤選擇器 ──────────────────────────────────
+function TagMultiSelect({ value = [], onChange, placeholder = '輸入名稱搜尋…', mockOptions = [] }) {
+  const [query, setQuery] = React.useState('');
+  const [open, setOpen] = React.useState(false);
+  const filtered = mockOptions.filter(o =>
+    query ? o.label.toLowerCase().includes(query.toLowerCase()) && !value.find(v => v.value === o.value)
+           : !value.find(v => v.value === o.value)
+  );
+  const add = opt => { onChange([...value, opt]); setQuery(''); };
+  const remove = val => onChange(value.filter(v => v.value !== val));
+  return (
+    <div style={{ position: 'relative' }}>
+      <div
+        style={{ display: 'flex', flexWrap: 'wrap', gap: 6, padding: '6px 8px', border: '1px solid #DCDFE6', background: '#fff', minHeight: 40, alignItems: 'center', cursor: 'text' }}
+        onClick={() => setOpen(true)}
+      >
+        {value.map(v => (
+          <span key={v.value} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '2px 10px', background: '#F5F7FA', border: '1px solid #DCDFE6', fontSize: 12, color: '#606266', borderRadius: 9999 }}>
+            {v.label}
+            <span onMouseDown={e => { e.preventDefault(); remove(v.value); }} style={{ cursor: 'pointer', color: '#909399', fontWeight: 700, marginLeft: 2 }}>×</span>
+          </span>
+        ))}
+        <input
+          value={query}
+          onChange={e => { setQuery(e.target.value); setOpen(true); }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 180)}
+          placeholder={value.length === 0 ? placeholder : ''}
+          style={{ border: 'none', outline: 'none', fontSize: 13, background: 'transparent', minWidth: 140, flex: 1, padding: '2px 0' }}
+        />
+      </div>
+      {open && (
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: '#fff', border: '1px solid #DCDFE6', zIndex: 120, maxHeight: 200, overflowY: 'auto', marginTop: 2 }}>
+          {filtered.length === 0 ? (
+            <div style={{ padding: '10px 12px', fontSize: 13, color: '#909399' }}>
+              {query ? '找不到符合的產品' : '請輸入產品名稱搜尋'}
+            </div>
+          ) : filtered.slice(0, 20).map(o => (
+            <div key={o.value}
+              onMouseDown={e => { e.preventDefault(); add(o); }}
+              style={{ padding: '10px 12px', fontSize: 13, color: '#303133', cursor: 'pointer', borderBottom: '1px solid #F5F7FA' }}
+              onMouseEnter={e => e.currentTarget.style.background = '#F5F7FA'}
+              onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+            >{o.label}</div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── SCREEN 2: 優惠券 新增／編輯 ──────────────────────────────────────────────
 function CouponFormPage({ onNavigate, mode, show }) {
   const isEdit = mode === 'edit';
@@ -322,11 +401,14 @@ function CouponFormPage({ onNavigate, mode, show }) {
   const [form, setForm] = React.useState({
     name: isEdit ? '夏日折扣碼' : '', couponType: 'discount_code',
     discountType: 'percent', discountValue: isEdit ? '20' : '',
+    maxDiscount: '',
     code: isEdit ? 'SUMMER20' : '', totalLimit: isEdit ? '100' : '',
     perMemberLimit: '1', minOrderAmount: isEdit ? '1000' : '',
-    minQuantity: '', startDate: isEdit ? '2026-06-01' : '',
+    minQuantity: '', excludeProducts: [], stackable: false,
+    startDate: isEdit ? '2026-06-01' : '',
     endDate: isEdit ? '2026-08-31' : '', triggerEvent: 'register',
-    expiryDays: '30', exclusive: false,
+    triggerAmount: '', targetAudience: 'all',
+    expiryDays: '30',
   });
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -375,6 +457,15 @@ function CouponFormPage({ onNavigate, mode, show }) {
                 )}
               </div>
             </FormField>
+            {form.discountType === 'percent' && (
+              <FormField label={<span style={{ display: 'inline-flex', alignItems: 'center' }}>最高折扣上限<InfoTooltip content="範例：設定九折且上限 NT$500，即使消費者購買 NT$10,000 的商品，最多只折 NT$500，不會無限制放大折扣。" /></span>}
+                helper="選填。折扣金額最高不超過此上限，即使訂單金額很高也適用。">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: '#909399' }}>NT$</span>
+                  <NumberInput value={form.maxDiscount} onChange={v => set('maxDiscount', v)} width={160} />
+                </div>
+              </FormField>
+            )}
             <FormField label="有效期間" required>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <EInput type="date" value={form.startDate} onChange={v => set('startDate', v)} style={{ width: 160 }} />
@@ -405,10 +496,19 @@ function CouponFormPage({ onNavigate, mode, show }) {
                 options={[{ value: 'all', label: '全部產品' }, { value: 'category', label: '指定分類' }, { value: 'product', label: '指定產品' }]}
               />
             </FormField>
-            <FormField label="不可與其他優惠同時使用" helper="開啟後，顧客結帳時無法同時套用另一張優惠券。">
+            <FormField label={<span style={{ display: 'inline-flex', alignItems: 'center' }}>排除產品<InfoTooltip content="常見用途：活動期間某些特定品項（例：限量新品、已有折扣商品）不希望再被優惠券折抵，可在此排除。" /></span>}
+              helper="選填。此清單中的產品不適用本券，即使符合其他條件也無法使用。">
+              <TagMultiSelect
+                value={form.excludeProducts}
+                onChange={v => set('excludeProducts', v)}
+                placeholder="輸入產品名稱搜尋…"
+                mockOptions={MOCK_PRODUCTS}
+              />
+            </FormField>
+            <FormField label="可與其他優惠疊加" helper="開啟後，顧客結帳時可同時套用本券與其他促銷活動。">
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                <Switch checked={form.exclusive} onChange={v => set('exclusive', v)} />
-                <span style={{ fontSize: 13, color: '#606266' }}>{form.exclusive ? '已開啟 — 不可疊加使用' : '已關閉 — 可與其他優惠疊加'}</span>
+                <Switch checked={form.stackable} onChange={v => set('stackable', v)} />
+                <span style={{ fontSize: 13, color: '#606266' }}>{form.stackable ? '已開啟 — 可與促銷活動同時使用' : '已關閉 — 不可與其他優惠同時使用'}</span>
               </div>
             </FormField>
           </div>
@@ -433,15 +533,54 @@ function CouponFormPage({ onNavigate, mode, show }) {
               </>
             ) : (
               <>
-                <FormField label="觸發發放時機" required>
-                  <ESelect value={form.triggerEvent} onChange={v => set('triggerEvent', v)} width={280}
+                <FormField label="觸發發放時機" required helper="符合以下任一條件時，系統自動發放優惠券至會員帳戶。">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {[
+                      { v: 'register',       l: '會員完成帳號啟用（入會贈券）',          locked: false },
+                      { v: 'first_purchase', l: '會員首次消費成功後',                      locked: false },
+                      { v: 'tier_upgrade',   l: '會員等級升級時',                          locked: false },
+                      { v: 'birthday',       l: '會員生日當月第一天（生日贈券）',          locked: true  },
+                      { v: 'order_amount',   l: '訂單達指定金額後（滿額贈券）',            locked: true  },
+                    ].map(o => (
+                      <label key={o.v} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', border: `1px solid ${form.triggerEvent === o.v ? '#409EFF' : '#DCDFE6'}`, background: form.triggerEvent === o.v ? '#EFF7FF' : '#fff', cursor: 'pointer' }}>
+                        <input type="radio" checked={form.triggerEvent === o.v} onChange={() => set('triggerEvent', o.v)} style={{ margin: 0 }} />
+                        <span style={{ fontSize: 13 }}>{o.l}</span>
+                        {o.locked && <AdvBadge />}
+                      </label>
+                    ))}
+                  </div>
+                </FormField>
+                {form.triggerEvent === 'order_amount' && (
+                  <FormField label="滿額門檻金額" required helper="訂單結帳金額達到此金額後，系統自動發放優惠券。此券供下次使用，不折抵本筆訂單。">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <span style={{ color: '#909399' }}>NT$</span>
+                      <NumberInput value={form.triggerAmount} onChange={v => set('triggerAmount', v)} width={160} />
+                    </div>
+                  </FormField>
+                )}
+                <FormField label={<span style={{ display: 'inline-flex', alignItems: 'center' }}>發放對象<InfoTooltip content="限制此優惠券只自動發放給符合條件的會員。選「全體會員」即不限制對象。" /></span>}
+                  helper="選填。限制此優惠券只自動發放給符合條件的會員。">
+                  <ESelect value={form.targetAudience} onChange={v => set('targetAudience', v)} width={240}
                     options={[
-                      { value: 'register', label: '會員完成註冊' },
-                      { value: 'birthday', label: '生日當月（每年）' },
-                      { value: 'first_purchase', label: '首次消費成功後' },
-                      { value: 'tier_upgrade', label: '會員等級升級' },
+                      { value: 'all',   label: '全體會員' },
+                      { value: 'tier',  label: '指定會員等級' },
+                      { value: 'tag',   label: '指定分眾標籤' },
                     ]}
                   />
+                  {form.targetAudience === 'tier' && (
+                    <div style={{ marginTop: 8 }}>
+                      <ESelect value="" onChange={() => {}} width={320} placeholder="選擇會員等級（可多選）…"
+                        options={[{ value: 'vip1', label: '等級一（一般會員）' }, { value: 'vip2', label: '等級二（銀卡會員）' }, { value: 'vip3', label: '等級三（金卡會員）' }]}
+                      />
+                    </div>
+                  )}
+                  {form.targetAudience === 'tag' && (
+                    <div style={{ marginTop: 8 }}>
+                      <ESelect value="" onChange={() => {}} width={320} placeholder="選擇分眾標籤…"
+                        options={[{ value: 'new', label: '新客' }, { value: 'loyal', label: '高忠誠客' }, { value: 'at_risk', label: '流失風險客' }]}
+                      />
+                    </div>
+                  )}
                 </FormField>
                 <FormField label={<span style={{ display: 'inline-flex', alignItems: 'center' }}>優惠券有效天數<InfoTooltip content="從系統將優惠券發放至會員帳戶的當天起算，超過天數後自動失效。填 0 代表永不過期。" /></span>}
                   helper="從發放日起算。填 0 代表永不過期。">
@@ -475,15 +614,17 @@ function PromotionListPage({ onNavigate, show }) {
   const [isAdvanced] = React.useState(false); // toggle to simulate 進階電商包 state
   const [sort, setSort] = React.useState({ field: 'start', dir: 'desc' });
   const handleSort = f => setSort(s => ({ field: f, dir: s.field === f && s.dir === 'asc' ? 'desc' : 'asc' }));
-  const TYPE_LABEL = { gift: '贈品活動', freeship: '免運活動', discount: '折扣活動', addon: '加購活動', bundle: '組合優惠' };
+  const TYPE_LABEL = { gift: '贈品活動', freeship: '免運活動', discount: '折扣活動', addon: '加購活動', bundle: '組合優惠', flash: '限時折扣' };
   const filtered = PROMOTIONS.filter(p => tab === 'all' || p.type === tab);
-  const isLockedTab = !isAdvanced && (tab === 'addon' || tab === 'bundle');
+  const isLockedTab = !isAdvanced && (tab === 'addon' || tab === 'bundle' || tab === 'flash');
+  const NEW_ROUTE = { gift: 'gift-new', flash: 'flash-new', bundle: 'bundle-new' };
+  const newRoute = NEW_ROUTE[tab] || 'promotion-new';
 
   return (
     <div>
       <PageHeader title="滿額／滿件優惠" breadcrumbs={['行銷中心', '優惠活動', '滿額／滿件優惠']} />
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-        <EvoBtn variant="primary" onClick={() => onNavigate('promotion-new')}>＋ 新增優惠活動</EvoBtn>
+        <EvoBtn variant="primary" onClick={() => onNavigate(newRoute)}>＋ 新增優惠活動</EvoBtn>
       </div>
       <SectionCard title="">
         <ETabs
@@ -492,6 +633,7 @@ function PromotionListPage({ onNavigate, show }) {
             { id: 'gift', label: '贈品活動' },
             { id: 'freeship', label: '免運活動' },
             { id: 'discount', label: '折扣活動' },
+            { id: 'flash', label: <span>限時折扣<AdvBadge /></span> },
             { id: 'addon', label: <span>加購活動<AdvBadge /></span> },
             { id: 'bundle', label: <span>組合優惠<AdvBadge /></span> },
           ]}
@@ -503,7 +645,7 @@ function PromotionListPage({ onNavigate, show }) {
             <EmptyState icon="🔒" title="此功能需進階電商包" sub="升級後即可建立加購優惠與組合優惠活動，有效提升客單價。" ctaLabel="了解進階電商包" onCta={() => {}} />
           </div>
         ) : filtered.length === 0 ? (
-          <EmptyState icon="🎁" title="尚無優惠活動" sub="建立滿額贈品、免運費或折扣活動，提升顧客購物意願。" ctaLabel="＋ 新增優惠活動" onCta={() => onNavigate('promotion-new')} />
+          <EmptyState icon="🎁" title="尚無優惠活動" sub="建立滿額贈品、免運費或折扣活動，提升顧客購物意願。" ctaLabel="＋ 新增優惠活動" onCta={() => onNavigate(newRoute)} />
         ) : (
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
@@ -617,6 +759,306 @@ function PromotionFormPage({ onNavigate, show }) {
         </SectionCard>
       </div>
       <FixedBar onCancel={() => onNavigate('promotion-list')} onSave={() => { show('優惠活動已建立', 'success'); onNavigate('promotion-list'); }} />
+    </div>
+  );
+}
+
+// ─── SCREEN: 贈品活動 新增表單（Screen 6）────────────────────────────────────
+function GiftPromoFormPage({ onNavigate, show }) {
+  const [form, setForm] = React.useState({
+    name: '', start: '', end: '', productScope: 'all',
+    description: '', enabled: false,
+    conditionType: 'amount', conditionValue: '',
+    giftProduct: '', giftQty: '1', outOfStockAction: 'pause',
+  });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  return (
+    <div>
+      <BackLink label="滿額／滿件優惠" onClick={() => onNavigate('promotion-list')} />
+      <PageHeader title="新增贈品活動" breadcrumbs={['行銷中心', '優惠活動', '新增贈品活動']} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <SectionCard title="通用設定">
+          <FormField label="活動名稱" required helper="最多 50 字，商家自用，不顯示於前台。">
+            <EInput value={form.name} onChange={v => set('name', v)} placeholder="例：滿千五送好禮" />
+          </FormField>
+          <FormField label="活動期間" required helper="活動開始前可儲存草稿，到時間後依啟用狀態自動生效。">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <EInput type="date" value={form.start} onChange={v => set('start', v)} style={{ width: 150 }} />
+              <span style={{ color: '#909399' }}>至</span>
+              <EInput type="date" value={form.end} onChange={v => set('end', v)} style={{ width: 150 }} />
+            </div>
+          </FormField>
+          <FormField label="適用產品範圍" helper="選填。選擇後，僅計入指定範圍內商品的金額或件數。">
+            <ESelect value={form.productScope} onChange={v => set('productScope', v)} width={240}
+              options={[{ value: 'all', label: '全部產品' }, { value: 'category', label: '指定分類' }, { value: 'product', label: '指定產品' }]}
+            />
+          </FormField>
+          <FormField label="活動說明（前台顯示）" helper="選填，最多 100 字，顯示於前台購物車旁說明文字。">
+            <textarea
+              value={form.description} onChange={e => set('description', e.target.value)}
+              placeholder="例：消費滿 NT$1,500 即贈好禮一份" maxLength={100}
+              style={{ width: '100%', height: 80, padding: '8px 12px', border: '1px solid #DCDFE6', fontSize: 13, color: '#303133', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.7 }}
+            />
+          </FormField>
+          <FormField label="是否啟用">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Switch checked={form.enabled} onChange={v => set('enabled', v)} />
+              <span style={{ fontSize: 13, color: '#606266' }}>{form.enabled ? '已啟用 — 依活動期間自動生效' : '草稿 — 活動不會對外顯示'}</span>
+            </div>
+          </FormField>
+        </SectionCard>
+        <SectionCard title="贈品設定">
+          <FormField label="條件類型" required>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {[
+                { v: 'amount', l: '訂單金額滿 NT$X 送贈品（滿額贈品）' },
+                { v: 'qty',    l: '訂單商品件數滿 N 件送贈品（滿件贈品）' },
+              ].map(o => (
+                <label key={o.v} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', border: `1px solid ${form.conditionType === o.v ? '#409EFF' : '#DCDFE6'}`, background: form.conditionType === o.v ? '#EFF7FF' : '#fff', cursor: 'pointer' }}>
+                  <input type="radio" checked={form.conditionType === o.v} onChange={() => { set('conditionType', o.v); set('conditionValue', ''); }} style={{ margin: 0 }} />
+                  <span style={{ fontSize: 13 }}>{o.l}</span>
+                </label>
+              ))}
+            </div>
+          </FormField>
+          <FormField label="條件數值" required helper={form.conditionType === 'amount' ? '購物車金額（折後）達此金額後，系統自動將贈品加入購物車。' : '購物車中符合適用範圍的商品件數達此數量後，自動加入贈品。'}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {form.conditionType === 'amount' && <span style={{ color: '#909399' }}>NT$</span>}
+              <NumberInput value={form.conditionValue} onChange={v => set('conditionValue', v)} width={160} />
+              {form.conditionType === 'qty' && <span style={{ color: '#909399' }}>件</span>}
+            </div>
+          </FormField>
+          <FormField label={<span style={{ display: 'inline-flex', alignItems: 'center' }}>贈品產品<InfoTooltip content="建議將贈品的「定價」設為 NT$0，以免贈品售價影響訂單金額，進而影響其他滿額優惠的門檻計算。贈品庫存會在訂單成立時自動扣除。" /></span>} required helper="選定後顯示目前庫存數量。">
+            <ESelect value={form.giftProduct} onChange={v => set('giftProduct', v)} width={320} placeholder="輸入產品名稱搜尋…"
+              options={[
+                { value: 'p1', label: '水光精華 EX（剩餘庫存：28 件）' },
+                { value: 'p2', label: '超保濕乳液 3件組（剩餘庫存：12 件）' },
+                { value: 'p3', label: '全效防曬噴霧 SPF50（剩餘庫存：45 件）' },
+                { value: 'p4', label: '安瓶精華液 5ml（剩餘庫存：0 件）' },
+                { value: 'p5', label: '膠原蛋白面膜 10片（剩餘庫存：67 件）' },
+              ]}
+            />
+            {form.giftProduct === 'p4' && (
+              <div style={{ marginTop: 8, padding: '8px 12px', background: '#FDF6EC', border: '1px solid #F5DAB1', fontSize: 12, color: '#E6A23C' }}>
+                此產品目前無庫存，活動啟用後若庫存仍為 0，將依「庫存不足時」的設定處理。
+              </div>
+            )}
+          </FormField>
+          <FormField label="贈品數量" required helper="每筆達標訂單贈送幾件，最少 1 件。">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <NumberInput value={form.giftQty} onChange={v => set('giftQty', v)} width={100} />
+              <span style={{ color: '#909399' }}>件</span>
+            </div>
+          </FormField>
+          <FormField label={<span style={{ display: 'inline-flex', alignItems: 'center' }}>贈品庫存不足時<InfoTooltip content="推薦選「自動暫停」，可避免消費者達門檻後無法獲贈的落差體驗。選「繼續但不發」則系統不會通知消費者無法獲贈，需自行追蹤庫存補充進度。" /></span>} required>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {[
+                { v: 'pause',    l: '自動暫停贈品發送（推薦）', d: '庫存不足時暫停送贈品，消費者購物體驗不受影響' },
+                { v: 'continue', l: '繼續活動但不發贈品',       d: '消費者達條件後仍不會收到贈品，可能造成體驗落差' },
+              ].map(o => (
+                <label key={o.v} style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px', border: `1px solid ${form.outOfStockAction === o.v ? '#409EFF' : '#DCDFE6'}`, background: form.outOfStockAction === o.v ? '#EFF7FF' : '#fff', cursor: 'pointer' }}>
+                  <input type="radio" checked={form.outOfStockAction === o.v} onChange={() => set('outOfStockAction', o.v)} style={{ marginTop: 2 }} />
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 500 }}>{o.l}</div>
+                    <div style={{ fontSize: 12, color: '#909399', marginTop: 2 }}>{o.d}</div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </FormField>
+        </SectionCard>
+      </div>
+      <FixedBar onCancel={() => onNavigate('promotion-list')}
+        onSave={() => { show('贈品活動已建立', 'success'); onNavigate('promotion-list'); }} />
+    </div>
+  );
+}
+
+// ─── SCREEN: 限時折扣活動 新增表單（Screen 4，進階電商包）────────────────────
+function FlashDiscountFormPage({ onNavigate, show }) {
+  const [form, setForm] = React.useState({
+    name: '', start: '', end: '', productScope: 'all',
+    description: '', enabled: false,
+    discountType: 'percent', discountValue: '',
+    showCountdown: false, showOriginalPrice: false,
+  });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  return (
+    <div>
+      <BackLink label="滿額／滿件優惠" onClick={() => onNavigate('promotion-list')} />
+      <PageHeader title="新增限時折扣活動" breadcrumbs={['行銷中心', '優惠活動', '新增限時折扣活動']} />
+      <UpgradeLockBanner featureName="限時折扣活動" valueProp="讓消費者看到倒數計時，製造購買緊迫感" onLearnMore={() => show('請前往「全域設定 → 方案狀態」查看升級方案，或聯絡您的營運輔導顧問', 'info')} />
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <SectionCard title="通用設定">
+          <FormField label="活動名稱" required helper="最多 50 字，商家自用，不顯示於前台。">
+            <EInput value={form.name} onChange={v => set('name', v)} placeholder="例：週末特賣七折" />
+          </FormField>
+          <FormField label="活動期間" required helper="活動開始前可儲存草稿，到時間後自動生效。">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <EInput type="date" value={form.start} onChange={v => set('start', v)} style={{ width: 150 }} />
+              <span style={{ color: '#909399' }}>至</span>
+              <EInput type="date" value={form.end} onChange={v => set('end', v)} style={{ width: 150 }} />
+            </div>
+          </FormField>
+          <FormField label="適用產品範圍" helper="選擇指定分類或產品後，僅該範圍商品享有折扣。">
+            <ESelect value={form.productScope} onChange={v => set('productScope', v)} width={240}
+              options={[{ value: 'all', label: '全部產品' }, { value: 'category', label: '指定分類' }, { value: 'product', label: '指定產品' }]}
+            />
+          </FormField>
+          <FormField label="活動說明（前台顯示）" helper="選填，最多 100 字，顯示於前台購物車旁。">
+            <textarea
+              value={form.description} onChange={e => set('description', e.target.value)}
+              placeholder="例：本活動適用期間不可與其他優惠同時使用" maxLength={100}
+              style={{ width: '100%', height: 72, padding: '8px 12px', border: '1px solid #DCDFE6', fontSize: 13, color: '#303133', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.7 }}
+            />
+          </FormField>
+          <FormField label="是否啟用">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Switch checked={form.enabled} onChange={v => set('enabled', v)} />
+              <span style={{ fontSize: 13, color: '#606266' }}>{form.enabled ? '已啟用 — 依活動期間自動生效' : '草稿 — 活動不會對外顯示'}</span>
+            </div>
+          </FormField>
+        </SectionCard>
+        <SectionCard title="折扣設定">
+          <FormField label="折扣類型" required>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {[
+                { v: 'percent', l: '百分比折扣' },
+                { v: 'fixed',   l: '固定金額折扣' },
+              ].map(o => (
+                <label key={o.v} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', border: `1px solid ${form.discountType === o.v ? '#409EFF' : '#DCDFE6'}`, background: form.discountType === o.v ? '#EFF7FF' : '#fff', cursor: 'pointer' }}>
+                  <input type="radio" checked={form.discountType === o.v} onChange={() => { set('discountType', o.v); set('discountValue', ''); }} style={{ margin: 0 }} />
+                  <span style={{ fontSize: 13 }}>{o.l}</span>
+                </label>
+              ))}
+            </div>
+          </FormField>
+          <FormField label="折扣數值" required helper={form.discountType === 'percent' ? '輸入 1–99 的整數。' : '最少 NT$1。'}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              {form.discountType === 'fixed' && <span style={{ color: '#909399' }}>NT$</span>}
+              <NumberInput value={form.discountValue} onChange={v => set('discountValue', v)} width={120} />
+              {form.discountType === 'percent' && <span style={{ color: '#909399' }}>%（輸入 20 = 打八折）</span>}
+            </div>
+          </FormField>
+          <FormField label={<span style={{ display: 'inline-flex', alignItems: 'center' }}>前台倒數計時顯示<InfoTooltip content="倒數計時顯示格式為「HH:MM:SS」，每秒即時更新。活動結束後自動停止顯示，不需手動關閉。建議搭配「顯示原價劃除」一起開啟，視覺效果更好。" /></span>}
+            helper="開啟後，前台產品頁顯示距活動結束的剩餘時間倒數計時器。">
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: form.showCountdown ? 8 : 0 }}>
+                <Switch checked={form.showCountdown} onChange={v => set('showCountdown', v)} />
+                <span style={{ fontSize: 13, color: '#606266' }}>{form.showCountdown ? '已開啟 — 產品頁顯示倒數計時器' : '已關閉'}</span>
+              </div>
+              {form.showCountdown && (
+                <div style={{ padding: '8px 12px', background: '#EFF7FF', border: '1px solid #B3D8FF', fontSize: 12, color: '#409EFF' }}>
+                  消費者將在產品頁看到距活動結束的倒數計時器。
+                </div>
+              )}
+            </div>
+          </FormField>
+          <FormField label="顯示原價劃除" helper="開啟後，前台折扣價旁以劃除樣式顯示原始售價。">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Switch checked={form.showOriginalPrice} onChange={v => set('showOriginalPrice', v)} />
+              <span style={{ fontSize: 13, color: '#606266' }}>{form.showOriginalPrice ? '已開啟 — 折扣價旁顯示劃除原價' : '已關閉'}</span>
+            </div>
+          </FormField>
+        </SectionCard>
+      </div>
+      <FixedBar onCancel={() => onNavigate('promotion-list')}
+        onSave={() => { show('限時折扣活動已建立', 'success'); onNavigate('promotion-list'); }} />
+    </div>
+  );
+}
+
+// ─── SCREEN: 組合優惠（紅配綠）活動 新增表單（Screen 5，進階電商包）──────────
+function BundlePromoFormPage({ onNavigate, show }) {
+  const [form, setForm] = React.useState({
+    name: '', start: '', end: '', enabled: false,
+    groupA: [], groupB: [],
+    discountType: 'fixed', discountValue: '',
+    description: '',
+  });
+  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const overlapIds = form.groupA.map(i => i.value).filter(id => form.groupB.some(b => b.value === id));
+  return (
+    <div>
+      <BackLink label="滿額／滿件優惠" onClick={() => onNavigate('promotion-list')} />
+      <PageHeader title="新增組合優惠活動" breadcrumbs={['行銷中心', '優惠活動', '新增組合優惠活動']} />
+      <UpgradeLockBanner featureName="組合優惠（紅配綠）" valueProp="帶動交叉銷售，讓顧客多買一件搭配品" onLearnMore={() => show('請前往「全域設定 → 方案狀態」查看升級方案，或聯絡您的營運輔導顧問', 'info')} />
+      <SectionCard title="基本設定" style={{ marginBottom: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 220px', gap: 16 }}>
+          <FormField label="活動名稱" required helper="最多 50 字，商家自用，不顯示於前台。">
+            <EInput value={form.name} onChange={v => set('name', v)} placeholder="例：上衣搭褲子享折扣" />
+          </FormField>
+          <FormField label="活動期間" required>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <EInput type="date" value={form.start} onChange={v => set('start', v)} style={{ width: 140 }} />
+              <span style={{ color: '#909399' }}>至</span>
+              <EInput type="date" value={form.end} onChange={v => set('end', v)} style={{ width: 140 }} />
+            </div>
+          </FormField>
+          <FormField label="是否啟用">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Switch checked={form.enabled} onChange={v => set('enabled', v)} />
+              <span style={{ fontSize: 13, color: '#606266' }}>{form.enabled ? '已啟用' : '草稿'}</span>
+            </div>
+          </FormField>
+        </div>
+      </SectionCard>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
+        <div style={{ background: '#fff', border: '1px solid #DCDFE6', borderLeft: '4px solid #F56C6C', padding: 20 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: '#303133', marginBottom: 4 }}>A 組產品（主購品）</div>
+          <div style={{ fontSize: 12, color: '#909399', marginBottom: 16 }}>主購品，例：上衣系列。消費者需從此組選購至少一件。</div>
+          <FormField label="A 組產品" required>
+            <TagMultiSelect value={form.groupA} onChange={v => set('groupA', v)} placeholder="輸入分類名稱或產品名稱搜尋…" mockOptions={MOCK_PRODUCTS} />
+          </FormField>
+        </div>
+        <div style={{ background: '#fff', border: '1px solid #DCDFE6', borderLeft: '4px solid #67C23A', padding: 20 }}>
+          <div style={{ fontWeight: 700, fontSize: 14, color: '#303133', marginBottom: 4 }}>B 組產品（搭配品）</div>
+          <div style={{ fontSize: 12, color: '#909399', marginBottom: 16 }}>搭配品，例：褲子系列。消費者從 A 組和 B 組各選一件，即可享有以下優惠。</div>
+          <FormField label="B 組產品" required>
+            <TagMultiSelect value={form.groupB} onChange={v => set('groupB', v)} placeholder="輸入分類名稱或產品名稱搜尋…" mockOptions={MOCK_PRODUCTS} />
+          </FormField>
+        </div>
+      </div>
+      {overlapIds.length > 0 && (
+        <div style={{ padding: '10px 14px', background: '#FDF6EC', border: '1px solid #F5DAB1', marginBottom: 16, fontSize: 13, color: '#E6A23C' }}>
+          有 {overlapIds.length} 件產品同時出現在 A 組和 B 組中，建議將同一產品移至同一組。
+        </div>
+      )}
+      <SectionCard title="優惠條件">
+        <div style={{ maxWidth: 560 }}>
+          <FormField label="優惠條件" required>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 12 }}>
+              {[
+                { v: 'fixed',   l: 'A 組＋B 組各一件，享固定金額折扣' },
+                { v: 'percent', l: 'A 組＋B 組各一件，享百分比折扣' },
+              ].map(o => (
+                <label key={o.v} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '9px 12px', border: `1px solid ${form.discountType === o.v ? '#409EFF' : '#DCDFE6'}`, background: form.discountType === o.v ? '#EFF7FF' : '#fff', cursor: 'pointer' }}>
+                  <input type="radio" checked={form.discountType === o.v} onChange={() => { set('discountType', o.v); set('discountValue', ''); }} style={{ margin: 0 }} />
+                  <span style={{ fontSize: 13 }}>{o.l}</span>
+                </label>
+              ))}
+            </div>
+            <div style={{ paddingLeft: 4 }}>
+              <FormField label="折扣數值" required>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  {form.discountType === 'fixed' && <span style={{ color: '#909399' }}>NT$</span>}
+                  <NumberInput value={form.discountValue} onChange={v => set('discountValue', v)} width={120} />
+                  {form.discountType === 'percent' && <span style={{ color: '#909399' }}>%（輸入 20 = 打八折）</span>}
+                </div>
+              </FormField>
+            </div>
+          </FormField>
+          <FormField label="活動說明（前台顯示）" helper="選填，最多 100 字，顯示於前台購物車旁。">
+            <textarea
+              value={form.description} onChange={e => set('description', e.target.value)}
+              placeholder="例：上衣＋褲子組合購買享 NT$200 折扣" maxLength={100}
+              style={{ width: '100%', height: 72, padding: '8px 12px', border: '1px solid #DCDFE6', fontSize: 13, color: '#303133', resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.7 }}
+            />
+          </FormField>
+        </div>
+      </SectionCard>
+      <FixedBar onCancel={() => onNavigate('promotion-list')}
+        onSave={() => { show('組合優惠活動已建立', 'success'); onNavigate('promotion-list'); }} />
     </div>
   );
 }
@@ -3089,8 +3531,11 @@ const PAGE_MAP = {
   'coupon-list':         p => <CouponListPage      {...p} />,
   'coupon-new':          p => <CouponFormPage      {...p} mode="add" />,
   'coupon-edit':         p => <CouponFormPage      {...p} mode="edit" />,
-  'promotion-list':      p => <PromotionListPage   {...p} />,
-  'promotion-new':       p => <PromotionFormPage   {...p} />,
+  'promotion-list':      p => <PromotionListPage      {...p} />,
+  'promotion-new':       p => <PromotionFormPage      {...p} />,
+  'gift-new':            p => <GiftPromoFormPage      {...p} />,
+  'flash-new':           p => <FlashDiscountFormPage  {...p} />,
+  'bundle-new':          p => <BundlePromoFormPage    {...p} />,
   'marketing-promotions':p => <CouponListPage      {...p} />,
   'marketing-journey':   p => <JourneyOverviewPage {...p} />,
   'journey-overview':    p => <JourneyOverviewPage {...p} />,
