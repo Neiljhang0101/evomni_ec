@@ -315,6 +315,22 @@ function NLScreen1({ onConnected }) {
         <NLCard>
           <NLStatusBanner status="not_connected" />
 
+          <div style={{ background: '#F0F9EB', border: '1px solid #C2E7B0', borderRadius: 3, padding: '14px 16px', marginBottom: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#303133', marginBottom: 8 }}>串接飛信電子報後，你可以：</div>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {[
+                '將 Evomni 訂閱者名單一鍵同步到飛信，不需手動匯出再匯入',
+                '透過飛信的大量發信基礎設施，提升電子報到達率',
+                '在飛信後台設計精美的電子報範本，搭配 Evomni 的訂單、促銷活動一起使用',
+              ].map((t, i) => (
+                <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, fontSize: 13, color: '#606266', lineHeight: 1.6 }}>
+                  <IcoDot color="#67C23A" size={8} style={{ marginTop: 5, flexShrink: 0 }} />
+                  {t}
+                </li>
+              ))}
+            </ul>
+          </div>
+
           <div style={{ fontSize: 14, color: '#606266', lineHeight: 1.8, marginBottom: 20 }}>
             飛信電子報是台灣專業的電子報發送（EDM）服務，適合大量、高頻率的電子報發送。
             串接後可將 Evomni 的訂閱者名單一鍵同步到飛信系統。

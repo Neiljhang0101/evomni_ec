@@ -564,7 +564,8 @@ function ComparePlansPage({ onOpenInquiry }) {
             <div style={{ marginBottom: 12 }}>
               <PlanTag type="neutral">目前的方案</PlanTag>
             </div>
-            <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>電商啟航方案</div>
+            <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 2 }}>電商啟航方案</div>
+            <div style={{ fontSize: 12, color: PLAN_C.muted, marginBottom: 12 }}>適合電商起步，建立完整上架、收款、出貨流程</div>
             <div style={{ fontSize: 22, fontWeight: 700, color: PLAN_C.text, marginBottom: 20 }}>
               NT$29,800 <span style={{ fontSize: 13, fontWeight: 400, color: PLAN_C.muted }}>/ 年</span>
             </div>
@@ -586,7 +587,8 @@ function ComparePlansPage({ onOpenInquiry }) {
             <div style={{ marginBottom: 12 }}>
               <PlanTag type="warning">推薦升級</PlanTag>
             </div>
-            <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 4 }}>進階電商包</div>
+            <div style={{ fontSize: 20, fontWeight: 700, marginBottom: 2 }}>進階電商包</div>
+            <div style={{ fontSize: 12, color: PLAN_C.muted, marginBottom: 12 }}>為成長期電商打造，進階行銷、數據分析與自動化全面升級</div>
             <div style={{ fontSize: 22, fontWeight: 700, color: PLAN_C.text, marginBottom: 20 }}>
               NT$39,800 <span style={{ fontSize: 13, fontWeight: 400, color: PLAN_C.muted }}>/ 年</span>
             </div>

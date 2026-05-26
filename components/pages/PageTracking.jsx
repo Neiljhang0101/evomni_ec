@@ -49,6 +49,45 @@ function TrackTip({ text }) {
   );
 }
 
+// ── Decision guide ────────────────────────────────────────────
+
+function TrackDecisionGuide() {
+  const [open, setOpen] = React.useState(false);
+
+  const scenarios = [
+    { q: '我想知道廣告有沒有效，消費者從哪個管道來的', a: '需要設定 Google 流量分析（GA4）', tool: 'GA4' },
+    { q: '我有在跑 Facebook / Instagram 廣告', a: '需要設定 Meta 廣告像素（Pixel），並建議同時啟用 Facebook 伺服器轉換（CAPI）以提升精準度', tool: 'Pixel + CAPI' },
+    { q: '我使用多個行銷工具，不想每次都請工程師改程式', a: '建議使用 Google 代碼管理工具（GTM）統一管理，但注意啟用 GTM 前須停用已單獨設定的 GA4 / Pixel，避免重複計算', tool: 'GTM' },
+    { q: '我剛開店，什麼都還沒設定', a: '建議先設定 GA4，了解基本流量與購買行為後，再視需求補上其他工具', tool: 'GA4' },
+  ];
+
+  return (
+    <div style={{ background: '#F5F7FA', border: '1px solid #DCDFE6', borderRadius: 3, marginBottom: 20 }}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', background: 'none', border: 'none', cursor: 'pointer', fontFamily: 'Noto Sans TC,sans-serif', textAlign: 'left' }}
+      >
+        <span style={{ fontSize: 13, fontWeight: 600, color: '#303133' }}>我需要用到這些嗎？— 依使用情境快速判斷</span>
+        <span style={{ fontSize: 13, color: '#909399', flexShrink: 0, marginLeft: 8 }}>{open ? '收起' : '展開'}</span>
+      </button>
+      {open && (
+        <div style={{ padding: '0 16px 16px', display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {scenarios.map((s, i) => (
+            <div key={i} style={{ background: '#fff', border: '1px solid #DCDFE6', borderRadius: 3, padding: '12px 14px' }}>
+              <div style={{ fontSize: 13, color: '#606266', marginBottom: 6, lineHeight: 1.6 }}>
+                <span style={{ color: '#909399', marginRight: 6 }}>情境：</span>{s.q}
+              </div>
+              <div style={{ fontSize: 13, color: '#303133', lineHeight: 1.6 }}>
+                <span style={{ color: '#409EFF', marginRight: 6, fontWeight: 500 }}>建議：</span>{s.a}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Brand icons ──────────────────────────────────────────────
 
 function GA4Icon() {
@@ -479,6 +518,8 @@ function PageTracking({ onNavigate, show }) {
               在此設定 GA4、Meta Pixel、GTM 等行銷追蹤工具。填入 ID 後系統將自動安裝追蹤碼，無需手動埋設程式碼。
             </p>
           </div>
+
+          <TrackDecisionGuide />
 
           <InlineAlert type="info">
             <strong>注意：</strong>

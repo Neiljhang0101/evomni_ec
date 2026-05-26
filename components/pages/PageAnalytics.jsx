@@ -641,6 +641,9 @@ function SalesOverview({ showCompare, isPro, onUpgrade, onOpenAdDrawer, isEmpty 
         </Card>
         <Card style={{ position: 'relative', minHeight: 240 }}>
           <AnaSectionTitle>時段熱力圖</AnaSectionTitle>
+          <div style={{ fontSize: 12, color: ANA_C.grey, marginBottom: 10, lineHeight: 1.6 }}>
+            顏色越深代表該時段訂單量越高。用來決定推播通知與廣告投放的最佳時機，例如：若週五晚上 8–10 點最深，推播應在該時段前發出。
+          </div>
           {!isPro && <UpgradeLockBanner featureName="時段訂單熱力圖" valueProp="找出下單最集中的時段，決定推播與廣告投放的最佳時機" onLearnMore={onUpgrade} />}
           <Heatmap blurred={!isPro} onUpgrade={onUpgrade} />
         </Card>
@@ -1225,6 +1228,13 @@ function MarketingEfficiency({ isPro, onUpgrade, isEmpty }) {
           <AnaEmptyState icon="marketing" title="所選期間無轉換資料" subtitle={'有訂單進入結帳流程後，\n轉換漏斗將開始統計。'} />
         ) : (
           <>
+            <div style={{ fontSize: 12, color: ANA_C.grey, marginBottom: 12, lineHeight: 1.7 }}>
+              顧客從看到產品到完成購買的每個步驟流失比例。完成付款率目前為 <strong style={{ color: FUNNEL_STAGES[FUNNEL_STAGES.length - 1].pct < 15 ? ANA_C.red : ANA_C.green }}>{FUNNEL_STAGES[FUNNEL_STAGES.length - 1].pct}%</strong>
+              {FUNNEL_STAGES[FUNNEL_STAGES.length - 1].pct < 15 && (
+                <span style={{ color: ANA_C.red }}>（低於 15%，建議檢查結帳流程或金流設定）</span>
+              )}
+              。
+            </div>
             <FunnelChart stages={FUNNEL_STAGES} />
             <div style={{ marginTop: 16, background: ANA_C.blueBg, border: `1px solid ${ANA_C.blue}40`, padding: '10px 14px', fontSize: 13, color: ANA_C.mid }}>
               建議：購物車主要流失發生在「加入購物車 → 進入結帳」，流失率 40%。可設定購物車提醒，或提供更有吸引力的滿額優惠。

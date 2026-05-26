@@ -559,6 +559,24 @@ function FreightScreen4() {
         消費者前台頁面預覽 — 以下模擬消費者看到的購物車介面
       </div>
 
+      <div style={{ background: '#ECF5FF', border: '1px solid #B3D8FF', borderRadius: 3, padding: '14px 16px', marginBottom: 20 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: '#303133', marginBottom: 10 }}>混溫層運費計算規則說明</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          {[
+            { q: '消費者買了一件常溫商品 + 一件冷藏商品，運費怎麼算？', a: '系統以「最高溫層」決定運費。此例包含冷藏品，運費依冷藏費率計算，即使常溫品本身免運也一樣。' },
+            { q: '消費者的購物車有常溫、冷藏、冷凍都有，運費呢？', a: '系統取最高溫層（冷凍），以冷凍費率計算整筆訂單運費。' },
+            { q: '消費者想要常溫和冷凍分開配送怎麼辦？', a: '頁面會顯示「分拆購物車」按鈕，讓消費者拆成兩筆訂單分別結帳，各自選擇適合的物流方式與費率。' },
+          ].map((item, i) => (
+            <div key={i} style={{ background: '#fff', border: '1px solid #DCDFE6', borderRadius: 3, padding: '10px 14px' }}>
+              <div style={{ fontSize: 12, color: '#909399', marginBottom: 4 }}>情境 {i + 1}：{item.q}</div>
+              <div style={{ fontSize: 13, color: '#303133', lineHeight: 1.6 }}>
+                <span style={{ color: '#409EFF', marginRight: 4 }}>系統行為：</span>{item.a}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div style={{ marginBottom: 20 }}>
         <span style={{ fontSize: 13, color: '#606266', marginRight: 12 }}>切換購物車狀態：</span>
         {[
