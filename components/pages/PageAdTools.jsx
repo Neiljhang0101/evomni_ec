@@ -265,21 +265,11 @@ function UTMTab({ toast }) {
           <SectionLabel>UTM 參數</SectionLabel>
 
           <FormField label={<span>來源（utm_source）<span style={{ color: '#F56C6C' }}> *</span></span>} error={errors.src}>
-            <div style={{ position: 'relative' }}>
-              <input value={utmSrc} onChange={e => { setUtmSrc(e.target.value); setErrors(prev => ({ ...prev, src: '' })); }} placeholder="如 facebook、google、line…" list="utm-source-list" style={{ ...fieldStyle, borderColor: errors.src ? '#F56C6C' : '#DCDFE6' }} />
-              <datalist id="utm-source-list">
-                <option value="facebook" /><option value="google" /><option value="line" /><option value="instagram" /><option value="email" /><option value="sms" /><option value="qrcode" />
-              </datalist>
-            </div>
+            <input value={utmSrc} onChange={e => { setUtmSrc(e.target.value); setErrors(prev => ({ ...prev, src: '' })); }} placeholder="如 facebook、google、line…" style={{ ...fieldStyle, borderColor: errors.src ? '#F56C6C' : '#DCDFE6' }} />
           </FormField>
 
           <FormField label={<span>媒介（utm_medium）<span style={{ color: '#F56C6C' }}> *</span></span>} error={errors.med}>
-            <>
-              <input value={utmMed} onChange={e => { setUtmMed(e.target.value); setErrors(prev => ({ ...prev, med: '' })); }} placeholder="如 paid、email、social…" list="utm-medium-list" style={{ ...fieldStyle, borderColor: errors.med ? '#F56C6C' : '#DCDFE6' }} />
-              <datalist id="utm-medium-list">
-                <option value="paid" /><option value="cpc" /><option value="cpm" /><option value="organic" /><option value="social" /><option value="email" /><option value="sms" /><option value="banner" />
-              </datalist>
-            </>
+            <input value={utmMed} onChange={e => { setUtmMed(e.target.value); setErrors(prev => ({ ...prev, med: '' })); }} placeholder="如 paid、email、social…" style={{ ...fieldStyle, borderColor: errors.med ? '#F56C6C' : '#DCDFE6' }} />
           </FormField>
 
           <FormField label={<span>廣告活動（utm_campaign）<span style={{ color: '#F56C6C' }}> *</span></span>}
@@ -797,7 +787,7 @@ function AnalyticsTab({ toast }) {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-function AdToolsPage({ toast }) {
+function AdToolsPage({ toast, onNavigate }) {
   const [activeTab, setActiveTab] = React.useState('utm');
 
   const tabs = [
@@ -811,8 +801,8 @@ function AdToolsPage({ toast }) {
       <PageHeader title="廣告投放工具" breadcrumbs={['行銷管理', '廣告投放工具']} />
 
       <InfoBanner>
-        廣告追蹤碼（Facebook Pixel / GA4 / LINE Tag）設定請前往「行銷管理 &gt; 行銷工具設定」，不在此頁設定。
-        <a href="#" style={{ color: '#409EFF', marginLeft: 4 }}>前往行銷工具設定 →</a>
+        廣告追蹤碼（Facebook Pixel / GA4 / LINE Tag）設定請前往「全域設定 &gt; 行銷追蹤碼」，不在此頁設定。
+        <a href="#" style={{ color: '#409EFF', marginLeft: 4 }} onClick={e => { e.preventDefault(); onNavigate && onNavigate('gs-tracking'); }}>前往行銷追蹤碼設定 →</a>
       </InfoBanner>
 
       <div style={{ display: 'flex', borderBottom: '2px solid #DCDFE6', marginBottom: 24 }}>
@@ -835,5 +825,5 @@ function AdToolsPage({ toast }) {
 
 function PageAdTools({ onNavigate, show }) {
   const toast = show || (() => {});
-  return <AdToolsPage toast={toast} />;
+  return <AdToolsPage toast={toast} onNavigate={onNavigate} />;
 }

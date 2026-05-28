@@ -99,6 +99,22 @@ const SidebarData = [
     ]
   },
   {
+    id: 'website-design',
+    label: '網站設計',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="2" width="14" height="10" rx="1" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/>
+        <line x1="1" y1="5" x2="15" y2="5" stroke="currentColor" strokeWidth="1.4" opacity="0.9"/>
+        <line x1="4" y1="14" x2="12" y2="14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.9"/>
+        <line x1="8" y1="12" x2="8" y2="14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.9"/>
+      </svg>
+    ),
+    children: [
+      { id: 'website-menu',   label: '選單管理' },
+      { id: 'system-pages',   label: '系統分頁' },
+    ]
+  },
+  {
     id: 'global-settings',
     label: '全域設定',
     icon: (
@@ -145,6 +161,9 @@ const NAV_GROUP_MAP = {
   'gs-tracking': 'global-settings',
   'gs-newsletter': 'global-settings',
   'gs-msl': 'global-settings',
+  // 網站設計
+  'website-menu':  'website-design',
+  'system-pages':  'website-design',
   // 金物流串接 sub-pages
   'payment-hub': 'global-settings', 'invoice-settings': 'global-settings', 'webhook-mgmt': 'global-settings',
   'vendor-auto': 'global-settings', 'vendor-bank': 'global-settings', 'vendor-manual': 'global-settings',

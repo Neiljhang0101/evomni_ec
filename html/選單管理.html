@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>選單管理 — Evomni Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body, #root { height: 100%; }
+    body { font-family: 'Noto Sans TC', sans-serif; font-size: 14px; color: #303133; background: #F5F7FA; -webkit-font-smoothing: antialiased; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-thumb { background: #DCDFE6; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    input::placeholder { color: #909399; }
+    select { appearance: auto; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel" src="../components/Sidebar.jsx"></script>
+<script type="text/babel" src="../components/Header.jsx"></script>
+<script type="text/babel" src="../components/SharedUI.jsx"></script>
+<script type="text/babel" src="../components/Shared.jsx"></script>
+
+<script type="text/babel">
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+const PURPLE     = '#7C3AED';
+const BORDER     = '#DCDFE6';
+const TEXT       = '#303133';
+const MUTED      = '#909399';
+const PANEL_BG   = '#FAFBFC';
+const WHITE      = '#FFFFFF';
+const LINK_BLUE  = '#409EFF';
+const RED        = '#F56C6C';
+
+const TYPE_OPTIONS = [
+  { value: 'group',            label: '群組' },
+  { value: 'page',             label: '單頁' },
+  { value: 'article-category', label: '文章分類' },
+  { value: 'external-link',    label: '外部連結' },
+];
+const TYPE_LABEL = {
+  group: '群組', page: '單頁',
+  'article-category': '文章分類', 'external-link': '外部連結',
+};
+
+const INIT_ITEMS = [
+  { id: 'i1', name: '公司動態',  type: 'article-category', children: [] },
+  { id: 'i2', name: '公司簡介',  type: 'page',             children: [] },
+  { id: 'i3', name: '服務介紹',  type: 'article-category', children: [
+    { id: 'i3a', name: '設計服務', type: 'page', children: [] },
+    { id: 'i3b', name: '工程服務', type: 'page', children: [] },
+  ]},
+  { id: 'i4', name: '最新消息',  type: 'article-category', children: [] },
+  { id: 'i5', name: '關於我們',  type: 'group',            children: [
+    { id: 'i5a', name: '公司動態', type: 'article-category', children: [] },
+    { id: 'i5b', name: '里程碑',   type: 'page',             children: [] },
+  ]},
+  { id: 'i6', name: '業界新聞',  type: 'article-category', children: [] },
+];
+
+// ─── Icons ────────────────────────────────────────────────────────────────────
+function UploadIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <rect x="3" y="3" width="22" height="22" rx="4" stroke={BORDER} strokeWidth="1.2" fill="none"/>
+      <path d="M14 20V12M14 12L10 16M14 12L18 16" stroke={MUTED} strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M8 22H20" stroke={MUTED} strokeWidth="1.5" strokeLinecap="round"/>
+    </svg>
+  );
+}
+function DragIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ cursor: 'grab', flexShrink: 0 }}>
+      <circle cx="4.5" cy="3.5"  r="1.1" fill="#C0C4CC"/>
+      <circle cx="9.5" cy="3.5"  r="1.1" fill="#C0C4CC"/>
+      <circle cx="4.5" cy="7"    r="1.1" fill="#C0C4CC"/>
+      <circle cx="9.5" cy="7"    r="1.1" fill="#C0C4CC"/>
+      <circle cx="4.5" cy="10.5" r="1.1" fill="#C0C4CC"/>
+      <circle cx="9.5" cy="10.5" r="1.1" fill="#C0C4CC"/>
+    </svg>
+  );
+}
+function ChevronIcon({ open }) {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"
+      style={{ transition: 'transform 0.2s', transform: open ? 'rotate(90deg)' : 'none', flexShrink: 0 }}>
+      <path d="M5 3L9.5 7L5 11" stroke={MUTED} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  );
+}
+function PlusIcon({ size = 13, color = LINK_BLUE }) {
+  return <svg width={size} height={size} viewBox="0 0 13 13" fill="none"><path d="M6.5 1.5v10M1.5 6.5h10" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></svg>;
+}
+function TrashIcon() {
+  return <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2.5 3.5h9M5.5 3.5V2.5h3v1M4.5 3.5l.5 8h4l.5-8" stroke="#C0C4CC" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/></svg>;
+}
+
+// ─── Add-item left panel ──────────────────────────────────────────────────────
+function AddForm({ topLevelItems, onAdd }) {
+  const [fType,   setFType]   = React.useState('group');
+  const [fName,   setFName]   = React.useState('');
+  const [fClick,  setFClick]  = React.useState('clickable');
+  const [fAddTo,  setFAddTo]  = React.useState('root');
+
+  const submit = () => {
+    if (!fName.trim()) return;
+    onAdd({ type: fType, name: fName.trim(), addTo: fAddTo });
+    setFName('');
+  };
+
+  const addToOpts = [
+    { value: 'root', label: '第一層（主選單）' },
+    ...topLevelItems.map(it => ({ value: it.id, label: it.name })),
+  ];
+
+  const radioStyle = (active) => ({
+    width: 15, height: 15, borderRadius: '50%',
+    border: `2px solid ${active ? PURPLE : BORDER}`,
+    background: active ? PURPLE : WHITE,
+    flexShrink: 0, marginTop: 1,
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    transition: 'all 0.15s', cursor: 'pointer',
+  });
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflowY: 'auto' }}>
+
+      {/* CSV import */}
+      <div style={{ padding: '16px 16px 12px' }}>
+        <div style={{ fontSize: 12, fontWeight: 500, color: TEXT, marginBottom: 10 }}>批量匯入</div>
+        <label style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+          padding: '14px 10px', border: `1.5px dashed ${BORDER}`, cursor: 'pointer',
+          background: WHITE, marginBottom: 8,
+        }}>
+          <UploadIcon />
+          <span style={{ fontSize: 12, color: MUTED }}>上傳 CSV / Excel</span>
+          <input type="file" style={{ display: 'none' }} accept=".csv,.xlsx" />
+        </label>
+        <div style={{ textAlign: 'center', marginBottom: 4 }}>
+          <span style={{ fontSize: 12, color: LINK_BLUE, cursor: 'pointer', textDecoration: 'underline' }}>下載 CSV 範本</span>
+        </div>
+        <div style={{ textAlign: 'center', fontSize: 12, color: MUTED }}>或手動新增</div>
+      </div>
+
+      <div style={{ borderTop: `1px solid ${BORDER}` }} />
+
+      {/* Manual form */}
+      <div style={{ padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+        {/* 選擇類型 */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: TEXT, marginBottom: 6 }}>
+            <span style={{ color: RED, marginRight: 2 }}>*</span>選擇類型
+          </div>
+          <select value={fType} onChange={e => setFType(e.target.value)}
+            style={{ width: '100%', height: 36, padding: '0 10px', border: `1px solid ${BORDER}`, borderRadius: 0, fontSize: 13, fontFamily: 'Noto Sans TC, sans-serif', color: TEXT, background: WHITE, outline: 'none', cursor: 'pointer' }}>
+            {TYPE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </div>
+
+        {/* 名稱 */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: TEXT, marginBottom: 6 }}>
+            <span style={{ color: RED, marginRight: 2 }}>*</span>
+            {fType === 'group' ? '群組名稱' : fType === 'external-link' ? '連結名稱' : '頁面名稱'}
+          </div>
+          <input value={fName} onChange={e => setFName(e.target.value)}
+            placeholder={fType === 'group' ? '輸入前台顯示的群組文字' : '輸入顯示名稱'}
+            onKeyDown={e => e.key === 'Enter' && submit()}
+            style={{ width: '100%', height: 36, padding: '0 10px', border: `1px solid ${BORDER}`, borderRadius: 0, fontSize: 13, fontFamily: 'Noto Sans TC, sans-serif', color: TEXT, outline: 'none' }}
+          />
+        </div>
+
+        {/* 連結網址（外部連結） */}
+        {fType === 'external-link' && (
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: TEXT, marginBottom: 6 }}>
+              <span style={{ color: RED, marginRight: 2 }}>*</span>連結網址
+            </div>
+            <input placeholder="https://..." style={{ width: '100%', height: 36, padding: '0 10px', border: `1px solid ${BORDER}`, borderRadius: 0, fontSize: 13, fontFamily: 'Noto Sans TC, sans-serif', color: TEXT, outline: 'none' }} />
+          </div>
+        )}
+
+        {/* 點擊行為（群組） */}
+        {fType === 'group' && (
+          <div>
+            <div style={{ fontSize: 12, fontWeight: 500, color: TEXT, marginBottom: 8 }}>點擊行為</div>
+            {[
+              { value: 'clickable', label: '可點擊（進入子層集合頁）' },
+              { value: 'hover',     label: '停用點擊（hover 展開子選單）' },
+            ].map(opt => (
+              <label key={opt.value} style={{ display: 'flex', alignItems: 'flex-start', gap: 7, marginBottom: 8, cursor: 'pointer' }}>
+                <div onClick={() => setFClick(opt.value)} style={radioStyle(fClick === opt.value)}>
+                  {fClick === opt.value && <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#fff' }} />}
+                </div>
+                <div>
+                  <div style={{ fontSize: 12, color: TEXT, lineHeight: 1.5 }}>{opt.label}</div>
+                  {opt.value === 'hover' && fClick === 'hover' && (
+                    <div style={{ fontSize: 11, color: MUTED, marginTop: 3, lineHeight: 1.6 }}>
+                      選擇停用點擊後，前台此項目僅做為 hover 展開子選單的觸發器，不會有點擊連結
+                    </div>
+                  )}
+                </div>
+              </label>
+            ))}
+          </div>
+        )}
+
+        {/* 加入到 */}
+        <div>
+          <div style={{ fontSize: 12, fontWeight: 500, color: TEXT, marginBottom: 6 }}>加入到</div>
+          <select value={fAddTo} onChange={e => setFAddTo(e.target.value)}
+            style={{ width: '100%', height: 36, padding: '0 10px', border: `1px solid ${BORDER}`, borderRadius: 0, fontSize: 13, fontFamily: 'Noto Sans TC, sans-serif', color: TEXT, background: WHITE, outline: 'none', cursor: 'pointer' }}>
+            {addToOpts.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+          <div style={{ fontSize: 11, color: MUTED, marginTop: 5, lineHeight: 1.6 }}>
+            選擇要將此項目加入到哪個選單節點下
+          </div>
+        </div>
+
+        {/* Submit */}
+        <button onClick={submit} style={{
+          width: '100%', height: 40,
+          background: PURPLE, color: '#fff',
+          border: 'none', borderRadius: 4, cursor: 'pointer',
+          fontSize: 14, fontFamily: 'Noto Sans TC, sans-serif', fontWeight: 500,
+        }}
+          onMouseEnter={e => e.currentTarget.style.background = '#6D28D9'}
+          onMouseLeave={e => e.currentTarget.style.background = PURPLE}
+        >
+          新增至選單
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ─── Menu item row (recursive) ────────────────────────────────────────────────
+function MenuItemRow({ item, depth, onDelete, onAddChild }) {
+  const [open, setOpen] = React.useState(depth === 0);
+  const hasKids = item.children && item.children.length > 0;
+  const pl = 14 + depth * 24;
+
+  return (
+    <div style={{ marginBottom: depth === 0 ? 8 : 0 }}>
+
+      {/* Row */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        paddingLeft: pl, paddingRight: 12, height: 52,
+        background: WHITE,
+        border: `1px solid ${BORDER}`,
+        borderBottom: (hasKids || depth === 0) && open ? 'none' : `1px solid ${BORDER}`,
+      }}>
+        <DragIcon />
+        {hasKids
+          ? <span onClick={() => setOpen(o => !o)} style={{ cursor: 'pointer', display: 'flex' }}><ChevronIcon open={open} /></span>
+          : <span style={{ width: 14, flexShrink: 0 }} />
+        }
+        <span style={{ flex: 1, fontSize: 14, fontWeight: 500, color: TEXT }}>{item.name}</span>
+        <span style={{ fontSize: 12, color: LINK_BLUE, marginRight: 4, whiteSpace: 'nowrap' }}>
+          {TYPE_LABEL[item.type] || item.type}
+        </span>
+        <button style={{ height: 30, padding: '0 12px', background: WHITE, border: `1px solid ${BORDER}`, borderRadius: 0, fontSize: 12, color: TEXT, cursor: 'pointer', fontFamily: 'Noto Sans TC, sans-serif', whiteSpace: 'nowrap' }}
+          onMouseEnter={e => e.currentTarget.style.background = '#F5F7FA'}
+          onMouseLeave={e => e.currentTarget.style.background = WHITE}
+        >設定</button>
+        <button onClick={() => onDelete(item.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: 4, opacity: 0.7 }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '1'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '0.7'}
+        ><TrashIcon /></button>
+      </div>
+
+      {/* Expanded children + drop zone */}
+      {open && (
+        <div style={{ border: `1px solid ${BORDER}`, borderTop: 'none' }}>
+          {hasKids && item.children.map(child => (
+            <MenuItemRow key={child.id} item={child} depth={depth + 1} onDelete={onDelete} onAddChild={onAddChild} />
+          ))}
+
+          {/* Drop zone */}
+          <div style={{ margin: '6px 12px', border: '1.5px dashed #D0D5DD', background: '#FAFAFA', padding: '8px 0', textAlign: 'center', fontSize: 12, color: '#C0C4CC', borderRadius: 2 }}>
+            拖曳項目至此成為子項目
+          </div>
+
+          {/* Add child */}
+          <div onClick={() => onAddChild(item.id)} style={{
+            margin: '4px 12px 10px', border: `1.5px dashed ${LINK_BLUE}`, background: WHITE,
+            padding: '7px 0', textAlign: 'center', cursor: 'pointer', borderRadius: 2,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 5,
+          }}
+            onMouseEnter={e => e.currentTarget.style.background = '#EBF4FF'}
+            onMouseLeave={e => e.currentTarget.style.background = WHITE}
+          >
+            <PlusIcon size={12} />
+            <span style={{ fontSize: 12, color: LINK_BLUE }}>新增子項目</span>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function deleteFrom(items, id) {
+  return items.filter(n => n.id !== id).map(n => ({ ...n, children: n.children ? deleteFrom(n.children, id) : [] }));
+}
+function addChild(items, parentId, newItem) {
+  return items.map(n => {
+    if (n.id === parentId) return { ...n, children: [...(n.children || []), newItem] };
+    if (n.children) return { ...n, children: addChild(n.children, parentId, newItem) };
+    return n;
+  });
+}
+function addToRoot(items, parentId, newItem) {
+  if (parentId === 'root') return [...items, newItem];
+  return addChild(items, parentId, newItem);
+}
+
+// ─── Toast ────────────────────────────────────────────────────────────────────
+function ToastMsg({ list }) {
+  const map = { success: { bg:'#f0f9eb',b:'#c2e7b0',c:'#67C23A',i:'✓' }, info: { bg:'#ecf5ff',b:'#b3d8ff',c:'#409EFF',i:'ℹ' } };
+  return (
+    <div style={{ position:'fixed', top:20, right:20, zIndex:3000, display:'flex', flexDirection:'column', gap:8, pointerEvents:'none' }}>
+      {list.map(t => { const s=map[t.type]||map.success; return (
+        <div key={t.id} style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 14px', background:s.bg, border:`1px solid ${s.b}`, borderRadius:3, boxShadow:'0 2px 12px rgba(0,0,0,0.1)', minWidth:220, fontSize:13 }}>
+          <span style={{ color:s.c, fontWeight:700 }}>{s.i}</span>
+          <span style={{ color: TEXT }}>{t.msg}</span>
+        </div>
+      ); })}
+    </div>
+  );
+}
+function useSimpleToast() {
+  const [list, setList] = React.useState([]);
+  const show = (msg, type='success') => {
+    const id = Date.now();
+    setList(t => [...t, { id, msg, type }]);
+    setTimeout(() => setList(t => t.filter(x => x.id !== id)), 2800);
+  };
+  return { list, show };
+}
+
+// ─── App ─────────────────────────────────────────────────────────────────────
+function App() {
+  const [collapsed, setCollapsed] = React.useState(false);
+  const [page,      setPage]      = React.useState('website-menu');
+  const [items,     setItems]     = React.useState(INIT_ITEMS);
+  const [lang,      setLang]      = React.useState('zh');
+  const toast = useSimpleToast();
+
+  const handleAdd = ({ type, name, addTo }) => {
+    const newItem = { id: 'm_' + Date.now(), name, type, children: [] };
+    setItems(prev => addToRoot(prev, addTo, newItem));
+    toast.show('「' + name + '」已新增至選單');
+  };
+  const handleDelete = id => {
+    setItems(prev => deleteFrom(prev, id));
+    toast.show('項目已移除', 'info');
+  };
+  const handleAddChild = parentId => {
+    const newItem = { id: 'mc_' + Date.now(), name: '新子項目', type: 'page', children: [] };
+    setItems(prev => addChild(prev, parentId, newItem));
+    toast.show('子項目已新增');
+  };
+  const handleSave = () => toast.show('選單已儲存');
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Header
+        breadcrumbs={['網站設計', '選單管理']}
+        onNavigate={setPage}
+        onToggleSidebar={() => setCollapsed(c => !c)}
+      />
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <Sidebar currentPage={page} onNavigate={setPage} collapsed={collapsed} />
+
+        {/* Page content: left form + right list */}
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minWidth: 0 }}>
+
+          {/* Left panel */}
+          <div style={{ width: 220, flexShrink: 0, borderRight: `1px solid ${BORDER}`, background: PANEL_BG, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+            <AddForm topLevelItems={items} onAdd={handleAdd} />
+          </div>
+
+          {/* Right panel */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+
+            {/* Save button row */}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '8px 24px', background: WHITE, borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
+              <button onClick={handleSave} style={{
+                height: 36, padding: '0 20px',
+                background: PURPLE, color: '#fff', border: 'none', borderRadius: 4,
+                fontSize: 14, fontFamily: 'Noto Sans TC, sans-serif', fontWeight: 500, cursor: 'pointer',
+              }}
+                onMouseEnter={e => e.currentTarget.style.background = '#6D28D9'}
+                onMouseLeave={e => e.currentTarget.style.background = PURPLE}
+              >儲存選單</button>
+            </div>
+
+            {/* Language tabs */}
+            <div style={{ display: 'flex', padding: '0 24px', background: WHITE, borderBottom: `1px solid ${BORDER}`, flexShrink: 0 }}>
+              {[{ id: 'zh', label: '繁中' }, { id: 'en', label: 'EN' }].map(l => (
+                <div key={l.id} onClick={() => setLang(l.id)} style={{
+                  padding: '10px 16px', fontSize: 14, cursor: 'pointer', userSelect: 'none',
+                  color: lang === l.id ? PURPLE : MUTED,
+                  borderBottom: `2px solid ${lang === l.id ? PURPLE : 'transparent'}`,
+                  marginBottom: -1, fontWeight: lang === l.id ? 500 : 400,
+                  transition: 'color 0.15s',
+                }}>
+                  {l.label}
+                </div>
+              ))}
+            </div>
+
+            {/* Items list */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '20px 24px', background: '#F5F7FA' }}>
+              {items.map(item => (
+                <MenuItemRow key={item.id} item={item} depth={0} onDelete={handleDelete} onAddChild={handleAddChild} />
+              ))}
+
+              {/* Add top-level button */}
+              <div onClick={() => handleAddChild('root_new')} style={{
+                border: `1.5px dashed ${LINK_BLUE}`, background: WHITE, padding: '10px 0',
+                textAlign: 'center', cursor: 'pointer', borderRadius: 2, marginTop: 4,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+              }}
+                onMouseEnter={e => e.currentTarget.style.background = '#EBF4FF'}
+                onMouseLeave={e => e.currentTarget.style.background = WHITE}
+              >
+                <PlusIcon size={13} />
+                <span style={{ fontSize: 13, color: LINK_BLUE }}>新增主選單項目</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ToastMsg list={toast.list} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

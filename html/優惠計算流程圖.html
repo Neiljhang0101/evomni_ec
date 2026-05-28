@@ -229,7 +229,7 @@
     margin-top: 1px;
   }
 
-  /* ── Decision block (Layer 4) ── */
+  /* ── Decision block (第四層) ── */
   .decision-block {
     background: #fff;
     border: 1.5px dashed #DCDFE6;
@@ -391,7 +391,7 @@
   <!-- Connector L1→L2 -->
   <div class="connector">
     <div class="connector-line"></div>
-    <div class="connector-label output-l1">輸出：各產品折後單價小計加總 = Layer 1 折後金額</div>
+    <div class="connector-label output-l1">輸出：各產品折後單價小計加總 = 第一層 折後金額</div>
     <div class="connector-line"></div>
     <div class="connector-arrow"></div>
   </div>
@@ -417,7 +417,7 @@
           計算基準
         </div>
         <div class="base-highlight">
-          Layer 1 折後金額
+          第一層 折後金額
           <span>門檻判斷亦以此金額為準，非原價</span>
         </div>
       </div>
@@ -445,7 +445,7 @@
             <circle cx="7" cy="7" r="6" fill="#E8F4FE"/>
             <path d="M4 7h6M7 4v6" stroke="#409EFF" stroke-width="1.5" stroke-linecap="round"/>
           </svg>
-          範例：Layer 1 後金額 900 元，「滿 1,000 享折扣」條件不成立，門檻以折後金額判斷
+          範例：第一層 後金額 900 元，「滿 1,000 享折扣」條件不成立，門檻以折後金額判斷
         </div>
       </div>
     </div>
@@ -454,7 +454,7 @@
   <!-- Connector L2→L3 -->
   <div class="connector">
     <div class="connector-line"></div>
-    <div class="connector-label output-l2">輸出：訂單折扣後金額 + 已計算運費 = Layer 2 折後金額</div>
+    <div class="connector-label output-l2">輸出：訂單折扣後金額 + 已計算運費 = 第二層 折後金額</div>
     <div class="connector-line"></div>
     <div class="connector-arrow"></div>
   </div>
@@ -480,7 +480,7 @@
           計算基準
         </div>
         <div class="base-highlight">
-          Layer 2 折後金額
+          第二層 折後金額
           <span>以此金額判斷是否達贈品/加購門檻</span>
         </div>
       </div>
@@ -519,7 +519,7 @@
   <!-- Connector L3→L4 -->
   <div class="connector">
     <div class="connector-line"></div>
-    <div class="connector-label output-l3">輸出：含贈品的購物車，訂單金額維持 Layer 2 折後金額不變</div>
+    <div class="connector-label output-l3">輸出：含贈品的購物車，訂單金額維持 第二層 折後金額不變</div>
     <div class="connector-line"></div>
     <div class="connector-arrow"></div>
   </div>
@@ -545,8 +545,8 @@
           計算基準
         </div>
         <div class="base-highlight">
-          Layer 2 折後金額
-          <span>贈品不計入金額，Layer 3 不影響此基準</span>
+          第二層 折後金額
+          <span>贈品不計入金額，第三層 不影響此基準</span>
         </div>
       </div>
       <!-- 包含優惠類型 -->
@@ -591,7 +591,7 @@
   <!-- Connector L4→L5 -->
   <div class="connector">
     <div class="connector-line"></div>
-    <div class="connector-label output-l4">輸出：優惠券折抵後金額 = Layer 4 折後金額</div>
+    <div class="connector-label output-l4">輸出：優惠券折抵後金額 = 第四層 折後金額</div>
     <div class="connector-line"></div>
     <div class="connector-arrow"></div>
   </div>
@@ -617,7 +617,7 @@
           計算基準
         </div>
         <div class="base-highlight">
-          Layer 4 折後金額
+          第四層 折後金額
           <span>所有折扣套用後，再以點數折抵</span>
         </div>
       </div>
@@ -667,8 +667,8 @@
     <strong>全局疊加規則（適用所有層級）</strong>
     <ul>
       <li>同一層、同一類型的優惠：不可疊加，系統自動取最優惠者</li>
-      <li>不同層之間：可疊加，依 Layer 1 → 5 順序依序套用</li>
-      <li>商家可對特定活動設定「禁止與任何券疊加」，Layer 4 套用時此活動將排除優惠券</li>
+      <li>不同層之間：可疊加，依第一至第五層順序依序套用</li>
+      <li>商家可對特定活動設定「禁止與任何券疊加」，第四層 套用時此活動將排除優惠券</li>
       <li>優惠套用必須在同一 Transaction 內完成，確保優惠券使用次數與點數扣減的資料一致性</li>
     </ul>
   </div>

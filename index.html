@@ -94,6 +94,8 @@
 <script type="text/babel" src="components/pages/PageThirdPartyLogin.jsx"></script>
 <script type="text/babel" src="components/pages/PageAdTools.jsx"></script>
 <script type="text/babel" src="components/pages/PageTracking.jsx"></script>
+<script type="text/babel" src="components/pages/PageWebsiteDesign.jsx"></script>
+<script type="text/babel" src="components/pages/PageSystemPages.jsx"></script>
 
 <!-- 統一 App -->
 <script type="text/babel">
@@ -157,6 +159,9 @@ const MARKETING_PAGES = new Set([
   'lp-create-step1','lp-create-step2','lp-create-step3','lp-create-step4',
   'marketing-landing-v2','lp-detail-v2',
 ]);
+const WEBSITE_DESIGN_PAGES = new Set([
+  'website-menu',
+]);
 const ANALYTICS_PAGES = new Set([
   'analytics-sales','analytics-products','analytics-members','analytics-marketing',
 ]);
@@ -192,6 +197,12 @@ function App() {
     }
     if (MARKETING_PAGES.has(currentPage)) {
       return <PageMarketing currentPage={currentPage} onNavigate={navigate} show={show} />;
+    }
+    if (currentPage === 'system-pages') {
+      return <PageSystemPages onNavigate={navigate} show={show} />;
+    }
+    if (WEBSITE_DESIGN_PAGES.has(currentPage)) {
+      return <PageWebsiteDesign onNavigate={navigate} show={show} />;
     }
     if (ANALYTICS_PAGES.has(currentPage)) {
       return <PageAnalytics currentPage={currentPage} onNavigate={navigate} show={show} />;
