@@ -150,10 +150,6 @@ function AddEditProductPage({ onNavigate, mode }) {
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button style={plainBtn} onClick={() => handleSave(false)} disabled={saving}>{saving ? '儲存中…' : '儲存草稿'}</button>
-          <button style={primaryBtn} onClick={() => handleSave(true)} disabled={saving}>{saving ? '儲存中…' : '儲存並上架'}</button>
-        </div>
       </div>
 
       {/* Main layout: left form + right preview panel */}
@@ -163,7 +159,7 @@ function AddEditProductPage({ onNavigate, mode }) {
         <div style={{ display: 'flex', alignItems: 'stretch' }}>
           {/* Tab bar */}
           <div style={{ flex: activeTab === 'basic' ? '0 0 55%' : '1', maxWidth: activeTab === 'basic' ? '55%' : '100%' }}>
-            <div style={{ display: 'flex', padding: '0 24px' }}>
+            <div style={{ display: 'flex', padding: '8px 24px 0' }}>
               {tabs.map((tab) => {
                 const hasError = (TAB_FIELDS[tab.id] || []).some(f => errors[f]);
                 return (
@@ -678,6 +674,12 @@ function AddEditProductPage({ onNavigate, mode }) {
           </div>
         </div>}
         </div>{/* end two-column */}
+
+        {/* Bottom action bar */}
+        <div style={{ borderTop: '1px solid #DCDFE6', padding: '16px 24px', background: '#fff', display: 'flex', justifyContent: 'flex-start', gap: 8, position: 'sticky', bottom: 0, zIndex: 10 }}>
+          <button style={plainBtn} onClick={() => handleSave(false)} disabled={saving}>{saving ? '儲存中…' : '儲存草稿'}</button>
+          <button style={primaryBtn} onClick={() => handleSave(true)} disabled={saving}>{saving ? '儲存中…' : '儲存並上架'}</button>
+        </div>
       </div>{/* end white container */}
     </div>);
 

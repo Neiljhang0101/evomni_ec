@@ -11,7 +11,7 @@ function TabSearchBar({ tabs, activeTab, onTabChange, children, style }) {
     <div style={{ background: '#fff', boxShadow: '0 1px 6px rgba(0,0,0,0.08)', marginBottom: 16, ...style }}>
 
       {/* 頁簽列 */}
-      <div style={{ display: 'flex', overflowX: 'auto', padding: '0 8px' }}>
+      <div style={{ display: 'flex', overflowX: 'auto', padding: '8px 8px 0' }}>
         {tabs.map(tab => {
           const isAct = activeTab === tab.key;
           const textColor = isAct ? '#409EFF' : (tab.danger ? '#F56C6C' : '#606266');
