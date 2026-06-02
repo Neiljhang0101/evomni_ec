@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;font-family:var(--font-sans);background:var(--fill-300);color:var(--fg)}
+  .card{padding:22px 26px;display:flex;gap:18px}
+  .prod{width:200px;background:#fff;border:1px solid var(--line-300);transition:box-shadow var(--dur) var(--ease)}
+  .prod.hover{box-shadow:var(--shadow-hover);border-color:transparent}
+  .ph{aspect-ratio:4/5;background:var(--fill-400);display:flex;align-items:center;justify-content:center;position:relative}
+  .ph .material-icons-outlined{color:var(--ink-300);font-size:34px}
+  .bdg{position:absolute;top:10px;left:10px;font:var(--w-medium) 10px/1 var(--font-sans);letter-spacing:.08em;background:var(--ink-900);color:#fff;padding:5px 8px}
+  .heart{position:absolute;top:8px;right:8px;color:var(--fg-subtle);font-size:20px}
+  .body{padding:12px 14px 16px;display:flex;flex-direction:column;gap:6px}
+  .eb{font:var(--w-medium) 10px/1 var(--font-sans);letter-spacing:.14em;text-transform:uppercase;color:var(--fg-subtle)}
+  .nm{font:var(--w-medium) 14px/1.4 var(--font-sans)}
+  .pr{display:flex;align-items:baseline;gap:8px;margin-top:2px}
+  .price{font:var(--w-medium) 15px/1 var(--font-sans);font-variant-numeric:tabular-nums}
+  .old{font:var(--w-regular) 12px/1 var(--font-sans);color:var(--fg-subtle);text-decoration:line-through}
+  .note{font:var(--w-regular) 12px/1.5 var(--font-sans);color:var(--fg-muted);align-self:center;max-width:160px}
+</style></head>
+<body><div class="card">
+  <div class="prod">
+    <div class="ph"><span class="material-icons-outlined">image</span><span class="bdg">NEW</span><span class="material-icons-outlined heart">favorite_border</span></div>
+    <div class="body"><div class="eb">SKINCARE</div><div class="nm">煥采保濕精華液 30ml</div><div class="pr"><span class="price">NT$ 1,280</span></div></div>
+  </div>
+  <div class="prod hover">
+    <div class="ph"><span class="material-icons-outlined">image</span><span class="bdg" style="background:#f56c6c">-20%</span><span class="material-icons-outlined heart" style="color:#303133">favorite</span></div>
+    <div class="body"><div class="eb">MAKEUP</div><div class="nm">絲絨霧面唇釉 #07</div><div class="pr"><span class="price">NT$ 880</span><span class="old">NT$ 1,100</span></div></div>
+  </div>
+  <div class="note">Product card — at rest (border) vs hover (lift + saved). Square crop, photography placeholder.</div>
+</div></body></html>

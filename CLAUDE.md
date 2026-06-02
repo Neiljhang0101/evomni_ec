@@ -12,6 +12,65 @@
 
 ---
 
+## Prototype 開發準則
+
+### 設計系統選用規則（必須遵守）
+
+本專案有兩套獨立設計系統，**絕對不可混用**：
+
+| 情境 | 使用的設計系統 | Skill 指令 |
+|------|--------------|-----------|
+| **前台（消費者端）** Prototype | `frontend-design-system/` | `/evomni-design-storefront` |
+| **後台（管理員端）** Prototype | `SPEC/ui-ux-design-specification.md` + `components/` | `/evomni-design` |
+
+**前台字級最小值規則：所有文字不得小於 14px。** `--t-xs` token 已設為 14px，inline style 中的 font 值亦同。違規字級（10px / 11px / 12px / 13px）一律提升至 14px。
+
+**前台 Prototype 技術棧（`frontend-design-system/SKILL.md` 為準）：**
+- React 18 + Babel standalone CDN
+- 字體：Inter（拉丁）+ Noto Sans TC（中文）
+- 圖示：Material Icons Outlined（CDN）
+- 色彩：CSS 自訂屬性，引用 `../frontend-design-system/colors_and_type.css`
+- 元件：引用 `../frontend-design-system/ui_kits/storefront/ui.jsx` 與 `sections.jsx`
+- 頁面背景：`var(--fill-300)`（米白，非灰色）
+- 基礎字級：16px（非後台的 14px）
+- 英文 UI 標籤：全大寫 + 寬字距（`CART`、`CHECKOUT`、`ORDER SUMMARY`）
+
+**後台 Prototype 技術棧（維持現行）：**
+- React 18 + Babel standalone CDN，所有樣式用 inline style
+- 引用 `../components/`（Sidebar、Header、StatusTag、SharedUI、Shared）
+- App 骨架：`<main style={{ padding: 40, background: '#F5F7FA' }}>`
+- 字體：Noto Sans TC，基礎字級 14px
+
+### 前台彈窗／通知規則（必須遵守）
+
+所有前台 Prototype 的彈窗、確認對話、toast 通知，一律使用 `evomnialert/` 元件，**禁止自製 modal、confirm panel 或 toast**。
+
+**引用方式（頁面 `<head>` 內，Babel 之後）：**
+
+```html
+<link rel="stylesheet" href="../evomnialert/evomnialert.css">
+<script src="../evomnialert/evomnialert.js"></script>
+```
+
+**呼叫規則：**
+
+| 情境 | 呼叫方式 |
+|------|---------|
+| 靜態文字通知（成功、警告、資訊） | `SiteAlert.success/error/warning/info(title, desc)` |
+| 需要使用者按 OK 確認後才執行動作 | `EvomniAlert.show({ type, title, desc, onConfirm })` |
+| AJAX 後端回應 | `EvomniAlert.fromResponse(res)` |
+| 登出流程 | `SiteAlert.logout({ redirect })` |
+
+`SiteAlert` 用純文字（前端寫死的字串）；`EvomniAlert.show()` 用於含動態字串或需 `onConfirm` callback 的情境。元件說明詳見 `evomnialert/README.md`。
+
+### 判斷依據
+
+頁面屬於「消費者會直接看到、操作的介面」→ 前台 DS。
+頁面屬於「商家後台管理、數據、設定」→ 後台 DS。
+不確定時，看 `前台開發計畫_checklist.md`：有列的頁面一律用前台 DS。
+
+---
+
 ## 開發階段時程
 
 | 階段 | 方案 | 開發期 | 整合測試期 | 目標上線 |
@@ -29,7 +88,7 @@
 
 ## 文件集說明
 
-所有 PRD 位於此資料夾。Master PRD（`Evomni_新電商系統_Master_PRD.md`）是所有子文件的導覽入口，章節結構如下：
+所有 PRD 位於 `PRD_new/` 資料夾。Master PRD（`PRD_new/Evomni_新電商系統_Master_PRD.md`）是所有子文件的導覽入口，章節結構如下：
 
 - §1 文件資訊
 - §2 產品背景與目標
@@ -53,6 +112,6 @@
 
 ## 關鍵架構決策（已定案）
 
-- **CMS 形象站產品 vs 電商產品中心**：分離架構 + 橋接推送（`products.cms_product_id`），詳見 `Evomni_形象產品與電商產品整合架構規劃.md`
+- **CMS 形象站產品 vs 電商產品中心**：分離架構 + 橋接推送（`products.cms_product_id`），詳見 `PRD_new/Evomni_形象產品與電商商品整合架構規劃.md`
 - **文章管理跨站**：共用文章管理模組，以 `display_scope` 欄位（`cms` / `ecommerce` / `both`）區分
 - **條件搜尋**：已移出本期開發範圍，改以 Grape.js 範本機制實作

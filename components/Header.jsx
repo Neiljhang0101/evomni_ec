@@ -9,11 +9,29 @@
 // 切換時廣播 CustomEvent('evomni:planchange', { detail: { isPro } })
 if (window.__evomni_isPro === undefined) window.__evomni_isPro = false;
 
+// 前台頁面路徑 — 相對於 index.html 所在目錄
+const _htmlRoot = 'html/';
+
+const FRONTEND_PAGES = [
+  { label: '購物車', url: _htmlRoot + '購物車.html', route: '/cart' },
+  { label: '結帳頁', url: _htmlRoot + '結帳頁.html', route: '/checkout' },
+  { label: '訂單確認頁', url: _htmlRoot + '訂單確認頁.html', route: '/order/confirmed' },
+];
+
 function Header({ breadcrumbs = [], onNavigate, onToggleSidebar }) {
   const getLabel = (crumb) => typeof crumb === 'string' ? crumb : crumb.label;
   const getPage  = (crumb) => typeof crumb === 'object' ? crumb.page : null;
 
   const [isPro, setIsPro] = React.useState(window.__evomni_isPro);
+  const [showFrontendMenu, setShowFrontendMenu] = React.useState(false);
+  const menuRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!showFrontendMenu) return;
+    const close = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setShowFrontendMenu(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [showFrontendMenu]);
 
   React.useEffect(() => {
     const handler = e => setIsPro(e.detail.isPro);
@@ -86,7 +104,61 @@ function Header({ breadcrumbs = [], onNavigate, onToggleSidebar }) {
 
       {/* Right actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <a href="#" style={{ fontSize: 13, color: '#409EFF', textDecoration: 'none' }}>查看前台 ↗</a>
+        {/* 查看前台 dropdown */}
+        <div ref={menuRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowFrontendMenu(s => !s)}
+            style={{
+              background: showFrontendMenu ? '#ECF5FF' : 'none',
+              border: '1px solid #409EFF', cursor: 'pointer',
+              padding: '4px 10px', fontSize: 12, color: '#409EFF',
+              display: 'flex', alignItems: 'center', gap: 4,
+              fontFamily: 'inherit', whiteSpace: 'nowrap', borderRadius: 0,
+              transition: 'background .15s',
+            }}
+          >
+            查看前台
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#409EFF" strokeWidth="1.5" strokeLinecap="round">
+              <path d="M2 8L8 2M8 2H4M8 2V6"/>
+            </svg>
+          </button>
+          {showFrontendMenu && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 4px)', right: 0,
+              background: '#fff', border: '1px solid #DCDFE6',
+              boxShadow: '0 4px 16px rgba(0,0,0,.1)',
+              zIndex: 1000, minWidth: 192,
+            }}>
+              <div style={{ padding: '7px 14px 6px', fontSize: 11, color: '#909399', borderBottom: '1px solid #F0F0F0', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                前台 Prototype
+              </div>
+              {FRONTEND_PAGES.map(page => (
+                <a
+                  key={page.url}
+                  href={page.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setShowFrontendMenu(false)}
+                  onMouseEnter={e => { e.currentTarget.style.background = '#F5F7FA'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = '#fff'; }}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '9px 14px', textDecoration: 'none',
+                    borderBottom: '1px solid #F0F0F0', background: '#fff',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 500, color: '#303133' }}>{page.label}</div>
+                    <div style={{ fontSize: 11, color: '#909399', marginTop: 2 }}>{page.route}</div>
+                  </div>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#C0C4CC" strokeWidth="1.5" strokeLinecap="round">
+                    <path d="M2 10L10 2M10 2H5M10 2V7"/>
+                  </svg>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{
             width: 28, height: 28, borderRadius: '50%',

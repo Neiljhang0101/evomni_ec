@@ -1,0 +1,22 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;font-family:var(--font-sans);background:var(--bg);color:var(--fg)}
+  .card{padding:24px 26px;display:grid;grid-template-columns:1fr 1fr;gap:16px 20px}
+  label{font:var(--w-medium) 12px/1 var(--font-sans);color:var(--fg-muted);display:block;margin-bottom:7px}
+  .field{height:44px;border:1px solid var(--line-400);background:#fff;display:flex;align-items:center;padding:0 14px;gap:8px;font:var(--w-regular) 14px/1 var(--font-sans)}
+  .field.focus{border-color:var(--ink-900);outline:2px solid var(--ink-900);outline-offset:-2px}
+  .field.err{border-color:var(--danger)}
+  .ph{color:var(--fg-disabled)}
+  .mi{font-size:18px;color:var(--fg-subtle)}
+  .hint{font:var(--w-regular) 11px/1 var(--font-sans);color:var(--danger);margin-top:6px}
+  .sel{justify-content:space-between}
+</style></head>
+<body><div class="card">
+  <div><label>電子郵件</label><div class="field"><span class="ph">you@example.com</span></div></div>
+  <div><label>密碼 (focus)</label><div class="field focus">••••••••</div></div>
+  <div><label>搜尋商品</label><div class="field"><span class="material-icons-outlined mi">search</span><span class="ph">搜尋…</span></div></div>
+  <div><label>數量 (error)</label><div class="field err">99</div><div class="hint">超過庫存數量</div></div>
+</div></body></html>

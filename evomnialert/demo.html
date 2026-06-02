@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EvomniAlert Demo</title>
+    <link rel="stylesheet" href="evomnialert.css">
+    <style>
+        :root {
+            --ColorPrimary: #ea0e0e;
+            --ColorSecondary: #0aea06;
+            --TextColorPrimary: #333;
+            --TextColorSecondary: #888;
+            --BtnPrimaryBg: #333;
+            --BtnPrimaryHoverBg: #606266;
+            --BtnPrimaryTextColor: #fff;
+            --BtnPrimaryHoverTextColor: #fff;
+            --BtnFontSize: 16px;
+            --FontFamily: Roboto, "Noto Sans TC", sans-serif;
+            --FontSizeBody: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            background-color: #f5f5f5;
+            font-family: var(--FontFamily);
+            color: var(--TextColorPrimary);
+            line-height: 1.6;
+        }
+
+        .demo-container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .demo-header {
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .demo-header h1 {
+            margin: 0 0 8px;
+            font-size: 32px;
+        }
+
+        .demo-header p {
+            margin: 0;
+            color: var(--TextColorSecondary);
+        }
+
+        .demo-section {
+            margin-bottom: 48px;
+            padding: 24px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        }
+
+        .demo-section h2 {
+            margin: 0 0 8px;
+            font-size: 22px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .demo-section .section-desc {
+            margin: 0 0 20px;
+            color: var(--TextColorSecondary);
+            font-size: 14px;
+        }
+
+        .demo-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .demo-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .try-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: 0;
+            border-radius: 4px;
+            background-color: var(--BtnPrimaryBg);
+            color: var(--BtnPrimaryTextColor);
+            font-size: 15px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.15s ease, background-color 0.3s ease;
+        }
+
+        .try-btn:hover {
+            background-color: var(--BtnPrimaryHoverBg);
+            transform: translateY(-1px);
+        }
+
+        .try-btn:active {
+            transform: translateY(0);
+        }
+
+        .try-btn.success {
+            background-color: #27ae60;
+        }
+
+        .try-btn.success:hover {
+            background-color: #1e8449;
+        }
+
+        .try-btn.error {
+            background-color: #EB5757;
+        }
+
+        .try-btn.error:hover {
+            background-color: #c0392b;
+        }
+
+        .try-btn.warning {
+            background-color: #F39C12;
+        }
+
+        .try-btn.warning:hover {
+            background-color: #d68910;
+        }
+
+        .try-btn.info {
+            background-color: #409EFF;
+        }
+
+        .try-btn.info:hover {
+            background-color: #2d7dd2;
+        }
+
+        .try-btn .emoji {
+            font-size: 18px;
+        }
+
+        .code-block {
+            margin: 12px 0 0;
+            padding: 12px 16px;
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            border-radius: 4px;
+            font-family: "SF Mono", Menlo, Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre;
+        }
+
+        .code-block .comment {
+            color: #75715e;
+        }
+
+        .code-block .keyword {
+            color: #f92672;
+        }
+
+        .code-block .string {
+            color: #a6e22e;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 99em;
+            font-size: 12px;
+            font-weight: 500;
+            vertical-align: middle;
+        }
+
+        .tag.evomni {
+            background-color: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .tag.site {
+            background-color: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .note {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background-color: #fff8e1;
+            border-left: 3px solid #F39C12;
+            border-radius: 3px;
+            font-size: 14px;
+            color: #6d5200;
+        }
+    </style>
+</head>
+<body>
+    <main class="demo-container">
+        <header class="demo-header">
+            <h1>EvomniAlert Demo</h1>
+            <p>點擊下方按鈕，實測 4 種訊息類型與進階用法。</p>
+        </header>
+
+        <!-- 區塊 1：基本 4 種 type（SiteAlert） -->
+        <section class="demo-section">
+            <h2>
+                基本 4 種 type
+                <span class="tag site">SiteAlert · 純文字</span>
+            </h2>
+            <p class="section-desc">站台前端靜態內容使用。純文字 API，零 XSS 風險。</p>
+            <div class="demo-row">
+                <button type="button" class="try-btn success" onclick="demoSiteSuccess()">
+                    <span class="emoji">✓</span> success
+                </button>
+                <button type="button" class="try-btn error" onclick="demoSiteError()">
+                    <span class="emoji">✕</span> error
+                </button>
+                <button type="button" class="try-btn warning" onclick="demoSiteWarning()">
+                    <span class="emoji">⚠</span> warning
+                </button>
+                <button type="button" class="try-btn info" onclick="demoSiteInfo()">
+                    <span class="emoji">ℹ</span> info
+                </button>
+            </div>
+            <div class="code-block">SiteAlert.success('送出成功', '我們會盡快聯繫您');
+SiteAlert.error('登入失敗', '帳號或密碼錯誤，請重試');
+SiteAlert.warning('請確認資料', 'Email 格式不正確');
+SiteAlert.info('系統通知', '將於 23:00 進行維護');</div>
+        </section>
+
+        <!-- 區塊 2：EvomniAlert.show（支援 HTML） -->
+        <section class="demo-section">
+            <h2>
+                支援 HTML 內容
+                <span class="tag evomni">EvomniAlert · DOMPurify</span>
+            </h2>
+            <p class="section-desc">後端動態訊息使用。自動清洗 HTML，僅允許白名單標籤（b, i, strong, em, br, a, span）。</p>
+            <div class="demo-row">
+                <button type="button" class="try-btn" onclick="demoHtmlContent()">
+                    含 &lt;b&gt; &lt;a&gt; 標籤
+                </button>
+                <button type="button" class="try-btn" onclick="demoHtmlLineBreak()">
+                    含 &lt;br&gt; 換行
+                </button>
+                <button type="button" class="try-btn" onclick="demoHtmlCallback()">
+                    error + onConfirm callback
+                </button>
+            </div>
+            <div class="code-block">EvomniAlert.show({
+    type: 'info',
+    title: '系統通知',
+    desc: '請參考 &lt;a href="#" target="_blank"&gt;常見問題&lt;/a&gt;'
+});</div>
+        </section>
+
+        <!-- 區塊 3：XSS 防護測試 -->
+        <section class="demo-section">
+            <h2>
+                XSS 防護測試
+                <span class="tag evomni">資安核心</span>
+            </h2>
+            <p class="section-desc">模擬惡意字串注入，驗證 DOMPurify 會清除危險內容。</p>
+            <div class="demo-row">
+                <button type="button" class="try-btn error" onclick="demoXssScript()">
+                    &lt;script&gt; 注入
+                </button>
+                <button type="button" class="try-btn error" onclick="demoXssImg()">
+                    &lt;img onerror&gt; 注入
+                </button>
+                <button type="button" class="try-btn error" onclick="demoXssJsProtocol()">
+                    javascript: 協定
+                </button>
+            </div>
+            <div class="note">
+                按下按鈕後，標題中的危險內容會被清除，僅保留安全部分。可打開瀏覽器開發者工具觀察結果。
+            </div>
+        </section>
+
+        <!-- 區塊 4：佇列機制 -->
+        <section class="demo-section">
+            <h2>
+                佇列機制（Queue）
+                <span class="tag evomni">進階</span>
+            </h2>
+            <p class="section-desc">多則訊息同時觸發時會排隊顯示。error 型會插隊到最前方。</p>
+            <div class="demo-row">
+                <button type="button" class="try-btn" onclick="demoQueueSequence()">
+                    連續觸發 3 則 success
+                </button>
+                <button type="button" class="try-btn error" onclick="demoQueueErrorInterrupt()">
+                    error 插隊測試
+                </button>
+            </div>
+            <div class="code-block"><span class="comment">// 連續觸發：依序顯示</span>
+SiteAlert.success('第 1 則');
+SiteAlert.success('第 2 則');
+SiteAlert.success('第 3 則');
+
+<span class="comment">// error 會插隊到 queue 最前方</span>
+SiteAlert.info('一般訊息 A');
+SiteAlert.info('一般訊息 B');
+SiteAlert.error('錯誤', '會先於 A、B 顯示');</div>
+        </section>
+
+        <!-- 區塊 5：fromResponse AJAX 快捷 -->
+        <section class="demo-section">
+            <h2>
+                fromResponse（AJAX 快捷）
+                <span class="tag evomni">後端整合</span>
+            </h2>
+            <p class="section-desc">模擬 AJAX 回應，自動依 <code>ok</code> 與 <code>type</code> 欄位顯示對應訊息。</p>
+            <div class="demo-row">
+                <button type="button" class="try-btn success" onclick="demoResponseOk()">
+                    ok: true
+                </button>
+                <button type="button" class="try-btn error" onclick="demoResponseFail()">
+                    ok: false
+                </button>
+                <button type="button" class="try-btn warning" onclick="demoResponseCustomType()">
+                    自訂 type: warning
+                </button>
+            </div>
+            <div class="code-block">EvomniAlert.fromResponse({
+    ok: true,
+    title: '送出成功',
+    msg: '我們會盡快聯繫您'
+});</div>
+        </section>
+
+        <!-- 區塊 6：logout 快捷 -->
+        <section class="demo-section">
+            <h2>
+                logout 快捷
+                <span class="tag evomni">登出流程</span>
+            </h2>
+            <p class="section-desc">Plan B 登出專用：成功圖示 + OK 鈕 + 按 OK 後導向指定路徑。不自動關、不可 backdrop 關。</p>
+            <div class="demo-row">
+                <button type="button" class="try-btn success" onclick="demoLogoutDefault()">
+                    預設：登出後跳首頁
+                </button>
+                <button type="button" class="try-btn success" onclick="demoLogoutCustomRedirect()">
+                    自訂 redirect 路徑
+                </button>
+                <button type="button" class="try-btn" onclick="demoLogoutCustomCallback()">
+                    自訂 onConfirm（先清 token）
+                </button>
+            </div>
+            <div class="code-block"><span class="comment">// 最簡：按 OK 後 location.href = '/'</span>
+SiteAlert.logout();
+
+<span class="comment">// 指定跳轉路徑</span>
+SiteAlert.logout({ redirect: '/zh-tw/member/login' });
+
+<span class="comment">// 先清 token 再跳轉</span>
+SiteAlert.logout({
+    onConfirm: () =&gt; {
+        localStorage.clear();
+        location.href = '/';
+    }
+});</div>
+            <div class="note">
+                Demo 中用 <code>onConfirm</code> 攔截導向，避免按 OK 真的跳頁離開 demo。
+            </div>
+        </section>
+
+        <!-- 區塊 7：dismiss 主動關閉 -->
+        <section class="demo-section">
+            <h2>
+                dismiss（主動關閉）
+                <span class="tag evomni">進階</span>
+            </h2>
+            <p class="section-desc">取得 show() 回傳的 id，可在非同步完成時主動關閉。</p>
+            <div class="demo-row">
+                <button type="button" class="try-btn info" onclick="demoDismiss()">
+                    顯示 1.5 秒後主動關閉
+                </button>
+            </div>
+            <div class="code-block">const id = EvomniAlert.show({
+    type: 'info',
+    title: '載入中...',
+    duration: 0  <span class="comment">// 不自動關閉</span>
+});
+
+setTimeout(() =&gt; {
+    EvomniAlert.dismiss(id);
+}, 1500);</div>
+        </section>
+    </main>
+
+    <!-- EvomniAlert 必載 -->
+    <script src="purify.min.js"></script>
+    <script src="evomnialert.js"></script>
+    <script>
+        /* ------------------------------------------------------------------
+           區塊 1：基本 4 種 type
+           ------------------------------------------------------------------ */
+        function demoSiteSuccess() {
+            SiteAlert.success('送出成功', '我們會盡快聯繫您');
+        }
+
+        function demoSiteError() {
+            SiteAlert.error('登入失敗', '帳號或密碼錯誤，請重試');
+        }
+
+        function demoSiteWarning() {
+            SiteAlert.warning('請確認資料', 'Email 格式不正確');
+        }
+
+        function demoSiteInfo() {
+            SiteAlert.info('系統通知', '將於 23:00 進行系統維護');
+        }
+
+        /* ------------------------------------------------------------------
+           區塊 2：EvomniAlert.show 支援 HTML
+           ------------------------------------------------------------------ */
+        function demoHtmlContent() {
+            EvomniAlert.show({
+                type: 'info',
+                title: '系統通知',
+                desc: '遇到問題？請參考 <a href="https://example.com/faq" target="_blank">常見問題</a>'
+            });
+        }
+
+        function demoHtmlLineBreak() {
+            EvomniAlert.show({
+                type: 'success',
+                title: '訂單已送出',
+                desc: '訂單編號 <b>#A20260421-001</b><br>預計 3 個工作天內出貨'
+            });
+        }
+
+        function demoHtmlCallback() {
+            EvomniAlert.show({
+                type: 'error',
+                title: 'Session 已過期',
+                desc: '請重新登入以繼續操作',
+                onConfirm: function () {
+                    SiteAlert.info('callback 觸發', '實際使用會導向登入頁');
+                }
+            });
+        }
+
+        /* ------------------------------------------------------------------
+           區塊 3：XSS 測試
+           ------------------------------------------------------------------ */
+        function demoXssScript() {
+            EvomniAlert.show({
+                type: 'warning',
+                title: 'XSS 測試：<script>alert("hacked")<\/script>安全標題',
+                desc: '<script>document.body.innerHTML=""<\/script>script 標籤會被清除，僅保留文字'
+            });
+        }
+
+        function demoXssImg() {
+            EvomniAlert.show({
+                type: 'warning',
+                title: 'XSS 測試',
+                desc: '<img src=x onerror="alert(1)">上方 img onerror 會被清除'
+            });
+        }
+
+        function demoXssJsProtocol() {
+            EvomniAlert.show({
+                type: 'warning',
+                title: 'javascript: 協定測試',
+                desc: '<a href="javascript:alert(1)">這個連結會被移除 href</a>'
+            });
+        }
+
+        /* ------------------------------------------------------------------
+           區塊 4：佇列
+           ------------------------------------------------------------------ */
+        function demoQueueSequence() {
+            SiteAlert.success('第 1 則', '依序顯示');
+            SiteAlert.success('第 2 則', '前一則關閉後才顯示');
+            SiteAlert.success('第 3 則', '最後一則');
+        }
+
+        function demoQueueErrorInterrupt() {
+            SiteAlert.info('一般訊息 A', '先進 queue');
+            SiteAlert.info('一般訊息 B', '排在 A 之後');
+            SiteAlert.error('錯誤！插隊', '會先於 A、B 顯示（按 OK 關閉後才繼續）');
+        }
+
+        /* ------------------------------------------------------------------
+           區塊 5：fromResponse
+           ------------------------------------------------------------------ */
+        function demoResponseOk() {
+            EvomniAlert.fromResponse({
+                ok: true,
+                title: '送出成功',
+                msg: '我們會盡快聯繫您'
+            });
+        }
+
+        function demoResponseFail() {
+            EvomniAlert.fromResponse({
+                ok: false,
+                title: '送出失敗',
+                msg: '請檢查必填欄位'
+            });
+        }
+
+        function demoResponseCustomType() {
+            EvomniAlert.fromResponse({
+                ok: false,
+                type: 'warning',
+                title: '請確認資料',
+                msg: 'Email 格式不正確'
+            });
+        }
+
+        /* ------------------------------------------------------------------
+           區塊 6：logout 快捷
+           ------------------------------------------------------------------ */
+        function demoLogoutDefault() {
+            // 用 onConfirm 攔截，避免真的跳走
+            SiteAlert.logout({
+                onConfirm: function () {
+                    SiteAlert.info('即將跳轉', '實際環境會執行 location.href = "/"');
+                }
+            });
+        }
+
+        function demoLogoutCustomRedirect() {
+            SiteAlert.logout({
+                redirect: '/zh-tw/member/login',
+                onConfirm: function () {
+                    SiteAlert.info('即將跳轉', 'redirect 設定為 /zh-tw/member/login');
+                }
+            });
+        }
+
+        function demoLogoutCustomCallback() {
+            SiteAlert.logout({
+                title: '登出成功',
+                desc: '正在清除本機資料...',
+                onConfirm: function () {
+                    SiteAlert.success('清除完成', '已清除 token、cookie、localStorage');
+                }
+            });
+        }
+
+        /* ------------------------------------------------------------------
+           區塊 7：dismiss
+           ------------------------------------------------------------------ */
+        function demoDismiss() {
+            var id = EvomniAlert.show({
+                type: 'info',
+                title: '載入中...',
+                desc: '1.5 秒後將被主動關閉',
+                duration: 0
+            });
+            setTimeout(function () {
+                EvomniAlert.dismiss(id);
+                SiteAlert.success('已主動關閉', 'dismiss(id) 執行成功');
+            }, 1500);
+        }
+    </script>
+</body>
+</html>

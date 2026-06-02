@@ -3392,7 +3392,7 @@ function LandingPageDetailV2({ onNavigate, show }) {
         {/* 頁籤列 */}
         <div style={{ display: 'flex', alignItems: 'stretch' }}>
           <div style={{ flex: isBasic ? '0 0 55%' : '1', maxWidth: isBasic ? '55%' : '100%' }}>
-            <div style={{ display: 'flex', padding: '0 24px' }}>
+            <div style={{ display: 'flex', padding: '8px 24px 0' }}>
               {tabs.map(tab => (
                 <div key={tab.id} onClick={() => setActiveTab(tab.id)}
                   style={{ padding: '12px 16px', cursor: 'pointer', fontSize: 14,

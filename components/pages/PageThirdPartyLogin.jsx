@@ -365,18 +365,26 @@ function LineOASettings({ show }) {
 function CartTimeoutSettings({ show }) {
   const [enabled, setEnabled] = React.useState(true);
   const [minutes, setMinutes] = React.useState('60');
+  const [minutesErr, setMinutesErr] = React.useState('');
   const [saving, setSaving] = React.useState(false);
 
-  const OPTIONS = [
-    { value: '15',  label: '15 分鐘' },
-    { value: '30',  label: '30 分鐘' },
-    { value: '60',  label: '60 分鐘（預設）' },
-    { value: '120', label: '120 分鐘（2 小時）' },
-    { value: '240', label: '240 分鐘（4 小時）' },
-    { value: '0',   label: '不限時（不建議）' },
-  ];
+  const handleMinutesChange = (e) => {
+    const val = e.target.value;
+    setMinutes(val);
+    const n = parseInt(val, 10);
+    if (!val || isNaN(n) || n < 15 || n > 1440) {
+      setMinutesErr('請輸入 15 ～ 1,440 之間的整數');
+    } else {
+      setMinutesErr('');
+    }
+  };
 
   const handleSave = () => {
+    const n = parseInt(minutes, 10);
+    if (!minutes || isNaN(n) || n < 15 || n > 1440) {
+      setMinutesErr('請輸入 15 ～ 1,440 之間的整數');
+      return;
+    }
     setSaving(true);
     setTimeout(() => { setSaving(false); show('購物車逾時設定已儲存', 'success'); }, 800);
   };
@@ -386,13 +394,13 @@ function CartTimeoutSettings({ show }) {
       <div style={{ padding: '20px 24px 16px' }}>
         <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>購物車逾時設定</div>
         <div style={{ fontSize: 13, color: '#606266', lineHeight: 1.7 }}>
-          設定消費者購物車的產品保留時間。超過時限後，購物車內的產品庫存將自動釋放。
+          設定消費者購物車的產品保留時間。超過時限後，購物車內的產品將自動清空並釋放庫存。
         </div>
       </div>
 
       <div style={{ padding: '0 24px' }}>
         <AdvSectionCard title="啟用購物車逾時機制">
-          <AdvToggle checked={enabled} onChange={setEnabled} label={enabled ? '已啟用（超時自動釋放庫存）' : '已停用（購物車產品永久保留）'} />
+          <AdvToggle checked={enabled} onChange={setEnabled} label={enabled ? '已啟用（超時自動清空購物車）' : '已停用（購物車內容永久保留）'} />
           {!enabled && (
             <div style={{ background: '#fdf6ec', border: '1px solid #f5dab1', borderRadius: 3, padding: '10px 14px', marginTop: 14, fontSize: 13, color: '#E6A23C', lineHeight: 1.6 }}>
               停用逾時機制後，購物車產品將無限期佔用庫存，可能導致其他顧客無法購買。建議謹慎評估。
@@ -402,15 +410,28 @@ function CartTimeoutSettings({ show }) {
 
         <div style={{ opacity: enabled ? 1 : 0.5, pointerEvents: enabled ? 'auto' : 'none', transition: 'opacity .2s' }}>
           <AdvSectionCard title="逾時時間">
-            <div style={{ maxWidth: 280 }}>
-              <label style={{ display: 'block', fontSize: 13, color: '#606266', fontWeight: 500, marginBottom: 8 }}>產品加入購物車後保留時間</label>
-              <select value={minutes} onChange={e => setMinutes(e.target.value)}
-                style={{ ...advInput, cursor: 'pointer', appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\' viewBox=\'0 0 12 8\'%3E%3Cpath d=\'M1 1l5 5 5-5\' stroke=\'%23909399\' stroke-width=\'1.5\' fill=\'none\' stroke-linecap=\'round\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', paddingRight: 36 }}>
-                {OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-              </select>
+            <div style={{ maxWidth: 200 }}>
+              <label style={{ display: 'block', fontSize: 13, color: '#606266', fontWeight: 500, marginBottom: 8 }}>
+                購物車保留時間（分鐘）
+              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input
+                  type="number"
+                  value={minutes}
+                  onChange={handleMinutesChange}
+                  min="15"
+                  max="1440"
+                  style={{ ...advInput, width: 120 }}
+                />
+                <span style={{ fontSize: 14, color: '#606266' }}>分鐘</span>
+              </div>
+              {minutesErr
+                ? <div style={{ fontSize: 12, color: '#F56C6C', marginTop: 4 }}>{minutesErr}</div>
+                : <div style={{ fontSize: 12, color: '#909399', marginTop: 6 }}>可設定 15 ～ 1,440 分鐘（24 小時）</div>
+              }
             </div>
-            <div style={{ fontSize: 12, color: '#909399', marginTop: 10, lineHeight: 1.7 }}>
-              計時從產品加入購物車時開始。消費者完成結帳前若超過此時間，購物車將自動清空並釋放庫存。
+            <div style={{ marginTop: 14, padding: '10px 14px', background: '#EDF2FC', border: '1px solid #BEDCFF', borderRadius: 3, fontSize: 13, color: '#606266', lineHeight: 1.7 }}>
+              此設定值同時作為「行銷中心 &gt; 購物車挽回旅程」的觸發門檻。修改後，購物車閒置觸發條件將自動同步，無需至行銷中心重新設定。
             </div>
           </AdvSectionCard>
         </div>
@@ -426,11 +447,28 @@ function CartTimeoutSettings({ show }) {
 function StockAlertSettings({ show }) {
   const [enabled, setEnabled] = React.useState(true);
   const [threshold, setThreshold] = React.useState('5');
-  const [notifyEmail, setNotifyEmail] = React.useState('admin@example.com');
+  const [thresholdErr, setThresholdErr] = React.useState('');
   const [saving, setSaving] = React.useState(false);
 
+  const CMS_EMAIL = 'admin@example.com'; // 從 CMS 系統設定讀取，唯讀
+
+  const handleThresholdChange = (e) => {
+    const val = e.target.value;
+    setThreshold(val);
+    const n = parseInt(val, 10);
+    if (!val || isNaN(n) || n < 1 || n > 999) {
+      setThresholdErr('請輸入 1 ～ 999 之間的整數');
+    } else {
+      setThresholdErr('');
+    }
+  };
+
   const handleSave = () => {
-    if (!notifyEmail.trim()) { show('請填寫通知信箱', 'error'); return; }
+    const n = parseInt(threshold, 10);
+    if (!threshold || isNaN(n) || n < 1 || n > 999) {
+      setThresholdErr('請輸入 1 ～ 999 之間的整數');
+      return;
+    }
     setSaving(true);
     setTimeout(() => { setSaving(false); show('庫存警示設定已儲存', 'success'); }, 800);
   };
@@ -440,7 +478,7 @@ function StockAlertSettings({ show }) {
       <div style={{ padding: '20px 24px 16px' }}>
         <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>庫存警示門檻設定</div>
         <div style={{ fontSize: 13, color: '#606266', lineHeight: 1.7 }}>
-          當產品庫存低於設定門檻時，系統自動發送 Email 通知，避免產品缺貨而未即時補貨。
+          當商品庫存數量低於或等於設定門檻時，系統每日通知商家管理員補貨。
         </div>
       </div>
 
@@ -450,28 +488,44 @@ function StockAlertSettings({ show }) {
         </AdvSectionCard>
 
         <div style={{ opacity: enabled ? 1 : 0.5, pointerEvents: enabled ? 'auto' : 'none', transition: 'opacity .2s' }}>
-          <AdvSectionCard title="警示門檻與通知設定">
-            <div style={{ display: 'grid', gap: 20 }}>
+          <AdvSectionCard title="警示門檻設定">
+            <div style={{ display: 'grid', gap: 24 }}>
               <div style={{ maxWidth: 280 }}>
-                <label style={{ display: 'block', fontSize: 13, color: '#606266', fontWeight: 500, marginBottom: 8 }}>庫存低於此數量時發出警示（件）</label>
-                <input
-                  type="number" min="1" max="9999"
-                  value={threshold}
-                  onChange={e => setThreshold(e.target.value)}
-                  style={{ ...advInput, width: 120 }}
-                />
-                <div style={{ fontSize: 12, color: '#909399', marginTop: 6 }}>每件產品規格（規格品項）各自計算，低於門檻即觸發通知。</div>
+                <label style={{ display: 'block', fontSize: 13, color: '#606266', fontWeight: 500, marginBottom: 8 }}>
+                  全局低庫存警示門檻（件）
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    type="number" min="1" max="999"
+                    value={threshold}
+                    onChange={handleThresholdChange}
+                    style={{ ...advInput, width: 100 }}
+                  />
+                  <span style={{ fontSize: 14, color: '#606266' }}>件</span>
+                </div>
+                {thresholdErr
+                  ? <div style={{ fontSize: 12, color: '#F56C6C', marginTop: 4 }}>{thresholdErr}</div>
+                  : <div style={{ fontSize: 12, color: '#909399', marginTop: 6, lineHeight: 1.6 }}>
+                      可設定 1 ～ 999。各商品可在「商品中心 &gt; 商品設定」中覆寫個別門檻值。
+                    </div>
+                }
               </div>
+
               <div>
-                <label style={{ display: 'block', fontSize: 13, color: '#606266', fontWeight: 500, marginBottom: 8 }}>警示通知信箱</label>
-                <input
-                  type="email"
-                  value={notifyEmail}
-                  onChange={e => setNotifyEmail(e.target.value)}
-                  placeholder="請輸入接收警示的 Email"
-                  style={{ ...advInput, maxWidth: 360 }}
-                />
-                <div style={{ fontSize: 12, color: '#909399', marginTop: 6 }}>多個信箱請以逗號分隔，例如：a@example.com, b@example.com</div>
+                <label style={{ display: 'block', fontSize: 13, color: '#606266', fontWeight: 500, marginBottom: 8 }}>
+                  警示通知信箱
+                </label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <input
+                    readOnly
+                    value={CMS_EMAIL}
+                    style={{ ...advInput, maxWidth: 320, background: '#F5F7FA', color: '#909399', cursor: 'not-allowed' }}
+                  />
+                </div>
+                <div style={{ fontSize: 12, color: '#909399', marginTop: 6, lineHeight: 1.6 }}>
+                  通知寄送至「系統設定 &gt; 基本設定」中的商家 Email，如需變更請前往修改。
+                  <br />同一商品 7 天內只發送一次低庫存通知。
+                </div>
               </div>
             </div>
           </AdvSectionCard>

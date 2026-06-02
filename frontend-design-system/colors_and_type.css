@@ -1,0 +1,175 @@
+/* ==========================================================================
+   EVOMNI DESIGN SYSTEM — Foundations
+   E-commerce storefront platform (前台 / customer-facing)
+   Default palette: monochrome (black / gray / white). A single --brand
+   token drives all "primary action" color so a merchant's brand color can
+   be swapped in later without touching anything else.
+   ========================================================================== */
+
+/* ---- Fonts --------------------------------------------------------------- */
+/* CJK (Traditional Chinese): Noto Sans TC — SELF-HOSTED (variable, user-supplied).
+   Latin: Inter — Google Fonts CDN (not vendored). Load Inter + icons in HTML:
+   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+   Then link this file; the @font-face below provides Noto Sans TC locally. */
+
+@font-face {
+  font-family: "Noto Sans TC";
+  src: url("fonts/NotoSansTC-VariableFont_wght.ttf") format("truetype");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* ====================================================================
+     1. NEUTRAL SCALE  (Element-Plus-derived, UX-compliant contrast)
+        This is the heart of the default monochrome system.
+     ==================================================================== */
+  --ink-900: #303133;   /* primary text / near-black — source `primary` */
+  --ink-700: #606266;   /* regular / secondary text — source `text-desc` */
+  --ink-500: #909399;   /* tertiary text, captions, placeholders */
+  --ink-300: #c0c4cc;   /* disabled text, faint icons */
+
+  --line-400: #dcdfe6;  /* base border (inputs, dividers) */
+  --line-300: #e4e7ed;  /* light border */
+  --line-200: #ebeef5;  /* lighter border, table rules */
+  --line-100: #f2f6fc;  /* extra-light border */
+
+  --fill-100: #ffffff;  /* base surface / page */
+  --fill-200: #fafafa;  /* hover fill, subtle zebra */
+  --fill-300: #f9fafb;  /* card / panel surface — source `surface-light` */
+  --fill-400: #f5f7fa;  /* sunken fill, input background */
+
+  /* ====================================================================
+     2. BRAND / PRIMARY ACTION
+        Defaults to charcoal. Swap --brand (and its tints) per merchant.
+     ==================================================================== */
+  --brand: #303133;
+  --brand-hover: #1a1b1d;   /* darken on hover */
+  --brand-active: #000000;  /* darken further on press */
+  --brand-soft: #f4f4f5;    /* tinted background for subtle brand surfaces */
+  --brand-on: #ffffff;      /* foreground on brand fills */
+
+  /* ====================================================================
+     3. FUNCTIONAL / SEMANTIC (states only — never decorative)
+        Used for stock, validation, sale, shipping status, etc.
+     ==================================================================== */
+  --success: #67c23a;  --success-soft: #f0f9eb;
+  --warning: #e6a23c;  --warning-soft: #fdf6ec;
+  --danger:  #f56c6c;  --danger-soft:  #fef0f0;  /* errors, sale price */
+  --info:    #909399;  --info-soft:    #f4f4f5;
+
+  /* ====================================================================
+     4. SEMANTIC ALIASES  (use these in components, not raw tokens)
+     ==================================================================== */
+  --bg:            var(--fill-100);
+  --surface:       var(--fill-300);
+  --surface-sunken:var(--fill-400);
+  --fg:            var(--ink-900);
+  --fg-muted:      var(--ink-700);
+  --fg-subtle:     var(--ink-500);
+  --fg-disabled:   var(--ink-300);
+  --border:        var(--line-400);
+  --border-light:  var(--line-200);
+
+  /* ====================================================================
+     5. TYPE
+     ==================================================================== */
+  --font-sans: "Inter", "Noto Sans TC", -apple-system, "PingFang TC",
+               "Microsoft JhengHei", sans-serif;
+  --font-display: var(--font-sans);      /* same family; weight + size do the work */
+  --font-mono: "SF Mono", "Roboto Mono", ui-monospace, monospace;
+
+  /* Weights */
+  --w-light: 300;
+  --w-regular: 400;
+  --w-medium: 500;
+  --w-semibold: 600;
+  --w-bold: 700;
+
+  /* Type scale — modular, ~1.2–1.25. Storefront-tuned. */
+  --t-display: 56px;   /* hero / campaign headline */
+  --t-h1: 40px;
+  --t-h2: 30px;
+  --t-h3: 22px;
+  --t-h4: 18px;
+  --t-body: 16px;      /* base */
+  --t-sm: 14px;        /* secondary, meta */
+  --t-xs: 14px;        /* labels, captions, badges — minimum enforced at 14px */
+
+  /* Line heights */
+  --lh-tight: 1.15;    /* display / headings */
+  --lh-snug: 1.35;
+  --lh-normal: 1.6;    /* body copy */
+
+  /* Letter spacing — wide tracking is a key editorial motif (labels, eyebrows) */
+  --ls-tight: -0.02em; /* large display */
+  --ls-normal: 0;
+  --ls-wide: 0.08em;   /* uppercase eyebrows, nav, buttons */
+  --ls-wider: 0.16em;  /* spaced-out section labels */
+
+  /* ====================================================================
+     6. RADIUS — the signature motif: SQUARE. Only pills are round.
+     ==================================================================== */
+  --radius: 0px;        /* everything: cards, buttons, inputs, images */
+  --radius-pill: 9999px;/* the single exception — chips, avatars, toggles */
+
+  /* ====================================================================
+     7. ELEVATION — minimal, low-opacity, no colored shadows
+     ==================================================================== */
+  --shadow-soft: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --shadow-hover: 0 10px 25px rgba(0, 0, 0, 0.08);
+  --shadow-overlay: 0 16px 48px rgba(0, 0, 0, 0.12); /* modals, dropdowns */
+
+  /* ====================================================================
+     8. SPACING — 4px base
+     ==================================================================== */
+  --s-1: 4px;   --s-2: 8px;   --s-3: 12px;  --s-4: 16px;
+  --s-5: 20px;  --s-6: 24px;  --s-8: 32px;  --s-10: 40px;
+  --s-12: 48px; --s-16: 64px; --s-20: 80px; --s-24: 96px;
+
+  /* Layout */
+  --container: 1280px;
+  --container-wide: 1440px;
+  --gutter: 24px;
+
+  /* Motion — calm, no bounce. Quick, eased fades/slides. */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --dur-fast: 150ms;
+  --dur: 250ms;
+  --dur-slow: 400ms;
+}
+
+/* ==========================================================================
+   SEMANTIC TYPE CLASSES — apply directly or copy the rules
+   ========================================================================== */
+.ds-display {
+  font-family: var(--font-display);
+  font-size: var(--t-display);
+  font-weight: var(--w-bold);
+  line-height: var(--lh-tight);
+  letter-spacing: var(--ls-tight);
+  color: var(--fg);
+}
+.ds-h1 { font: var(--w-bold) var(--t-h1)/var(--lh-tight) var(--font-display); letter-spacing: var(--ls-tight); color: var(--fg); }
+.ds-h2 { font: var(--w-semibold) var(--t-h2)/var(--lh-snug) var(--font-display); letter-spacing: var(--ls-tight); color: var(--fg); }
+.ds-h3 { font: var(--w-semibold) var(--t-h3)/var(--lh-snug) var(--font-sans); color: var(--fg); }
+.ds-h4 { font: var(--w-medium) var(--t-h4)/var(--lh-snug) var(--font-sans); color: var(--fg); }
+.ds-body { font: var(--w-regular) var(--t-body)/var(--lh-normal) var(--font-sans); color: var(--fg-muted); }
+.ds-sm { font: var(--w-regular) var(--t-sm)/var(--lh-normal) var(--font-sans); color: var(--fg-muted); }
+.ds-caption { font: var(--w-regular) var(--t-xs)/var(--lh-snug) var(--font-sans); color: var(--fg-subtle); }
+
+/* Eyebrow / label — uppercase, wide tracking. A defining storefront motif. */
+.ds-eyebrow {
+  font: var(--w-medium) var(--t-xs)/1 var(--font-sans);
+  letter-spacing: var(--ls-wider);
+  text-transform: uppercase;
+  color: var(--fg-subtle);
+}
+
+/* Price — tabular, medium weight */
+.ds-price { font: var(--w-medium) var(--t-h4)/1 var(--font-sans); font-variant-numeric: tabular-nums; color: var(--fg); }
+
+code, .ds-mono { font-family: var(--font-mono); font-size: 0.9em; }

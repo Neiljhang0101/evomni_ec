@@ -149,7 +149,7 @@ function NumberInput({ value, onChange, min, max, disabled, width }) {
 
 function ETabs({ tabs, active, onChange, style }) {
   return (
-    <div style={{ display: 'flex', borderBottom: '1px solid #DCDFE6', ...style }}>
+    <div style={{ display: 'flex', borderBottom: '1px solid #DCDFE6', paddingTop: 8, ...style }}>
       {tabs.map(t => (
         <button key={t.id} onClick={() => !t.disabled && onChange(t.id)} style={{ height: 48, padding: '0 20px', background: 'none', border: 'none', borderBottom: active === t.id ? '2px solid #409EFF' : '2px solid transparent', color: t.disabled ? '#C0C4CC' : active === t.id ? '#409EFF' : '#606266', cursor: t.disabled ? 'not-allowed' : 'pointer', fontSize: 14, fontFamily: 'Noto Sans TC,sans-serif', fontWeight: active === t.id ? 600 : 400, marginBottom: -1 }}>
           {t.label}

@@ -184,17 +184,9 @@ function SpMaintBanner({ onGoto }) {
 const SP_INPUT = { height: 34, padding: '0 10px', border: `1px solid ${SPC.border}`, borderRadius: 0, fontSize: 13, fontFamily: 'Noto Sans TC,sans-serif', color: SPC.text, background: SPC.white, outline: 'none', width: '100%' };
 
 // ─── Filter Bar ───────────────────────────────────────────────────────────────
-function SpFilterBar({ typeFilter, statusFilter, searchQuery, onType, onStatus, onSearch }) {
+function SpFilterBar({ statusFilter, searchQuery, onStatus, onSearch }) {
   return (
     <div style={{ background: SPC.white, border: `1px solid ${SPC.border}`, padding: '10px 14px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <span style={{ fontSize: 13, color: SPC.text2, whiteSpace: 'nowrap' }}>類型</span>
-        <select value={typeFilter} onChange={e => onType(e.target.value)} style={{ ...SP_INPUT, width: 120, cursor: 'pointer' }}>
-          <option value="all">全部類型</option>
-          <option value="legal">法律合規</option>
-          <option value="functional">功能性頁面</option>
-        </select>
-      </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ fontSize: 13, color: SPC.text2, whiteSpace: 'nowrap' }}>狀態</span>
         <select value={statusFilter} onChange={e => onStatus(e.target.value)} style={{ ...SP_INPUT, width: 110, cursor: 'pointer' }}>
@@ -215,7 +207,6 @@ function SpFilterBar({ typeFilter, statusFilter, searchQuery, onType, onStatus, 
 }
 
 // ─── Page Table ───────────────────────────────────────────────────────────────
-const SP_TYPE_LABEL = { legal: '法律合規', functional: '功能性頁面' };
 const SP_TH = { padding: '10px 14px', fontSize: 13, fontWeight: 700, color: SPC.text, background: SPC.bg, borderBottom: `1px solid ${SPC.border}`, textAlign: 'left', whiteSpace: 'nowrap' };
 
 function SpPageRow({ page, odd, onEdit, onToast }) {
@@ -229,7 +220,6 @@ function SpPageRow({ page, odd, onEdit, onToast }) {
           {page.name}
         </div>
       </td>
-      <td style={{ ...tdBase, color: SPC.text2, fontSize: 13 }}>{SP_TYPE_LABEL[page.type]}</td>
       <td style={tdBase}><SpStatusBadge status={page.status}/></td>
       <td style={{ ...tdBase, color: SPC.muted, fontSize: 12, fontFamily: 'monospace' }}>{page.path}</td>
       <td style={tdBase}>
@@ -421,10 +411,6 @@ function SpEditView({ pageId, pages, onSave, onBack, maintActive, onToggleMaint,
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button style={plainBtn} onClick={() => handleSave(false)} disabled={saving}>{saving ? '儲存中…' : '儲存草稿'}</button>
-          <button style={primaryBtn} onClick={() => handleSave(true)} disabled={saving}>{saving ? '儲存中…' : '儲存並發布'}</button>
-        </div>
       </div>
 
       {/* Main layout: white container — matches product page */}
@@ -465,10 +451,10 @@ function SpEditView({ pageId, pages, onSave, onBack, maintActive, onToggleMaint,
                     {form.slug || '（系統觸發）'}
                   </div>
                 ) : (
-                  <div style={{ display: 'flex' }}>
-                    <div style={{ padding: '0 12px', height: 40, background: '#F5F7FA', border: '1px solid #DCDFE6', borderRight: 'none', display: 'flex', alignItems: 'center', fontSize: 13, color: '#909399', whiteSpace: 'nowrap' }}>https://domain.com</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                    <div style={{ padding: '0 12px', height: 40, background: '#F5F7FA', border: '1px solid #DCDFE6', borderRight: 'none', display: 'flex', alignItems: 'center', fontSize: 13, color: '#909399', whiteSpace: 'nowrap' }}>https://domain.com/</div>
                     <input value={form.slug} onChange={e => update({ slug: e.target.value })} style={{ ...inputSt, flex: 1, borderRight: 'none' }} onFocus={e => e.target.style.borderColor = '#409EFF'} onBlur={e => e.target.style.borderColor = '#DCDFE6'}/>
-                    <button style={{ ...plainBtn, height: 40, borderLeft: 'none', padding: '0 12px', fontSize: 13 }}>編輯</button>
+                    <button style={{ ...plainBtn, borderLeft: 'none' }}>編輯</button>
                   </div>
                 )}
               </div>
@@ -566,17 +552,6 @@ function SpEditView({ pageId, pages, onSave, onBack, maintActive, onToggleMaint,
           {/* Right column — only on basic tab, gray panel matching product page */}
           {activeTab === 'basic' && (
             <div style={{ flex: '0 0 45%', maxWidth: '45%', background: '#F5F7FA', minHeight: 400, display: 'flex', flexDirection: 'column', padding: '32px 24px 24px 24px' }}>
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: '#909399', marginBottom: 4, letterSpacing: 1 }}>頁面類型</div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: '#303133', lineHeight: 1.2 }}>
-                  {page.type === 'legal' ? 'LEGAL PAGE' : 'SYSTEM PAGE'}
-                </div>
-                <div style={{ fontSize: 11, color: '#909399', marginTop: 8, lineHeight: 1.8 }}>
-                  {page.type === 'legal'
-                    ? '此頁面屬於法律合規類，\n建議在網站上線前完成設定。'
-                    : '此頁面由系統自動觸發，\n無法設定路徑，可自訂顯示內容。'}
-                </div>
-              </div>
               <div style={{ marginTop: 'auto', textAlign: 'center' }}>
                 <button onClick={() => spToast('前台預覽已在新分頁開啟', 'info')}
                   style={{ ...plainBtn, padding: '0 28px', height: 40, fontSize: 13 }}>前台預覽</button>
@@ -584,6 +559,12 @@ function SpEditView({ pageId, pages, onSave, onBack, maintActive, onToggleMaint,
             </div>
           )}
         </div>
+      </div>
+
+      {/* Bottom action bar */}
+      <div style={{ borderTop: '1px solid #DCDFE6', padding: '16px 24px', background: '#fff', display: 'flex', justifyContent: 'flex-start', gap: 8, position: 'sticky', bottom: 0, zIndex: 10 }}>
+        <button style={plainBtn} onClick={() => handleSave(false)} disabled={saving}>{saving ? '儲存中…' : '儲存草稿'}</button>
+        <button style={primaryBtn} onClick={() => handleSave(true)} disabled={saving}>{saving ? '儲存中…' : '儲存並發布'}</button>
       </div>
 
       <SpConfirm visible={showLeave} title="離開而不儲存？"
@@ -600,14 +581,12 @@ function PageSystemPages({ onNavigate, show }) {
   const [pages,      setPages]     = React.useState(SP_INIT_PAGES);
   const [view,       setView]      = React.useState('list');
   const [editId,     setEditId]    = React.useState(null);
-  const [typeFilter, setTypeFilter]= React.useState('all');
   const [statusFilter,setStatusFil]= React.useState('all');
   const [searchQ,    setSearchQ]   = React.useState('');
   const [maintActive,setMaintActive]= React.useState(false);
   const { show: spToast, Toast: SpToast } = useToast();
 
   const filtered = pages.filter(p => {
-    if (typeFilter !== 'all' && p.type !== typeFilter) return false;
     if (statusFilter !== 'all' && p.status !== statusFilter) return false;
     if (searchQ && !p.name.toLowerCase().includes(searchQ.toLowerCase())) return false;
     return true;
@@ -660,21 +639,21 @@ function PageSystemPages({ onNavigate, show }) {
       </div>
 
 
-      <SpFilterBar typeFilter={typeFilter} statusFilter={statusFilter} searchQuery={searchQ}
-        onType={setTypeFilter} onStatus={setStatusFil} onSearch={setSearchQ}/>
+      <SpFilterBar statusFilter={statusFilter} searchQuery={searchQ}
+        onStatus={setStatusFil} onSearch={setSearchQ}/>
 
       {filtered.length === 0 ? (
         <div style={{ background: SPC.white, border: `1px solid ${SPC.border}`, padding: '48px', textAlign: 'center' }}>
           <div style={{ fontSize: 15, fontWeight: 500, color: SPC.text2, marginBottom: 8 }}>找不到符合條件的頁面</div>
           <div style={{ fontSize: 13, color: SPC.muted, marginBottom: 16 }}>請調整篩選條件或清除搜尋關鍵字</div>
-          <button onClick={() => { setTypeFilter('all'); setStatusFil('all'); setSearchQ(''); }}
+          <button onClick={() => { setStatusFil('all'); setSearchQ(''); }}
             style={{ height: 34, padding: '0 16px', background: SPC.white, border: `1px solid ${SPC.border}`, borderRadius: 0, cursor: 'pointer', fontSize: 13, color: SPC.text }}>清除篩選</button>
         </div>
       ) : (
         <div style={{ background: SPC.white, border: `1px solid ${SPC.border}`, overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: 720 }}>
             <thead>
-              <tr>{['頁面名稱','類型','狀態','路徑（網址）','操作'].map(h => <th key={h} style={SP_TH}>{h}</th>)}</tr>
+              <tr>{['頁面名稱','狀態','路徑（網址）','操作'].map(h => <th key={h} style={SP_TH}>{h}</th>)}</tr>
             </thead>
             <tbody>
               {filtered.map((p, i) => (

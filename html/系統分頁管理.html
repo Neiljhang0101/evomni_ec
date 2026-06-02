@@ -247,17 +247,9 @@ function MaintenanceBanner({ onNavigate }) {
 const inputStyle = { height: 34, padding: '0 10px', border: `1px solid ${BORDER}`, borderRadius: 0, fontSize: 13, fontFamily: 'Noto Sans TC,sans-serif', color: TEXT, background: WHITE, outline: 'none' };
 const selectStyle = { ...inputStyle, cursor: 'pointer', paddingRight: 24 };
 
-function FilterBar({ typeFilter, statusFilter, searchQuery, onType, onStatus, onSearch, onClear }) {
+function FilterBar({ statusFilter, searchQuery, onStatus, onSearch, onClear }) {
   return (
     <div style={{ background: WHITE, border: `1px solid ${BORDER}`, padding: '12px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <span style={{ fontSize: 13, color: TEXT2, whiteSpace: 'nowrap' }}>類型</span>
-        <select value={typeFilter} onChange={e => onType(e.target.value)} style={{ ...selectStyle, width: 120 }}>
-          <option value="all">全部類型</option>
-          <option value="legal">法律合規</option>
-          <option value="functional">功能性頁面</option>
-        </select>
-      </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
         <span style={{ fontSize: 13, color: TEXT2, whiteSpace: 'nowrap' }}>狀態</span>
         <select value={statusFilter} onChange={e => onStatus(e.target.value)} style={{ ...selectStyle, width: 110 }}>
@@ -283,8 +275,6 @@ function FilterBar({ typeFilter, statusFilter, searchQuery, onType, onStatus, on
 }
 
 // ─── Page Table ───────────────────────────────────────────────────────────────
-const TYPE_LABEL = { legal: '法律合規', functional: '功能性頁面' };
-
 function PageTable({ filtered, all, onEdit, onPreview }) {
   const thStyle = { padding: '10px 14px', fontSize: 13, fontWeight: 700, color: TEXT, background: BG, borderBottom: `1px solid ${BORDER}`, textAlign: 'left', whiteSpace: 'nowrap' };
   const tdStyle = { padding: '12px 14px', fontSize: 14, color: TEXT, borderBottom: `1px solid ${BORDER}`, verticalAlign: 'middle' };
@@ -295,7 +285,7 @@ function PageTable({ filtered, all, onEdit, onPreview }) {
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
             <tr>
-              {['頁面名稱','類型','狀態','路徑（網址）','操作'].map(h => (
+              {['頁面名稱','狀態','路徑（網址）','操作'].map(h => (
                 <th key={h} style={thStyle}>{h}</th>
               ))}
             </tr>
@@ -341,7 +331,6 @@ function PageRow({ page, odd, onEdit, onPreview }) {
           {page.name}
         </div>
       </td>
-      <td style={{ ...tdBase, color: TEXT2, fontSize: 13 }}>{TYPE_LABEL[page.type]}</td>
       <td style={tdBase}><StatusBadge status={page.status}/></td>
       <td style={{ ...tdBase, color: GRAY, fontSize: 13, fontFamily: 'monospace' }}>{page.path}</td>
       <td style={tdBase}>
@@ -566,10 +555,6 @@ function EditPage({ pageId, pages, onSave, onBack, maintenanceActive, onToggleMa
             </div>
           </div>
         </div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          <button style={plainBtn} onClick={() => handleSave(false)} disabled={saving}>{saving ? '儲存中…' : '儲存草稿'}</button>
-          <button style={primaryBtn} onClick={() => handleSave(true)} disabled={saving}>{saving ? '儲存中…' : '儲存並發布'}</button>
-        </div>
       </div>
 
       {/* Main layout: white container — matches product page */}
@@ -610,10 +595,10 @@ function EditPage({ pageId, pages, onSave, onBack, maintenanceActive, onToggleMa
                     {form.slug || '（系統觸發）'}
                   </div>
                 ) : (
-                  <div style={{ display: 'flex' }}>
-                    <div style={{ padding: '0 12px', height: 40, background: BG, border: `1px solid ${BORDER}`, borderRight: 'none', display: 'flex', alignItems: 'center', fontSize: 13, color: GRAY, whiteSpace: 'nowrap' }}>https://domain.com</div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
+                    <div style={{ padding: '0 12px', height: 40, background: BG, border: `1px solid ${BORDER}`, borderRight: 'none', display: 'flex', alignItems: 'center', fontSize: 13, color: GRAY, whiteSpace: 'nowrap' }}>https://domain.com/</div>
                     <input value={form.slug} onChange={e => update({ slug: e.target.value })} style={{ ...inputSt, flex: 1, borderRight: 'none' }} onFocus={e => e.target.style.borderColor = BLUE} onBlur={e => e.target.style.borderColor = BORDER}/>
-                    <button style={{ ...plainBtn, height: 40, borderLeft: 'none', padding: '0 12px', fontSize: 13 }}>編輯</button>
+                    <button style={{ ...plainBtn, borderLeft: 'none' }}>編輯</button>
                   </div>
                 )}
               </div>
@@ -709,23 +694,18 @@ function EditPage({ pageId, pages, onSave, onBack, maintenanceActive, onToggleMa
           {/* Right column — gray panel, basic tab only — matches product page */}
           {activeTab === 'basic' && (
             <div style={{ flex: '0 0 45%', maxWidth: '45%', background: BG, minHeight: 400, display: 'flex', flexDirection: 'column', padding: '32px 24px 24px 24px' }}>
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: GRAY, marginBottom: 4, letterSpacing: 1 }}>頁面類型</div>
-                <div style={{ fontSize: 22, fontWeight: 700, color: TEXT, lineHeight: 1.2 }}>
-                  {page.type === 'legal' ? 'LEGAL PAGE' : 'SYSTEM PAGE'}
-                </div>
-                <div style={{ fontSize: 11, color: GRAY, marginTop: 8, lineHeight: 1.8 }}>
-                  {page.type === 'legal'
-                    ? '此頁面屬於法律合規類，\n建議在網站上線前完成設定。'
-                    : '此頁面由系統自動觸發，\n無法設定路徑，可自訂顯示內容。'}
-                </div>
-              </div>
               <div style={{ marginTop: 'auto', textAlign: 'center' }}>
                 <button onClick={() => toast.show('前台預覽已在新分頁開啟', 'info')} style={{ ...plainBtn, padding: '0 28px', height: 40, fontSize: 13 }}>前台預覽</button>
               </div>
             </div>
           )}
         </div>
+      </div>
+
+      {/* Bottom action bar */}
+      <div style={{ borderTop: `1px solid ${BORDER}`, padding: '16px 24px', background: WHITE, display: 'flex', justifyContent: 'flex-start', gap: 8, position: 'sticky', bottom: 0, zIndex: 10 }}>
+        <button style={plainBtn} onClick={() => handleSave(false)} disabled={saving}>{saving ? '儲存中…' : '儲存草稿'}</button>
+        <button style={primaryBtn} onClick={() => handleSave(true)} disabled={saving}>{saving ? '儲存中…' : '儲存並發布'}</button>
       </div>
 
       <ConfirmModal visible={showLeave} title="離開而不儲存？"
@@ -739,12 +719,10 @@ function EditPage({ pageId, pages, onSave, onBack, maintenanceActive, onToggleMa
 
 // ─── List View ────────────────────────────────────────────────────────────────
 function ListView({ pages, maintenanceActive, onEdit, onMaintenanceBanner, toast }) {
-  const [typeFilter,   setTypeFilter]   = React.useState('all');
   const [statusFilter, setStatusFilter] = React.useState('all');
   const [searchQuery,  setSearchQuery]  = React.useState('');
 
   const filtered = pages.filter(p => {
-    if (typeFilter !== 'all' && p.type !== typeFilter) return false;
     if (statusFilter !== 'all' && p.status !== statusFilter) return false;
     if (searchQuery && !p.name.toLowerCase().includes(searchQuery.toLowerCase())) return false;
     return true;
@@ -754,7 +732,7 @@ function ListView({ pages, maintenanceActive, onEdit, onMaintenanceBanner, toast
     toast.show(`${page.name} 預覽已在新分頁開啟`, 'info');
   };
 
-  const handleClear = () => { setTypeFilter('all'); setStatusFilter('all'); setSearchQuery(''); };
+  const handleClear = () => { setStatusFilter('all'); setSearchQuery(''); };
 
   return (
     <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
@@ -770,8 +748,8 @@ function ListView({ pages, maintenanceActive, onEdit, onMaintenanceBanner, toast
       </div>
 
       <FilterBar
-        typeFilter={typeFilter} statusFilter={statusFilter} searchQuery={searchQuery}
-        onType={setTypeFilter} onStatus={setStatusFilter} onSearch={setSearchQuery}
+        statusFilter={statusFilter} searchQuery={searchQuery}
+        onStatus={setStatusFilter} onSearch={setSearchQuery}
         onClear={handleClear}
       />
 
