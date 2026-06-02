@@ -10,6 +10,7 @@
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   html, body, #root { height: 100%; }
@@ -91,6 +92,7 @@
 <script type="text/babel" src="components/pages/PageNewsletter.jsx"></script>
 <script type="text/babel" src="components/pages/PageFreight.jsx"></script>
 <script type="text/babel" src="components/pages/PagePlan.jsx"></script>
+<script type="text/babel" src="components/pages/PageEcommerceBasic.jsx"></script>
 <script type="text/babel" src="components/pages/PageThirdPartyLogin.jsx"></script>
 <script type="text/babel" src="components/pages/PageAdTools.jsx"></script>
 <script type="text/babel" src="components/pages/PageTracking.jsx"></script>
@@ -125,6 +127,7 @@ Object.assign(NAV_GROUP_MAP, {
   'journey-expiry':   'marketing',
 
   // 全域設定子頁
+  'gs-ecommerce-store':      'global-settings',
   'gs-newsletter-flydove':   'global-settings',
   'gs-temp-freight':         'global-settings',
   'gs-weight-freight':       'global-settings',
@@ -218,6 +221,9 @@ function App() {
     }
     if (currentPage === 'gs-plan-status' || currentPage === 'gs-version') {
       return <PagePlan currentPage={currentPage} onNavigate={navigate} show={show} />;
+    }
+    if (currentPage === 'gs-ecommerce-store') {
+      return <PageEcommerceBasic onNavigate={navigate} show={show} />;
     }
     if (['gs-advanced','gs-third-party-login','line-oa','gs-cart-timeout','gs-stock-alert','gs-member-verification'].includes(currentPage)) {
       return <PageAdvanced currentPage={currentPage} onNavigate={navigate} show={show} />;

@@ -1,0 +1,17 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;font-family:var(--font-sans);background:var(--fill-300);color:var(--fg)}
+  .card{padding:30px 26px;display:flex;align-items:center;gap:30px}
+  .demo{display:flex;flex-direction:column;align-items:center;gap:12px}
+  .box{width:96px;height:60px;background:#fff}
+  .lbl{font:var(--w-medium) 11px/1 var(--font-sans)}
+  .sub{font:var(--w-regular) 10px/1 var(--font-mono);color:var(--fg-subtle)}
+</style></head>
+<body><div class="card">
+  <div class="demo"><div class="box" style="border:1px solid var(--line-400)"></div><div class="lbl">border</div><div class="sub">at rest</div></div>
+  <div class="demo"><div class="box" style="box-shadow:var(--shadow-soft)"></div><div class="lbl">soft</div><div class="sub">0 4 20 / .05</div></div>
+  <div class="demo"><div class="box" style="box-shadow:var(--shadow-hover)"></div><div class="lbl">hover</div><div class="sub">0 10 25 / .08</div></div>
+  <div class="demo"><div class="box" style="box-shadow:var(--shadow-overlay)"></div><div class="lbl">overlay</div><div class="sub">0 16 48 / .12</div></div>
+</div></body></html>

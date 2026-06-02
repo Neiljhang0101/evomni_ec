@@ -1,0 +1,31 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;font-family:var(--font-sans);background:var(--bg);color:var(--fg)}
+  .card{padding:24px 26px;display:flex;flex-direction:column;gap:18px}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .badge{font:var(--w-medium) 11px/1 var(--font-sans);letter-spacing:.08em;text-transform:uppercase;padding:6px 10px;color:#fff}
+  .chip{font:var(--w-regular) 13px/1 var(--font-sans);padding:8px 16px;border:1px solid var(--line-400);border-radius:9999px;background:#fff}
+  .chip.sel{background:var(--ink-900);color:#fff;border-color:var(--ink-900)}
+  .sw{width:26px;height:26px;border-radius:9999px;border:1px solid var(--line-400);position:relative}
+  .sw.sel{outline:1px solid var(--ink-900);outline-offset:2px}
+  .lab{font:var(--w-regular) 10px/1 var(--font-mono);color:var(--fg-subtle);width:100%}
+</style></head>
+<body><div class="card">
+  <div class="row"><span class="lab">badges (functional)</span>
+    <span class="badge" style="background:#303133">NEW</span>
+    <span class="badge" style="background:#f56c6c">-20%</span>
+    <span class="badge" style="background:#67c23a">IN STOCK</span>
+    <span class="badge" style="background:#909399">預購</span>
+  </div>
+  <div class="row"><span class="lab">filter chips</span>
+    <span class="chip sel">全部</span><span class="chip">保養</span><span class="chip">彩妝</span><span class="chip">香氛</span>
+  </div>
+  <div class="row"><span class="lab">color / variant swatches (pill exception)</span>
+    <span class="sw sel" style="background:#303133"></span>
+    <span class="sw" style="background:#c98a7a"></span>
+    <span class="sw" style="background:#e9d8c4"></span>
+    <span class="sw" style="background:#8a9a8e"></span>
+  </div>
+</div></body></html>

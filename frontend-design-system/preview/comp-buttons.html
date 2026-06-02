@@ -1,0 +1,32 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;font-family:var(--font-sans);background:var(--bg);color:var(--fg)}
+  .card{padding:24px 26px;display:flex;flex-direction:column;gap:16px}
+  .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .btn{height:44px;padding:0 22px;border:1px solid transparent;font:var(--w-medium) 14px/1 var(--font-sans);letter-spacing:.04em;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+  .primary{background:var(--brand);color:#fff}
+  .primary.hover{background:var(--brand-hover)}
+  .ghost{background:#fff;color:var(--fg);border-color:var(--ink-900)}
+  .ghost.hover{background:var(--fill-200)}
+  .text{background:none;color:var(--fg);padding:0 4px;text-decoration:underline;text-underline-offset:4px}
+  .disabled{background:var(--fill-400);color:var(--fg-disabled);cursor:not-allowed}
+  .mi{font-size:18px}
+  .st{font:var(--w-regular) 10px/1 var(--font-mono);color:var(--fg-subtle);margin-top:4px}
+  .stk{display:flex;flex-direction:column;align-items:center}
+</style></head>
+<body><div class="card">
+  <div class="row">
+    <div class="stk"><button class="btn primary">加入購物車</button><span class="st">primary</span></div>
+    <div class="stk"><button class="btn primary hover">加入購物車</button><span class="st">hover</span></div>
+    <div class="stk"><button class="btn disabled">售完</button><span class="st">disabled</span></div>
+  </div>
+  <div class="row">
+    <div class="stk"><button class="btn ghost"><span class="material-icons-outlined mi">favorite_border</span>收藏</button><span class="st">ghost</span></div>
+    <div class="stk"><button class="btn ghost hover">繼續選購</button><span class="st">ghost hover</span></div>
+    <div class="stk"><button class="btn text">查看更多 →</button><span class="st">text link</span></div>
+    <div class="stk"><button class="btn primary">SHOP NOW<span class="material-icons-outlined mi">arrow_forward</span></button><span class="st">w/ icon</span></div>
+  </div>
+</div></body></html>

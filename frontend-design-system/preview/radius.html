@@ -1,0 +1,18 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../colors_and_type.css">
+<style>
+  body{margin:0;font-family:var(--font-sans);background:var(--bg);color:var(--fg)}
+  .card{padding:24px 26px;display:flex;align-items:center;gap:34px}
+  .demo{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .box{width:84px;height:64px;background:var(--fill-300);border:1px solid var(--line-400)}
+  .lbl{font:var(--w-medium) 12px/1 var(--font-sans)}
+  .sub{font:var(--w-regular) 11px/1 var(--font-mono);color:var(--fg-subtle)}
+  .pill{width:84px;height:64px;background:var(--ink-900);border-radius:9999px}
+  .note{font:var(--w-regular) 12px/1.5 var(--font-sans);color:var(--fg-muted);max-width:230px}
+</style></head>
+<body><div class="card">
+  <div class="demo"><div class="box"></div><div class="lbl">radius</div><div class="sub">0px · everything</div></div>
+  <div class="demo"><div class="pill"></div><div class="lbl">radius-pill</div><div class="sub">9999px · chips only</div></div>
+  <div class="note"><b>Square is the signature.</b> Cards, buttons, inputs, and images are all 0px. Only pills, avatars, and toggles are round.</div>
+</div></body></html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>訂單確認 — Evomni Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<link rel="stylesheet" href="../frontend-design-system/colors_and_type.css">
+<link rel="stylesheet" href="../evomnialert/evomnialert.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../evomnialert/evomnialert.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { min-height: 100%; }
+  body { font-family: var(--font-sans); font-size: 16px; background: var(--fill-300); color: var(--fg); -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--line-300); }
+  button { cursor: pointer; font-family: var(--font-sans); }
+  a { color: var(--fg); text-decoration: none; }
+  .proto-bar { background: var(--ink-900); display: flex; align-items: center; padding: 0 24px; }
+  .proto-bar-label { font-size: 14px; letter-spacing: .1em; color: rgba(255,255,255,.45); text-transform: uppercase; padding-right: 12px; white-space: nowrap; }
+  .proto-btn { padding: 9px 14px; border: none; background: none; border-bottom: 2px solid transparent; font: 500 14px/1 var(--font-sans); letter-spacing: .05em; color: rgba(255,255,255,.55); cursor: pointer; white-space: nowrap; }
+  .proto-btn.active { border-bottom-color: #fff; color: #fff; }
+  @keyframes popIn { 0% { opacity: 0; transform: scale(.85); } 70% { transform: scale(1.04); } 100% { opacity: 1; transform: scale(1); } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="../frontend-design-system/ui_kits/storefront/ui.jsx"></script>
+<script type="text/babel" src="../frontend-design-system/ui_kits/storefront/sections.jsx"></script>
+<script type="text/babel">
+const { useState } = React;
+
+// ─── Mock Data ────────────────────────────────────────────────────────────────
+const ORDER = {
+  number: 'ORD-20260601-00289',
+  memberEmail: 'member@example.com',
+  guestEmail: 'guest@example.com',
+  items: [
+    { name: '輕透水潤精華乳', category: 'SKINCARE', specs: '容量：50ml · 款式：一般型', price: 890, qty: 2, img: '../assets/img2.png' },
+    { name: '深層修護面膜', category: 'TREATMENT', specs: '包裝：5 片裝 · 款式：保濕型', price: 650, qty: 1, img: '../assets/img3.png' },
+  ],
+  subtotal: 2430,
+  coupon: 200,
+  shipping: 0,
+  total: 2230,
+  payment: '信用卡（一次付清）',
+  delivery: '宅配到府',
+  recipient: '王小明',
+  address: '台北市大安區敦化南路一段 100 號 5 樓',
+};
+
+// ─── State Bar ────────────────────────────────────────────────────────────────
+const StateBar = ({ states, current, onChange }) => (
+  <div className="proto-bar">
+    <span className="proto-bar-label">Prototype State</span>
+    {states.map(s => (
+      <button key={s.key} className={`proto-btn${current === s.key ? ' active' : ''}`} onClick={() => onChange(s.key)}>
+        {s.label}
+      </button>
+    ))}
+  </div>
+);
+
+// ─── Minimal Header ───────────────────────────────────────────────────────────
+const MinimalHeader = () => (
+  <header style={{ background: 'var(--bg)', borderBottom: '1px solid var(--line-300)', padding: '18px 40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <img src="../frontend-design-system/uploads/logo.jpg" alt="Evomni" style={{ height: 36, width: 'auto', display: 'block' }} />
+  </header>
+);
+
+// ─── Step Indicator ───────────────────────────────────────────────────────────
+const StepsIndicator = () => {
+  const steps = [['CART', '購物車'], ['DETAILS', '填寫資料'], ['CONFIRMED', '完成訂購']];
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0, marginBottom: 40 }}>
+      {steps.map(([eyebrow, label], i) => (
+        <React.Fragment key={eyebrow}>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8 }}>
+            <div style={{
+              width: 32, height: 32, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: i === 2 ? 'var(--success)' : 'var(--ink-300)',
+              color: '#fff',
+            }}>
+              {i === 2 ? <Icon name="check" size={16} style={{ color: '#fff' }} /> : (
+                <span style={{ font: '500 14px/1 var(--font-sans)' }}>{i + 1}</span>
+              )}
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ font: '500 14px/1 var(--font-sans)', letterSpacing: '.12em', color: i === 2 ? 'var(--success)' : 'var(--fg-disabled)', textTransform: 'uppercase' }}>{eyebrow}</div>
+            </div>
+          </div>
+          {i < steps.length - 1 && (
+            <div style={{ width: 64, height: 1, background: 'var(--line-300)', margin: '0 8px', marginBottom: 24 }} />
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+  );
+};
+
+// ─── Detail Row ───────────────────────────────────────────────────────────────
+const DetailRow = ({ label, value }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '9px 0', borderBottom: '1px solid var(--line-200)' }}>
+    <span style={{ font: '400 16px/1 var(--font-sans)', color: 'var(--fg-subtle)' }}>{label}</span>
+    <span style={{ font: '400 16px/1.4 var(--font-sans)', color: 'var(--fg-muted)', textAlign: 'right', maxWidth: '60%' }}>{value}</span>
+  </div>
+);
+
+// ─── Price Row ────────────────────────────────────────────────────────────────
+const PriceRow = ({ label, value, color, bold }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0' }}>
+    <span style={{ font: '400 16px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>{label}</span>
+    <span style={{ font: `${bold ? '600' : '400'} 16px/1 var(--font-sans)`, color: color || (bold ? 'var(--fg)' : 'var(--fg-muted)'), fontVariantNumeric: 'tabular-nums' }}>
+      {value}
+    </span>
+  </div>
+);
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+const App = () => {
+  const [pageState, setPageState] = useState('member');
+  const isGuest = pageState === 'guest';
+  const email = isGuest ? ORDER.guestEmail : ORDER.memberEmail;
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--fill-300)' }}>
+      <MinimalHeader />
+      <StateBar
+        states={[
+          { key: 'member', label: '已登入會員' },
+          { key: 'guest', label: '訪客完成結帳' },
+        ]}
+        current={pageState}
+        onChange={setPageState}
+      />
+
+      <div style={{ maxWidth: 680, margin: '0 auto', padding: '48px var(--gutter) 96px' }}>
+        <StepsIndicator />
+
+        {/* Success card */}
+        <div style={{ background: 'var(--bg)', border: '1px solid var(--line-300)', marginBottom: 16 }}>
+          {/* Top: success icon + order number */}
+          <div style={{ padding: '40px 32px 32px', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', borderBottom: '1px solid var(--line-200)' }}>
+            <div style={{ animation: 'popIn .5s cubic-bezier(.34,1.56,.64,1) forwards' }}>
+              <Icon name="check_circle_outline" size={72} style={{ color: 'var(--success)' }} />
+            </div>
+            <Eyebrow style={{ marginTop: 20, marginBottom: 10 }}>ORDER CONFIRMED</Eyebrow>
+            <h1 style={{ font: '600 28px/1.2 var(--font-sans)', letterSpacing: '-.01em', color: 'var(--fg)', marginBottom: 12 }}>
+              訂單已成立！
+            </h1>
+            <div style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 16 }}>
+              訂單編號：<strong style={{ fontWeight: 600, color: 'var(--fg)', letterSpacing: '.04em' }}>{ORDER.number}</strong>
+            </div>
+            {/* Email confirmation */}
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', background: 'var(--fill-300)', border: '1px solid var(--line-300)' }}>
+              <Icon name="mail_outline" size={16} style={{ color: 'var(--fg-subtle)', flexShrink: 0 }} />
+              <span style={{ font: '400 14px/1.4 var(--font-sans)', color: 'var(--fg-muted)' }}>
+                確認信已寄至 <strong style={{ fontWeight: 500, color: 'var(--fg)' }}>{email}</strong>
+              </span>
+            </div>
+          </div>
+
+          {/* Order summary */}
+          <div style={{ padding: '24px 32px' }}>
+            <Eyebrow style={{ marginBottom: 16 }}>Order Details</Eyebrow>
+
+            {/* Items */}
+            <div style={{ marginBottom: 20 }}>
+              {ORDER.items.map((item, i) => (
+                <div key={i} style={{ display: 'flex', gap: 14, padding: '12px 0', borderBottom: '1px solid var(--line-200)', alignItems: 'center' }}>
+                  {item.img
+                    ? <img src={item.img} alt={item.name} style={{ width: 56, height: 56, objectFit: 'cover', flexShrink: 0 }} />
+                    : <Photo tint="#f0ede8" ratio="1/1" style={{ width: 56, height: 56 }} label={item.category} />
+                  }
+                  <div style={{ flex: 1 }}>
+                    <Eyebrow style={{ marginBottom: 5, fontSize: 14 }}>{item.category}</Eyebrow>
+                    <div style={{ font: '500 16px/1.4 var(--font-sans)', color: 'var(--fg)' }}>{item.name}</div>
+                    <div style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginTop: 4 }}>
+                      {item.specs} · 數量：{item.qty}
+                    </div>
+                  </div>
+                  <Price amount={item.price * item.qty} size={13} />
+                </div>
+              ))}
+            </div>
+
+            {/* Price breakdown */}
+            <div style={{ paddingBottom: 16, marginBottom: 16, borderBottom: '1px solid var(--line-200)' }}>
+              <PriceRow label="商品小計" value={`NT$ ${ORDER.subtotal.toLocaleString()}`} />
+              <PriceRow label={`優惠折扣（SAVE200）`} value={`- NT$ ${ORDER.coupon.toLocaleString()}`} color="var(--success)" />
+              <PriceRow label="運費" value="免運費" color="var(--success)" />
+              <div style={{ paddingTop: 10, marginTop: 6, borderTop: '1px solid var(--line-200)' }}>
+                <PriceRow label="訂單總計" value={`NT$ ${ORDER.total.toLocaleString()}`} bold />
+              </div>
+            </div>
+
+            {/* Delivery & payment */}
+            <div>
+              <DetailRow label="付款方式" value={ORDER.payment} />
+              <DetailRow label="配送方式" value={ORDER.delivery} />
+              <DetailRow label="收件人" value={isGuest ? '訪客消費者' : ORDER.recipient} />
+              <DetailRow label="收件地址" value={isGuest ? '台南市東區 XX 路 XX 號' : ORDER.address} />
+            </div>
+
+            {/* Estimated delivery */}
+            <div style={{ marginTop: 16, padding: '10px 14px', background: 'var(--fill-300)', border: '1px solid var(--line-200)', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Icon name="local_shipping" size={16} style={{ color: 'var(--fg-subtle)' }} />
+              <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>預計出貨：2–3 個工作天</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Action buttons */}
+        <div style={{ background: 'var(--bg)', border: '1px solid var(--line-300)', padding: '20px 32px', marginBottom: 16 }}>
+          <div style={{ display: 'flex', gap: 12 }}>
+            {isGuest ? (
+              <a href="訪客訂單查詢.html" style={{ flex: 1 }}>
+                <Button full>查詢我的訂單</Button>
+              </a>
+            ) : (
+              <a href="會員中心_我的訂單.html" style={{ flex: 1 }}>
+                <Button full>查看訂單詳情</Button>
+              </a>
+            )}
+            <a href="購物車.html" style={{ flex: 1 }}>
+              <Button full variant="ghost">繼續購物</Button>
+            </a>
+          </div>
+        </div>
+
+        {/* Guest-to-member conversion */}
+        {isGuest && (
+          <div style={{ background: 'var(--bg)', border: '1px solid var(--line-300)', padding: '24px 32px' }}>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+              <div style={{ width: 44, height: 44, background: 'var(--brand-soft)', border: '1px solid var(--line-300)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <Icon name="person_outline" size={22} style={{ color: 'var(--fg)' }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <Eyebrow style={{ marginBottom: 8 }}>JOIN US</Eyebrow>
+                <div style={{ font: '600 15px/1 var(--font-sans)', color: 'var(--fg)', marginBottom: 8 }}>下次購物更快速！</div>
+                <p style={{ font: '400 14px/1.6 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 16 }}>
+                  用此 Email 建立帳號，即可查看所有訂單紀錄、累積點數回饋，並享有地址快速填入功能。
+                </p>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                  <a href="#">
+                    <Button iconRight="arrow_forward">立即建立會員帳號</Button>
+                  </a>
+                  <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)' }}>
+                    將以 <strong style={{ fontWeight: 500, color: 'var(--fg-muted)' }}>{ORDER.guestEmail}</strong> 建立帳號
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Footer note */}
+        <div style={{ textAlign: 'center', marginTop: 40 }}>
+          <p style={{ font: '400 14px/1.8 var(--font-sans)', color: 'var(--fg-subtle)' }}>
+            感謝您的購買！如有任何問題，請聯繫客服{' '}
+            <a href="#" style={{ color: 'var(--fg-muted)', textDecoration: 'underline', textUnderlineOffset: 3 }}>service@evostore.com</a>
+          </p>
+        </div>
+      </div>
+
+      <Footer />
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

@@ -8,11 +8,14 @@ user-invocable: true
 
 ## 1. 立即載入規範
 
-首先讀取設計規範（唯一的 source of truth）：
+首先讀取以下兩個後台設計規範（唯一的 source of truth）：
 
 ```
-SPEC/Evomni_Design_System.md
+assets/colors_and_type.css      ← 色彩 token 與字型規格（CSS 自訂屬性）
+SKILL.md（本技能 §3–7 節）     ← 設計規則、元件庫、Prototype 結構
 ```
+
+> 注意：前台（storefront）設計系統請改用 `/evomni-design-storefront`，位於 `frontend-design-system/`。
 
 ## 2. 技術架構
 

@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>購物車 — Evomni Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<link rel="stylesheet" href="../frontend-design-system/colors_and_type.css">
+<link rel="stylesheet" href="../evomnialert/evomnialert.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../evomnialert/evomnialert.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { min-height: 100%; }
+  body { font-family: var(--font-sans); font-size: 16px; background: var(--fill-300); color: var(--fg); -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--line-300); }
+  a { color: var(--fg); text-decoration: none; } a:hover { text-decoration: underline; }
+  button { cursor: pointer; font-family: var(--font-sans); }
+  input { font-family: var(--font-sans); outline: none; }
+  /* Prototype state bar */
+  .proto-bar { background: var(--ink-900); display: flex; align-items: center; padding: 0 24px; overflow-x: auto; }
+  .proto-bar-label { font-size: 14px; letter-spacing: .08em; color: rgba(255,255,255,.45); text-transform: uppercase; padding-right: 12px; white-space: nowrap; }
+  .proto-btn { padding: 9px 14px; border: none; background: none; border-bottom: 2px solid transparent; font: 500 14px/1 var(--font-sans); letter-spacing: .04em; color: rgba(255,255,255,.55); cursor: pointer; white-space: nowrap; transition: color .15s; }
+  .proto-btn.active { border-bottom-color: #fff; color: #fff; }
+.mobile-cta { display: none; }
+  .sidebar-col { display: block; }
+  @media (max-width: 767px) {
+    .mobile-cta { display: block; position: sticky; bottom: 0; z-index: 50; background: var(--bg); border-top: 1px solid var(--line-300); padding: 12px 16px; }
+    .sidebar-col { display: none; }
+    .cart-layout { flex-direction: column !important; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="../frontend-design-system/ui_kits/storefront/ui.jsx"></script>
+<script type="text/babel" src="../frontend-design-system/ui_kits/storefront/sections.jsx"></script>
+<script type="text/babel">
+const { useState } = React;
+
+// ─── Proto State Bar ──────────────────────────────────────────────────────────
+const StateBar = ({ states, current, onChange }) => (
+  <div className="proto-bar">
+    <span className="proto-bar-label">Prototype State</span>
+    {states.map(s => (
+      <button key={s.key} className={`proto-btn${current === s.key ? ' active' : ''}`} onClick={() => onChange(s.key)}>
+        {s.label}
+      </button>
+    ))}
+  </div>
+);
+
+// ─── Qty Control ──────────────────────────────────────────────────────────────
+const QtyControl = ({ value, onChange, max = 99, disabled }) => {
+  const btnS = (active) => ({
+    width: 32, height: 32, border: '1px solid var(--border)', background: 'none',
+    color: active && !disabled ? 'var(--fg)' : 'var(--fg-disabled)',
+    cursor: active && !disabled ? 'pointer' : 'not-allowed', display: 'flex',
+    alignItems: 'center', justifyContent: 'center', fontSize: 18, lineHeight: 1,
+    transition: 'background .15s',
+  });
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--border)', width: 'fit-content' }}>
+      <button style={btnS(value > 1)} onClick={() => !disabled && value > 1 && onChange(value - 1)} disabled={disabled || value <= 1}>
+        <Icon name="remove" size={16} />
+      </button>
+      <span style={{ width: 40, textAlign: 'center', font: '400 14px/32px var(--font-sans)', color: disabled ? 'var(--fg-disabled)' : 'var(--fg)', borderLeft: '1px solid var(--border)', borderRight: '1px solid var(--border)' }}>
+        {value}
+      </span>
+      <button style={btnS(value < max)} onClick={() => !disabled && value < max && onChange(value + 1)} disabled={disabled || value >= max}>
+        <Icon name="add" size={16} />
+      </button>
+    </div>
+  );
+};
+
+// ─── Cart Item ────────────────────────────────────────────────────────────────
+const CartItem = ({ item, qty, onQtyChange, onDelete }) => {
+  const disc = item.status === 'discontinued';
+
+  const handleDelete = () => {
+    EvomniAlert.show({
+      type: 'warning',
+      title: `確定要移除「${item.name}」？`,
+      desc: '此操作無法復原',
+      onConfirm: onDelete
+    });
+  };
+
+  return (
+    <div style={{ borderBottom: '1px solid var(--line-300)' }}>
+      <div style={{ display: 'flex', gap: 20, padding: '20px 0', alignItems: 'center' }}>
+        {/* Photo 80x80 */}
+        <div style={{ position: 'relative', flexShrink: 0, width: 80, height: 80 }}>
+          {item.img
+            ? <img src={item.img} alt={item.name} style={{ width: 80, height: 80, objectFit: 'cover', display: 'block', opacity: disc ? 0.45 : 1 }} />
+            : <Photo tint={disc ? '#ececec' : '#f0ede8'} ratio="1/1" style={{ width: 80, height: 80, opacity: disc ? 0.45 : 1 }} label={item.specs[0]} />
+          }
+          {disc && (
+            <div style={{ position: 'absolute', inset: 0, background: 'rgba(48,49,51,.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <span style={{ font: '500 13px/1 var(--font-sans)', letterSpacing: '.06em', color: '#fff', textTransform: 'uppercase' }}>已下架</span>
+            </div>
+          )}
+        </div>
+
+        {/* Product info */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <Eyebrow style={{ marginBottom: 4 }}>{item.category}</Eyebrow>
+          <div style={{ font: '500 16px/1.4 var(--font-sans)', color: disc ? 'var(--fg-disabled)' : 'var(--fg)' }}>{item.name}</div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+            {item.specs.map((s, i) => (
+              <span key={i} style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)', padding: '3px 8px', border: '1px solid var(--line-300)' }}>{s}</span>
+            ))}
+          </div>
+          {disc && <div style={{ font: '400 13px/1.4 var(--font-sans)', color: 'var(--fg-subtle)', marginTop: 6 }}>此商品已下架，請移除後繼續結帳</div>}
+          {item.lowStock && !disc && (
+            <div style={{ display: 'flex', alignItems: 'center', color: 'var(--warning)', marginTop: 6 }}>
+              <Icon name="info_outline" size={14} style={{ color: 'var(--warning)', flexShrink: 0, width: 14, height: 14, overflow: 'hidden' }} />
+              <div style={{ width: 8, flexShrink: 0 }} />
+              <span style={{ font: '500 13px/1 var(--font-sans)' }}>僅剩 {item.lowStock} 件</span>
+            </div>
+          )}
+        </div>
+
+        {/* Qty 120px centered */}
+        <div style={{ width: 120, display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
+          <QtyControl value={qty} onChange={onQtyChange} max={item.lowStock || 99} disabled={disc} />
+        </div>
+
+        {/* Subtotal 100px right-aligned */}
+        <div style={{ width: 100, textAlign: 'right', flexShrink: 0 }}>
+          <Price amount={item.price * qty} size={16} />
+        </div>
+
+        {/* Delete */}
+        <button onClick={handleDelete} style={{ border: 'none', background: 'none', color: 'var(--fg-subtle)', cursor: 'pointer', padding: 4, flexShrink: 0, opacity: 0.6, transition: 'opacity .15s' }}>
+          <Icon name="delete_outline" size={20} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ─── Free Shipping Hint ───────────────────────────────────────────────────────
+const FreeShippingHint = ({ current, threshold = 1000 }) => {
+  if (current >= threshold) return null;
+  const remain = threshold - current;
+  const pct = Math.round((current / threshold) * 100);
+  return (
+    <div style={{ padding: '12px 16px', background: 'var(--fill-300)', borderRadius: '0 0 3px 3px', marginTop: 0 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+        <span style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>
+          再消費 <strong style={{ color: 'var(--fg)', fontWeight: 500 }}>NT$ {remain.toLocaleString()}</strong> 即享免運費
+        </span>
+        <span style={{ font: '500 14px/1 var(--font-sans)', color: 'var(--fg-subtle)' }}>{pct}%</span>
+      </div>
+      <div style={{ height: 2, background: 'var(--line-300)' }}>
+        <div style={{ height: 2, width: `${pct}%`, background: 'var(--fg)', transition: 'width .3s var(--ease)' }} />
+      </div>
+    </div>
+  );
+};
+
+// ─── Promotions Section ───────────────────────────────────────────────────────
+const PROMOTIONS = [
+  { id: 1, name: '全館滿額 88 折', desc: '消費滿 NT$2,000 全單享 88 折優惠', threshold: 2000 },
+  { id: 2, name: '加購優惠', desc: '任選 2 件指定商品，享加購優惠價', threshold: null },
+];
+
+const PromotionsSection = ({ subtotal }) => {
+  const unmet = PROMOTIONS.filter(p => !p.threshold || subtotal < p.threshold);
+  if (unmet.length === 0) return null;
+  return (
+    <div style={{ marginBottom: 12, background: 'var(--bg)', borderRadius: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+      <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line-200)', font: '500 16px/1 var(--font-sans)', color: 'var(--fg)' }}>
+        未符合優惠活動
+      </div>
+      {unmet.map((p, i) => (
+        <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 20px', borderBottom: i < unmet.length - 1 ? '1px solid var(--line-200)' : 'none' }}>
+          <div>
+            <div style={{ font: '500 14px/1 var(--font-sans)', color: 'var(--fg)', marginBottom: 5 }}>{p.name}</div>
+            <div style={{ font: '400 13px/1.5 var(--font-sans)', color: 'var(--fg-muted)' }}>
+              {p.threshold && subtotal < p.threshold
+                ? <span>再消費 <strong style={{ color: 'var(--fg)', fontWeight: 500 }}>NT$ {(p.threshold - subtotal).toLocaleString()}</strong> 即可達標 — </span>
+                : null}
+              {p.desc}
+            </div>
+          </div>
+          <button style={{ flexShrink: 0, marginLeft: 20, height: 32, padding: '0 14px', border: '1px solid var(--ink-900)', background: 'none', font: '500 13px/1 var(--font-sans)', color: 'var(--ink-900)', cursor: 'pointer', whiteSpace: 'nowrap', letterSpacing: '.04em' }}>
+            查看活動
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+// ─── Add-ons & Points Redemption Section ──────────────────────────────────────
+const ADDONS = [
+  { id: 1, name: '保濕精華液小樣', price: 99, originalPrice: 199, img: '../assets/img2.png' },
+  { id: 2, name: '防曬乳試用裝', price: 149, originalPrice: 299, img: null },
+  { id: 3, name: '卸妝油旅行組', price: 199, originalPrice: 399, img: '../assets/img3.png' },
+  { id: 4, name: '淨膚潔面乳', price: 129, originalPrice: 249, img: null },
+];
+
+const POINTS_ITEMS = [
+  { id: 1, name: '精華乳旅行組', points: 500, img: '../assets/img2.png' },
+  { id: 2, name: '保濕面膜（單片）', points: 200, img: '../assets/img3.png' },
+  { id: 3, name: '植萃精華水樣品', points: 150, img: null },
+];
+
+const AddOnsSection = () => {
+  const [tab, setTab] = useState('addons');
+  const tabStyle = (active) => ({
+    padding: '12px 20px', border: 'none', background: 'none', cursor: 'pointer',
+    font: `${active ? '500' : '400'} 16px/1 var(--font-sans)`,
+    color: active ? 'var(--fg)' : 'var(--fg-muted)',
+    borderBottom: active ? '2px solid var(--ink-900)' : '2px solid transparent',
+    transition: 'color .15s', letterSpacing: '.02em',
+  });
+  const items = tab === 'addons' ? ADDONS : POINTS_ITEMS;
+  return (
+    <div style={{ marginBottom: 12, background: 'var(--bg)', borderRadius: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+      <div style={{ display: 'flex', borderBottom: '1px solid var(--line-300)' }}>
+        <button style={tabStyle(tab === 'addons')} onClick={() => setTab('addons')}>加購品</button>
+        <button style={tabStyle(tab === 'points')} onClick={() => setTab('points')}>紅利兌換品（會員專屬）</button>
+      </div>
+      <div style={{ padding: '16px 20px', display: 'flex', gap: 16, overflowX: 'auto' }}>
+        {items.map(item => (
+          <div key={item.id} style={{ flexShrink: 0, width: 148, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {item.img
+              ? <img src={item.img} alt={item.name} style={{ width: 148, height: 148, objectFit: 'cover', display: 'block' }} />
+              : <Photo tint="#f0ede8" ratio="1/1" style={{ width: 148, height: 148 }} />
+            }
+            <div style={{ font: '500 14px/1.4 var(--font-sans)', color: 'var(--fg)' }}>{item.name}</div>
+            {tab === 'addons' ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ font: '500 14px/1 var(--font-sans)', color: 'var(--fg)', fontVariantNumeric: 'tabular-nums' }}>NT$ {item.price}</span>
+                <span style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-subtle)', textDecoration: 'line-through', fontVariantNumeric: 'tabular-nums' }}>NT$ {item.originalPrice}</span>
+              </div>
+            ) : (
+              <div style={{ font: '500 14px/1 var(--font-sans)', color: 'var(--fg-muted)', fontVariantNumeric: 'tabular-nums' }}>{item.points} 點</div>
+            )}
+            <button style={{ height: 34, border: '1px solid var(--ink-900)', background: 'none', font: '500 13px/1 var(--font-sans)', color: 'var(--ink-900)', cursor: 'pointer', letterSpacing: '.04em' }}>
+              {tab === 'addons' ? '加入購物車' : '兌換'}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ─── Delivery / Region / Payment Data ────────────────────────────────────────
+const REGIONS = [
+  { id: 'mainland', label: '台灣本島' },
+  { id: 'island',   label: '離島', note: '金門、馬祖、澎湖' },
+];
+
+const CART_DELIVERY_OPTIONS = [
+  { id: 'home',   label: '宅配到府',          desc: '2–4 個工作天',     regions: ['mainland','island'], fees: { mainland: 80,  island: 200 }, freeThreshold: { mainland: 1500, island: null } },
+  { id: '711',    label: '7-ELEVEN 超商取貨', desc: '取貨門市自行選擇', regions: ['mainland','island'], fees: { mainland: 65,  island: 65  }, freeThreshold: null },
+  { id: 'family', label: '全家超商取貨',       desc: '取貨門市自行選擇', regions: ['mainland','island'], fees: { mainland: 65,  island: 65  }, freeThreshold: null },
+  { id: 'frozen', label: '冷凍宅配',           desc: '低溫配送，2–5 天', regions: ['mainland'],          fees: { mainland: 200 },             freeThreshold: null },
+];
+
+const CART_PAYMENT_OPTIONS = [
+  { id: 'credit',    label: '信用卡（一次付清）',  deliveries: ['home','711','family','frozen'] },
+  { id: 'line_pay',  label: 'LINE Pay',            deliveries: ['home','711','family','frozen'] },
+  { id: 'atm',       label: 'ATM 轉帳',           deliveries: ['home','711','family','frozen'], note: '7 天內完成轉帳' },
+  { id: 'cvs_code',  label: '超商代碼繳費',       deliveries: ['home','711','family'],           note: '72 小時內繳款' },
+  { id: 'cvs_store', label: '超商取貨付款',       deliveries: ['711','family'] },
+  { id: 'cod',       label: '貨到付款',           deliveries: ['home'] },
+];
+
+const RadioOption = ({ selected, onClick, label, desc, right }) => (
+  <div onClick={onClick} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 16px', border: `1px solid ${selected ? 'var(--ink-900)' : 'var(--line-300)'}`, background: selected ? 'var(--fill-200)' : 'var(--bg)', cursor: 'pointer', transition: 'border-color .15s, background .15s', borderRadius: 2, marginBottom: 8 }}>
+    <div style={{ width: 18, height: 18, border: `2px solid ${selected ? 'var(--ink-900)' : 'var(--line-400)'}`, borderRadius: '50%', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      {selected && <div style={{ width: 8, height: 8, background: 'var(--ink-900)', borderRadius: '50%' }} />}
+    </div>
+    <div style={{ flex: 1 }}>
+      <div style={{ font: '500 14px/1 var(--font-sans)', color: 'var(--fg)' }}>{label}</div>
+      {desc && <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-muted)', marginTop: 3 }}>{desc}</div>}
+    </div>
+    {right && <div style={{ font: '500 14px/1 var(--font-sans)', fontVariantNumeric: 'tabular-nums', flexShrink: 0 }}>{right}</div>}
+  </div>
+);
+
+const SectionCard2 = ({ title, children }) => (
+  <div style={{ marginBottom: 12, background: 'var(--bg)', borderRadius: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', overflow: 'hidden' }}>
+    <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line-200)', font: '500 16px/1 var(--font-sans)', color: 'var(--fg)' }}>{title}</div>
+    <div style={{ padding: '16px 20px' }}>{children}</div>
+  </div>
+);
+
+const RegionSelector = ({ selected, onChange }) => (
+  <SectionCard2 title="配送地區">
+    <div style={{ display: 'flex', gap: 10 }}>
+      {REGIONS.map(r => (
+        <button key={r.id} onClick={() => onChange(r.id)} style={{ padding: '9px 20px', border: `1px solid ${selected === r.id ? 'var(--ink-900)' : 'var(--line-300)'}`, background: selected === r.id ? 'var(--ink-900)' : 'var(--bg)', color: selected === r.id ? '#fff' : 'var(--fg)', font: `${selected === r.id ? '500' : '400'} 14px/1 var(--font-sans)`, cursor: 'pointer', transition: 'all .15s', borderRadius: 2 }}>
+          {r.label}{r.note && <span style={{ font: '400 12px/1 var(--font-sans)', opacity: .75, marginLeft: 5 }}>（{r.note}）</span>}
+        </button>
+      ))}
+    </div>
+  </SectionCard2>
+);
+
+const DeliverySelector = ({ selected, onChange, region, subtotal }) => {
+  const opts = CART_DELIVERY_OPTIONS.filter(o => o.regions.includes(region));
+  return (
+    <SectionCard2 title="配送方式">
+      {opts.map(opt => {
+        const fee = opt.fees[region] || 0;
+        const threshold = opt.freeThreshold ? opt.freeThreshold[region] : null;
+        const isFree = threshold && subtotal >= threshold;
+        return (
+          <RadioOption key={opt.id} selected={selected === opt.id} onClick={() => onChange(opt.id)}
+            label={opt.label} desc={opt.desc}
+            right={<span style={{ color: isFree ? 'var(--success)' : 'var(--fg)' }}>{isFree ? '免運費' : `NT$ ${fee}`}</span>}
+          />
+        );
+      })}
+    </SectionCard2>
+  );
+};
+
+const PaymentSelector = ({ selected, onChange, deliveryMethod }) => {
+  const opts = CART_PAYMENT_OPTIONS.filter(p => p.deliveries.includes(deliveryMethod));
+  return (
+    <SectionCard2 title="付款方式">
+      {opts.map(opt => (
+        <RadioOption key={opt.id} selected={selected === opt.id} onClick={() => onChange(opt.id)}
+          label={opt.label} desc={opt.note || null}
+        />
+      ))}
+    </SectionCard2>
+  );
+};
+
+// ─── Order Summary Sidebar ────────────────────────────────────────────────────
+const VALID_COUPON = { code: 'SAVE200', discount: 200 };
+const POINTS_BALANCE = 850;
+
+const OrderSummary = ({ subtotal, shipping, total, hasDisc, couponState, setCouponState, couponDiscount, setCouponDiscount, points, setPoints, onCheckout }) => {
+  const [inputCode, setInputCode] = useState('');
+
+  const Row = ({ label, value, bold, color }) => (
+    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0' }}>
+      <span style={{ font: `${bold ? '500' : '400'} 16px/1 var(--font-sans)`, color: bold ? 'var(--fg)' : 'var(--fg-muted)' }}>{label}</span>
+      <span style={{ font: `${bold ? '500' : '400'} 16px/1 var(--font-sans)`, color: color || (bold ? 'var(--fg)' : 'var(--fg-muted)'), fontVariantNumeric: 'tabular-nums' }}>{value}</span>
+    </div>
+  );
+
+  const handleApply = () => {
+    if (inputCode.trim().toUpperCase() === VALID_COUPON.code) {
+      setCouponState('success'); setCouponDiscount(VALID_COUPON.discount);
+    } else {
+      setCouponState('fail');
+    }
+  };
+
+  const handleRemove = () => {
+    setCouponState('idle'); setCouponDiscount(0); setInputCode('');
+  };
+
+  return (
+    <div style={{ background: 'var(--bg)', borderRadius: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', overflow: 'hidden', position: 'sticky', top: 24 }}>
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--line-300)' }}>
+        <div style={{ font: '600 16px/1 var(--font-sans)', color: 'var(--fg)' }}>訂單摘要</div>
+      </div>
+
+      {/* Coupon */}
+      <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line-200)' }}>
+        <div style={{ font: '500 13px/1 var(--font-sans)', color: 'var(--fg-muted)', letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 10 }}>優惠代碼</div>
+        {couponState === 'success' ? (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 12px', background: 'var(--success-soft)', border: '1px solid #c2e7b0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <Icon name="check_circle_outline" size={14} style={{ color: 'var(--success)', flexShrink: 0, width: 14, height: 14, overflow: 'hidden' }} />
+              <span style={{ font: '500 14px/1 var(--font-sans)', color: 'var(--success)' }}>{VALID_COUPON.code}</span>
+              <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>折抵 NT$ {VALID_COUPON.discount}</span>
+            </div>
+            <button onClick={handleRemove} style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--fg-subtle)', padding: 2 }}>
+              <Icon name="close" size={16} style={{ width: 16, height: 16, overflow: 'hidden' }} />
+            </button>
+          </div>
+        ) : (
+          <div>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <input
+                value={inputCode} onChange={e => { setInputCode(e.target.value); setCouponState('idle'); }}
+                onKeyDown={e => e.key === 'Enter' && handleApply()}
+                placeholder="請輸入優惠代碼"
+                style={{ flex: 1, height: 36, border: `1px solid ${couponState === 'fail' ? 'var(--danger)' : 'var(--line-400)'}`, padding: '0 10px', font: '400 14px/1 var(--font-sans)', color: 'var(--fg)', background: 'var(--bg)', outline: 'none', textTransform: 'uppercase' }}
+              />
+              <button onClick={handleApply} style={{ height: 36, padding: '0 14px', background: 'var(--ink-900)', color: '#fff', border: 'none', font: '500 14px/1 var(--font-sans)', cursor: 'pointer', letterSpacing: '.04em', flexShrink: 0 }}>套用</button>
+            </div>
+            {couponState === 'fail' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6 }}>
+                <Icon name="error_outline" size={13} style={{ color: 'var(--danger)', flexShrink: 0, width: 13, height: 13, overflow: 'hidden' }} />
+                <span style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--danger)' }}>優惠代碼無效，請確認後重試</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Points */}
+      <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line-200)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+          <div style={{ font: '500 13px/1 var(--font-sans)', color: 'var(--fg-muted)', letterSpacing: '.06em', textTransform: 'uppercase' }}>紅利點數折抵</div>
+          <span style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-subtle)' }}>可用 <strong style={{ color: 'var(--fg)', fontWeight: 500 }}>{POINTS_BALANCE}</strong> 點</span>
+        </div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+          <input
+            type="number" value={points || ''} min={0} max={POINTS_BALANCE}
+            onChange={e => setPoints(Math.min(POINTS_BALANCE, Math.max(0, parseInt(e.target.value) || 0)))}
+            placeholder="輸入折抵點數"
+            style={{ flex: 1, height: 36, border: '1px solid var(--line-400)', padding: '0 10px', font: '400 14px/1 var(--font-sans)', color: 'var(--fg)', background: 'var(--bg)', outline: 'none' }}
+          />
+          {points > 0 && <span style={{ font: '500 14px/1 var(--font-sans)', color: 'var(--success)', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>- NT$ {points}</span>}
+        </div>
+        <div style={{ font: '400 12px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginTop: 5 }}>1 點 = NT$ 1，最多折抵 NT$ {POINTS_BALANCE}</div>
+      </div>
+
+      {/* Price breakdown */}
+      <div style={{ padding: '14px 20px', borderBottom: '1px solid var(--line-300)' }}>
+        <Row label="商品小計" value={`NT$ ${subtotal.toLocaleString()}`} />
+        {couponDiscount > 0 && <Row label="優惠折扣" value={`- NT$ ${couponDiscount.toLocaleString()}`} color="var(--success)" />}
+        {points > 0 && <Row label="點數折抵" value={`- NT$ ${points.toLocaleString()}`} color="var(--success)" />}
+        <Row
+          label="運費"
+          value={subtotal === 0 ? 'NT$ 0' : shipping === 0 ? '免運費' : `NT$ ${shipping}`}
+          color={subtotal > 0 && shipping === 0 ? 'var(--success)' : undefined}
+        />
+      </div>
+      <div style={{ padding: '16px 20px 20px' }}>
+        <Row label="應付金額" value={`NT$ ${total.toLocaleString()}`} bold color="var(--brand)" />
+        <div style={{ marginTop: 16 }}>
+          {hasDisc || subtotal === 0 ? (
+            <Button full disabled>{hasDisc ? '請移除已下架商品' : '前往結帳'}</Button>
+          ) : (
+            <button onClick={onCheckout} style={{ display: 'block', width: '100%', border: 'none', background: 'none', padding: 0 }}><Button full>前往結帳</Button></button>
+          )}
+        </div>
+        {hasDisc && (
+          <p style={{ font: '400 14px/1.5 var(--font-sans)', color: 'var(--warning)', marginTop: 10, textAlign: 'center' }}>
+            購物車中有已下架商品，移除後即可結帳
+          </p>
+        )}
+        <a href="#" style={{ display: 'block', textAlign: 'center', marginTop: 12, font: '400 13px/1 var(--font-sans)', color: 'var(--fg-subtle)' }}>繼續購物</a>
+      </div>
+    </div>
+  );
+};
+
+// ─── Empty Cart ───────────────────────────────────────────────────────────────
+const EmptyCart = () => (
+  <div style={{ padding: '80px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center', border: '1px solid var(--line-300)' }}>
+    <Icon name="shopping_bag" size={64} style={{ color: 'var(--ink-300)' }} />
+    <div>
+      <Eyebrow style={{ marginBottom: 10 }}>YOUR BAG IS EMPTY</Eyebrow>
+      <p style={{ font: '400 15px/1.6 var(--font-sans)', color: 'var(--fg-muted)' }}>您的購物車是空的。去挑選喜歡的商品吧！</p>
+    </div>
+    <a href="#" style={{ marginTop: 8 }}>
+      <Button iconRight="arrow_forward">繼續購物</Button>
+    </a>
+  </div>
+);
+
+// ─── Mock Data ────────────────────────────────────────────────────────────────
+const ITEMS_BY_STATE = {
+  normal: [
+    { id: 1, name: '輕透水潤精華乳', category: 'SKINCARE', specs: ['容量：50ml', '款式：一般型'], price: 890, status: 'active', img: '../assets/img2.png' },
+    { id: 2, name: '深層修護面膜', category: 'TREATMENT', specs: ['包裝：5 片裝', '款式：保濕型'], price: 650, status: 'active', img: '../assets/img3.png' },
+  ],
+  single_item: [
+    { id: 1, name: '輕透水潤精華乳', category: 'SKINCARE', specs: ['容量：50ml', '款式：一般型'], price: 890, status: 'active', img: '../assets/img2.png' },
+  ],
+  low_stock: [
+    { id: 1, name: '輕透水潤精華乳', category: 'SKINCARE', specs: ['容量：50ml', '款式：一般型'], price: 890, status: 'active', lowStock: 2, img: '../assets/img2.png' },
+    { id: 2, name: '深層修護面膜', category: 'TREATMENT', specs: ['包裝：5 片裝', '款式：保濕型'], price: 650, status: 'active', img: '../assets/img3.png' },
+  ],
+  discontinued: [
+    { id: 1, name: '輕透水潤精華乳', category: 'SKINCARE', specs: ['容量：50ml', '款式：一般型'], price: 890, status: 'active', img: '../assets/img2.png' },
+    { id: 2, name: '深層修護面膜', category: 'TREATMENT', specs: ['包裝：5 片裝', '款式：保濕型'], price: 650, status: 'discontinued', img: '../assets/img3.png' },
+  ],
+  empty: [],
+};
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+const App = () => {
+  const [pageState, setPageState] = useState('normal');
+  const [qty, setQty] = useState({ 1: 2, 2: 1 });
+  const [deleted, setDeleted] = useState({});
+  const [couponState, setCouponState] = useState('idle');
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [points, setPoints] = useState(0);
+  const [region, setRegion] = useState('mainland');
+  const [deliveryMethod, setDeliveryMethod] = useState('home');
+  const [paymentMethod, setPaymentMethod] = useState('credit');
+
+  const handleStateChange = (s) => {
+    setPageState(s);
+    setDeleted({});
+    if (s === 'single_item') setQty({ 1: 1, 2: 1 });
+  };
+
+  const handleRegionChange = (r) => {
+    setRegion(r);
+    const avail = CART_DELIVERY_OPTIONS.filter(o => o.regions.includes(r));
+    if (!avail.find(o => o.id === deliveryMethod)) setDeliveryMethod(avail[0].id);
+  };
+
+  const handleDeliveryChange = (d) => {
+    setDeliveryMethod(d);
+    const avail = CART_PAYMENT_OPTIONS.filter(p => p.deliveries.includes(d));
+    if (!avail.find(p => p.id === paymentMethod)) setPaymentMethod(avail[0].id);
+  };
+
+  const items = (ITEMS_BY_STATE[pageState] || []).filter(i => !deleted[`${pageState}_${i.id}`]);
+  const hasDisc = items.some(i => i.status === 'discontinued');
+  const activeItems = items.filter(i => i.status !== 'discontinued');
+  const subtotal = activeItems.reduce((s, i) => s + i.price * (qty[i.id] || 1), 0);
+  const selectedDelivery = CART_DELIVERY_OPTIONS.find(o => o.id === deliveryMethod) || CART_DELIVERY_OPTIONS[0];
+  const deliveryFee = selectedDelivery.fees[region] || 0;
+  const freeThreshold = selectedDelivery.freeThreshold ? selectedDelivery.freeThreshold[region] : null;
+  const isFreeShip = freeThreshold && subtotal >= freeThreshold;
+  const shipping = subtotal === 0 ? 0 : isFreeShip ? 0 : deliveryFee;
+  const total = Math.max(0, subtotal + shipping - couponDiscount - points);
+
+  const handleCheckout = () => {
+    try {
+      localStorage.setItem('deliveryMethod', deliveryMethod);
+      localStorage.setItem('paymentMethod', paymentMethod);
+      localStorage.setItem('region', region);
+    } catch(e) {}
+    window.location.href = '結帳頁.html';
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--fill-300)' }}>
+      <AnnouncementBar />
+      <Header cartCount={items.length} onCart={() => { window.location.href = '購物車.html'; }} onNav={() => {}} active="SHOP" />
+      <StateBar
+        states={[
+          { key: 'normal', label: '正常（免運）' },
+          { key: 'single_item', label: '單件（含運費）' },
+          { key: 'low_stock', label: '庫存警示' },
+          { key: 'discontinued', label: '含已下架商品' },
+          { key: 'empty', label: '空購物車' },
+        ]}
+        current={pageState}
+        onChange={handleStateChange}
+      />
+
+      <main style={{ maxWidth: 'var(--container)', margin: '0 auto', padding: '48px var(--gutter) 96px' }}>
+        {/* Page title */}
+        <div style={{ marginBottom: 40 }}>
+          <Eyebrow style={{ marginBottom: 10 }}>SHOPPING BAG</Eyebrow>
+          <h1 style={{ font: '600 32px/1 var(--font-sans)', letterSpacing: '-.01em', color: 'var(--fg)' }}>
+            購物車{items.length > 0 ? <span style={{ font: '400 18px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginLeft: 12 }}>（{items.length} 件）</span> : ''}
+          </h1>
+        </div>
+
+        {pageState === 'empty' || items.length === 0 ? (
+          <EmptyCart />
+        ) : (
+          <div className="cart-layout" style={{ display: 'flex', gap: 48, alignItems: 'flex-start' }}>
+            {/* Left — items */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              {/* Cart items card */}
+              <div style={{ background: 'var(--bg)', borderRadius: 3, boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: 12, overflow: 'hidden' }}>
+                {/* Column headers */}
+                <div style={{ display: 'flex', gap: 20, padding: '10px 20px', borderBottom: '1px solid var(--line-300)' }}>
+                  <div style={{ width: 80, flexShrink: 0 }} />
+                  <div style={{ flex: 1, font: '500 13px/1 var(--font-sans)', color: 'var(--fg-muted)', letterSpacing: '.08em', textTransform: 'uppercase' }}>品項</div>
+                  <div style={{ width: 120, textAlign: 'center', flexShrink: 0, font: '500 13px/1 var(--font-sans)', color: 'var(--fg-muted)', letterSpacing: '.08em', textTransform: 'uppercase' }}>數量</div>
+                  <div style={{ width: 100, textAlign: 'right', flexShrink: 0, font: '500 13px/1 var(--font-sans)', color: 'var(--fg-muted)', letterSpacing: '.08em', textTransform: 'uppercase' }}>小計</div>
+                  <div style={{ width: 28, flexShrink: 0 }} />
+                </div>
+                <div style={{ padding: '0 20px' }}>
+                  {items.map(item => (
+                    <CartItem
+                      key={item.id}
+                      item={item}
+                      qty={qty[item.id] || 1}
+                      onQtyChange={v => setQty(q => ({ ...q, [item.id]: v }))}
+                      onDelete={() => setDeleted(d => ({ ...d, [`${pageState}_${item.id}`]: true }))}
+                    />
+                  ))}
+                </div>
+                {freeThreshold && <FreeShippingHint current={subtotal} threshold={freeThreshold} />}
+              </div>
+              <PromotionsSection subtotal={subtotal} />
+              <AddOnsSection />
+              <RegionSelector selected={region} onChange={handleRegionChange} />
+              <DeliverySelector selected={deliveryMethod} onChange={handleDeliveryChange} region={region} subtotal={subtotal} />
+              <PaymentSelector selected={paymentMethod} onChange={setPaymentMethod} deliveryMethod={deliveryMethod} />
+
+              {/* Mobile submit */}
+              <div className="mobile-cta" style={{ marginTop: 16 }}>
+                <Button full disabled={hasDisc || subtotal === 0}>
+                  {hasDisc ? '請移除已下架商品' : '前往結帳'}
+                </Button>
+              </div>
+            </div>
+
+            {/* Right — summary */}
+            <div className="sidebar-col" style={{ width: 320, flexShrink: 0 }}>
+              <OrderSummary
+                subtotal={subtotal} shipping={shipping} total={total} hasDisc={hasDisc}
+                couponState={couponState} setCouponState={setCouponState}
+                couponDiscount={couponDiscount} setCouponDiscount={setCouponDiscount}
+                points={points} setPoints={setPoints}
+                onCheckout={handleCheckout}
+              />
+            </div>
+          </div>
+        )}
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
