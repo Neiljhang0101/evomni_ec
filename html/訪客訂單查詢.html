@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>訂單查詢 — Evomni Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<link rel="stylesheet" href="../frontend-design-system/colors_and_type.css">
+<link rel="stylesheet" href="../evomnialert/evomnialert.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../evomnialert/evomnialert.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { min-height: 100%; }
+  body { font-family: var(--font-sans); font-size: 16px; background: var(--fill-300); color: var(--fg); -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--line-300); }
+  a { color: var(--fg); text-decoration: none; }
+  button { cursor: pointer; font-family: var(--font-sans); }
+  input { font-family: var(--font-sans); }
+
+  /* Prototype state bar */
+  .proto-bar { background: var(--ink-900); display: flex; align-items: center; padding: 0 24px; overflow-x: auto; white-space: nowrap; }
+  .proto-bar-label { font-size: 14px; letter-spacing: .08em; color: rgba(255,255,255,.45); text-transform: uppercase; padding-right: 12px; }
+  .proto-btn { padding: 9px 14px; border: none; background: none; border-bottom: 2px solid transparent; font: 500 14px/1 var(--font-sans); letter-spacing: .04em; color: rgba(255,255,255,.55); cursor: pointer; transition: color .15s; }
+  .proto-btn.active { border-bottom-color: #fff; color: #fff; }
+
+  /* Status tag (pill) */
+  .status-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 9999px; font: 500 14px/1 var(--font-sans); }
+
+  /* Timeline */
+  .timeline { display: flex; flex-direction: column; gap: 0; }
+  .tl-item { display: flex; gap: 14px; position: relative; }
+  .tl-item:not(:last-child) { padding-bottom: 20px; }
+  .tl-spine { display: flex; flex-direction: column; align-items: center; width: 20px; flex-shrink: 0; }
+  .tl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+  .tl-line { flex: 1; width: 1px; background: var(--line-300); margin-top: 4px; }
+  .tl-body { flex: 1; padding-bottom: 4px; }
+
+  /* Form input */
+  .form-input { width: 100%; height: 48px; padding: 0 14px; border: 1px solid var(--line-400); background: #fff; font: 400 16px/1 var(--font-sans); color: var(--fg); outline: none; transition: border-color .2s; }
+  .form-input::placeholder { color: var(--ink-500); }
+  .form-input:focus { border-color: var(--ink-900); }
+  .form-input.error { border-color: var(--danger); }
+
+  /* Member CTA banner */
+  .member-banner { background: #f0f4ff; border: 1px solid #dbe4ff; padding: 20px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+
+  /* Skeleton shimmer */
+  @keyframes skeleton-shimmer {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: .35; }
+  }
+  /* Result / empty fade-in */
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .member-banner { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="../frontend-design-system/ui_kits/storefront/ui.jsx"></script>
+<script type="text/babel" src="../frontend-design-system/ui_kits/storefront/sections.jsx"></script>
+<script type="text/babel">
+const { useState, useRef } = React;
+
+// ─── Prototype State Bar ──────────────────────────────────────────────────────
+const StateBar = ({ states, current, onChange }) => (
+  <div className="proto-bar">
+    <span className="proto-bar-label">Prototype State</span>
+    {states.map(s => (
+      <button key={s.key} className={`proto-btn${current === s.key ? ' active' : ''}`} onClick={() => onChange(s.key)}>
+        {s.label}
+      </button>
+    ))}
+  </div>
+);
+
+// ─── Status Tag ───────────────────────────────────────────────────────────────
+const STATUS_CONFIG = {
+  pending_payment: { label: '待付款',  bg: '#fdf6ec', color: '#b45309', border: '#fde68a' },
+  paid:            { label: '已付款',  bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
+  processing:      { label: '備貨中',  bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
+  shipped:         { label: '已出貨',  bg: '#eff6ff', color: '#1d4ed8', border: '#bfdbfe' },
+  delivering:      { label: '配送中',  bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' },
+  delivered:       { label: '已送達',  bg: '#f0fdf4', color: '#166534', border: '#bbf7d0' },
+  completed:       { label: '已完成',  bg: '#f9fafb', color: '#374151', border: '#e5e7eb' },
+  cancelled:       { label: '已取消',  bg: '#fef2f2', color: '#b91c1c', border: '#fecaca' },
+};
+
+const STATUS_TOOLTIPS = {
+  pending_payment: '待付款 — 訂單已建立，請於 24 小時內完成付款，逾時將自動取消',
+  paid:            '已付款 — 付款已確認，商家準備開始備貨',
+  processing:      '備貨中 — 商家已確認訂單，正在備貨與打包',
+  shipped:         '已出貨 — 商品已離開倉庫，等待物流接收',
+  delivering:      '配送中 — 包裹已由物流人員取件，正在前往您的地址',
+  delivered:       '已送達 — 包裹已送達，請於 3 天內確認收貨',
+  completed:       '已完成 — 訂單已完成，7 天退換貨保障適用中',
+  cancelled:       '已取消 — 訂單已取消，如已付款將於 5–7 個工作日退款',
+};
+
+const StatusTag = ({ status }) => {
+  const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.processing;
+  return (
+    <span
+      className="status-tag"
+      style={{ background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}`, cursor: 'help' }}
+      title={STATUS_TOOLTIPS[status] || cfg.label}
+    >
+      {cfg.label}
+    </span>
+  );
+};
+
+// ─── Logistics Timeline ───────────────────────────────────────────────────────
+const TimelineItem = ({ time, text, isLatest, isLast }) => (
+  <div className="tl-item">
+    <div className="tl-spine">
+      <div className="tl-dot" style={{ background: isLatest ? 'var(--ink-900)' : 'var(--line-400)', width: isLatest ? 12 : 8, height: isLatest ? 12 : 8 }} />
+      {!isLast && <div className="tl-line" />}
+    </div>
+    <div className="tl-body">
+      <div style={{ font: isLatest ? '500 15px/1.4 var(--font-sans)' : '400 15px/1.4 var(--font-sans)', color: isLatest ? 'var(--fg)' : 'var(--fg-muted)' }}>{text}</div>
+      <div style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginTop: 4 }}>{time}</div>
+    </div>
+  </div>
+);
+
+// ─── Product Row ──────────────────────────────────────────────────────────────
+const ProductRow = ({ name, spec, qty, subtotal }) => (
+  <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '12px 0', borderBottom: '1px solid var(--line-200)' }}>
+    <div style={{ width: 48, height: 48, background: 'var(--fill-400)', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <span className="material-icons-outlined" style={{ fontSize: 20, color: 'var(--ink-300)' }}>image</span>
+    </div>
+    <div style={{ flex: 1, minWidth: 0 }}>
+      <div style={{ font: '500 15px/1.4 var(--font-sans)', color: 'var(--fg)', marginBottom: 2 }}>{name}</div>
+      {spec && <div style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)' }}>{spec}</div>}
+    </div>
+    <div style={{ textAlign: 'right', flexShrink: 0 }}>
+      <div style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginBottom: 2 }}>x{qty}</div>
+      <div style={{ font: '500 15px/1 var(--font-sans)', fontVariantNumeric: 'tabular-nums', color: 'var(--fg)' }}>NT$ {subtotal.toLocaleString()}</div>
+    </div>
+  </div>
+);
+
+// ─── Info Row ─────────────────────────────────────────────────────────────────
+const InfoRow = ({ label, value, valueStyle = {} }) => (
+  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', padding: '8px 0', borderBottom: '1px solid var(--line-200)' }}>
+    <span style={{ font: '400 14px/1.4 var(--font-sans)', color: 'var(--fg-subtle)', flexShrink: 0, marginRight: 16 }}>{label}</span>
+    <span style={{ font: '400 15px/1.4 var(--font-sans)', color: 'var(--fg)', textAlign: 'right', ...valueStyle }}>{value}</span>
+  </div>
+);
+
+// ─── Section Heading ──────────────────────────────────────────────────────────
+const SectionHeading = ({ en, zh }) => (
+  <div style={{ marginBottom: 16 }}>
+    <div style={{ font: '500 14px/1 var(--font-sans)', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--fg-subtle)', marginBottom: 4 }}>{en}</div>
+    <div style={{ font: '600 17px/1 var(--font-sans)', color: 'var(--fg)' }}>{zh}</div>
+  </div>
+);
+
+// ─── Mock Data ────────────────────────────────────────────────────────────────
+const MOCK_PRODUCTS = [
+  { id: 1, name: '煥白光采精華液', spec: '30ml', qty: 1, subtotal: 1280 },
+  { id: 2, name: '深層修護面膜',   spec: '5片裝 / 深層修護',  qty: 2, subtotal: 590 },
+];
+
+const MOCK_ORDER = {
+  orderNo: 'ORD-20260515-000247',
+  date: '2026/05/15 14:32',
+  total: 1870,
+  location: '台北市（地址依個資保護規範不完整顯示）',
+  logistics: '黑貓宅急便',
+  trackNo: '63452901847',
+};
+
+const TIMELINE_DELIVERING = [
+  { time: '2026/05/17 09:14', text: '您的包裹已由配送人員取件，正在前往目的地途中', isLatest: true },
+  { time: '2026/05/16 18:45', text: '您的包裹已由商家交付物流廠商', isLatest: false },
+  { time: '2026/05/15 16:20', text: '商家確認訂單，開始備貨作業', isLatest: false },
+];
+
+const TIMELINE_COMPLETED = [
+  { time: '2026/05/20 10:05', text: '您已確認收到商品，訂單完成', isLatest: true },
+  { time: '2026/05/19 13:22', text: '包裹已送達，請確認收貨', isLatest: false },
+  { time: '2026/05/18 09:14', text: '您的包裹正在配送途中', isLatest: false },
+  { time: '2026/05/17 18:45', text: '商家已出貨，物流追蹤號：63452901847', isLatest: false },
+];
+
+const TIMELINE_CANCELLED = [
+  { time: '2026/05/15 15:02', text: '訂單已取消，庫存已回補', isLatest: true },
+  { time: '2026/05/15 14:32', text: '訂單建立，等待付款', isLatest: false },
+];
+
+// ─── Query Form ───────────────────────────────────────────────────────────────
+const QueryForm = ({ protoState, onStateChange }) => {
+  const isError = protoState === 'fail';
+  const isLoading = protoState === 'loading';
+  const [orderError, setOrderError] = useState(false);
+  const [phoneError, setPhoneError] = useState(false);
+  const orderRef = useRef(null);
+  const phoneRef = useRef(null);
+
+  const handleSubmit = () => {
+    if (isLoading) return;
+    const orderVal = (orderRef.current?.value || '').trim();
+    const phoneVal = (phoneRef.current?.value || '').trim();
+    const oErr = !orderVal;
+    const pErr = !phoneVal || phoneVal.length !== 4 || !/^\d+$/.test(phoneVal);
+    setOrderError(oErr);
+    setPhoneError(pErr);
+    if (oErr || pErr) return;
+    onStateChange('loading');
+    setTimeout(() => onStateChange('delivering'), 1200);
+  };
+
+  return (
+    <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 24px' }}>
+      {/* Form card */}
+      <div style={{ background: '#fff', border: '1px solid var(--line-300)', padding: '40px 36px' }}>
+        {/* Eyebrow + description */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ font: '500 14px/1 var(--font-sans)', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--fg-subtle)', marginBottom: 10 }}>ORDER INQUIRY</div>
+          <p style={{ font: '400 15px/1.6 var(--font-sans)', color: 'var(--fg-muted)' }}>
+            輸入下單時的訂單編號及手機號碼末四碼即可查詢訂單狀態
+          </p>
+        </div>
+
+        {/* Error alert */}
+        {isError && (
+          <div style={{ background: 'var(--danger-soft)', border: '1px solid var(--danger)', padding: '12px 16px', marginBottom: 20, display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+            <span className="material-icons-outlined" style={{ fontSize: 18, color: 'var(--danger)', flexShrink: 0, marginTop: 1 }}>error_outline</span>
+            <p style={{ font: '400 14px/1.5 var(--font-sans)', color: '#b91c1c' }}>
+              查無此訂單，請確認訂單編號及手機號碼末四碼是否正確。如有問題請聯繫客服。
+            </p>
+          </div>
+        )}
+
+        {/* Fields */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+          {/* Order number */}
+          <div>
+            <label style={{ display: 'block', font: '500 14px/1 var(--font-sans)', color: 'var(--fg)', marginBottom: 8, letterSpacing: '.02em' }}>
+              訂單編號
+            </label>
+            <input
+              ref={orderRef}
+              className={`form-input${isError || orderError ? ' error' : ''}`}
+              type="text"
+              placeholder="例：ORD-20260427-000001"
+              defaultValue={isError ? 'ORD-20260427-000001' : ''}
+              style={{ textTransform: 'uppercase' }}
+            />
+            {orderError && (
+              <p style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--danger)', marginTop: 6 }}>請輸入訂單編號</p>
+            )}
+          </div>
+
+          {/* Phone last 4 */}
+          <div>
+            <label style={{ display: 'block', font: '500 14px/1 var(--font-sans)', color: 'var(--fg)', marginBottom: 8, letterSpacing: '.02em' }}>
+              收件人手機末四碼
+            </label>
+            <input
+              ref={phoneRef}
+              className={`form-input${isError || phoneError ? ' error' : ''}`}
+              type="text"
+              inputMode="numeric"
+              maxLength={4}
+              placeholder="請輸入 4 位數字"
+              defaultValue={isError ? '1234' : ''}
+            />
+            {phoneError ? (
+              <p style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--danger)', marginTop: 6 }}>請輸入 4 位數字（僅限數字）</p>
+            ) : (
+              <p style={{ font: '400 14px/1.4 var(--font-sans)', color: 'var(--fg-subtle)', marginTop: 6 }}>
+                下單時填寫的收件手機號碼後四碼
+              </p>
+            )}
+          </div>
+
+          {/* Submit */}
+          <button
+            style={{
+              height: 52, width: '100%', border: 'none',
+              background: isLoading ? 'var(--ink-500)' : 'var(--brand)',
+              color: '#fff', font: '500 16px/1 var(--font-sans)',
+              letterSpacing: '.04em', cursor: isLoading ? 'not-allowed' : 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+              transition: 'background .2s',
+            }}
+            onClick={handleSubmit}
+          >
+            {isLoading ? (
+              <React.Fragment>
+                <span className="material-icons-outlined" style={{ fontSize: 18, animation: 'spin 1s linear infinite' }}>autorenew</span>
+                查詢中...
+              </React.Fragment>
+            ) : (
+              <React.Fragment>
+                <span className="material-icons-outlined" style={{ fontSize: 18 }}>search</span>
+                查詢訂單
+              </React.Fragment>
+            )}
+          </button>
+        </div>
+      </div>
+
+      {/* Helper */}
+      <p style={{ font: '400 14px/1.5 var(--font-sans)', color: 'var(--fg-subtle)', textAlign: 'center', marginTop: 16 }}>
+        已有帳號？<a href="#" style={{ color: 'var(--fg)', textDecoration: 'underline', textUnderlineOffset: 3 }}>登入</a>後可直接查詢所有訂單
+      </p>
+    </div>
+  );
+};
+
+// ─── Query Empty (查無資料) ───────────────────────────────────────────────────
+const QueryEmpty = ({ onRetry }) => (
+  <div style={{ maxWidth: 480, margin: '0 auto', padding: '0 24px', animation: 'fadeSlideIn .3s ease-out' }}>
+    <div style={{ background: '#fff', border: '1px solid var(--line-300)', padding: '56px 36px', textAlign: 'center' }}>
+      <div style={{ width: 64, height: 64, borderRadius: '50%', background: 'var(--fill-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 24px' }}>
+        <span className="material-icons-outlined" style={{ fontSize: 32, color: 'var(--fg-subtle)' }}>search_off</span>
+      </div>
+      <p style={{ font: '600 18px/1.4 var(--font-sans)', color: 'var(--fg)', marginBottom: 12 }}>請確認訂單編號與手機末四碼是否正確</p>
+      <p style={{ font: '400 15px/1.6 var(--font-sans)', color: 'var(--fg-muted)', maxWidth: 340, margin: '0 auto 32px' }}>
+        找不到與此訂單編號及手機末四碼相符的訂單，請確認輸入資料是否正確後再試。
+      </p>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 280, margin: '0 auto' }}>
+        <button
+          onClick={onRetry}
+          style={{ height: 48, border: 'none', background: 'var(--brand)', color: '#fff', font: '500 15px/1 var(--font-sans)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}
+        >
+          <span className="material-icons-outlined" style={{ fontSize: 18 }}>refresh</span>
+          重新查詢
+        </button>
+        <a href="#" style={{ height: 48, border: '1px solid var(--line-400)', color: 'var(--fg-muted)', font: '400 15px/1 var(--font-sans)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, textDecoration: 'none', background: '#fff' }}>
+          聯絡客服協助查詢
+        </a>
+      </div>
+    </div>
+    <p style={{ font: '400 14px/1.5 var(--font-sans)', color: 'var(--fg-subtle)', textAlign: 'center', marginTop: 16 }}>
+      已有帳號？<a href="#" style={{ color: 'var(--fg)', textDecoration: 'underline', textUnderlineOffset: 3 }}>登入</a>後可直接查詢所有訂單
+    </p>
+  </div>
+);
+
+// ─── Skeleton Results ─────────────────────────────────────────────────────────
+const SkeletonBlock = ({ w = '100%', h = 16, mb = 0, r = 4 }) => (
+  <div style={{ width: w, height: h, marginBottom: mb, background: 'var(--fill-400)', borderRadius: r, animation: 'skeleton-shimmer 1.5s ease-in-out infinite', flexShrink: 0 }} />
+);
+
+const SkeletonResults = () => (
+  <div style={{ maxWidth: 640, margin: '0 auto', padding: '0 24px', animation: 'fadeSlideIn .3s ease-out' }}>
+    <div style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 12 }}>
+      <div style={{ padding: '24px 28px', borderBottom: '1px solid var(--line-200)', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+        <div style={{ flex: 1 }}>
+          <SkeletonBlock w={80} h={11} mb={12} />
+          <SkeletonBlock w={200} h={22} mb={14} />
+          <SkeletonBlock w={72} h={24} r={9999} />
+        </div>
+        <SkeletonBlock w={90} h={36} />
+      </div>
+      <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 28 }}>
+        <div>
+          <SkeletonBlock w={110} h={12} mb={6} />
+          <SkeletonBlock w={160} h={18} mb={16} />
+          {[1, 2].map(i => (
+            <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--line-200)', gap: 16 }}>
+              <SkeletonBlock w={80} h={13} />
+              <SkeletonBlock w={120} h={13} />
+            </div>
+          ))}
+        </div>
+        <div>
+          <SkeletonBlock w={110} h={12} mb={6} />
+          <SkeletonBlock w={160} h={18} mb={16} />
+          {[1, 2].map(i => (
+            <div key={i} style={{ display: 'flex', gap: 14, padding: '12px 0', borderBottom: '1px solid var(--line-200)', alignItems: 'center' }}>
+              <SkeletonBlock w={48} h={48} />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <SkeletonBlock w='60%' h={13} />
+                <SkeletonBlock w='40%' h={12} />
+              </div>
+              <SkeletonBlock w={60} h={14} />
+            </div>
+          ))}
+        </div>
+        <div>
+          <SkeletonBlock w={110} h={12} mb={6} />
+          <SkeletonBlock w={160} h={18} mb={16} />
+          {[1, 2, 3].map(i => (
+            <div key={i} style={{ display: 'flex', gap: 14, paddingBottom: i < 3 ? 20 : 0, alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: 20, flexShrink: 0 }}>
+                <SkeletonBlock w={10} h={10} r={9999} mb={4} />
+                {i < 3 && <div style={{ width: 1, minHeight: 16, flex: 1, background: 'var(--line-300)' }} />}
+              </div>
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                <SkeletonBlock w={120} h={11} />
+                <SkeletonBlock w='75%' h={13} />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
+// ─── Order Results ────────────────────────────────────────────────────────────
+const OrderResults = ({ variant, onReset }) => {
+  const isCompleted  = variant === 'completed';
+  const isCancelled  = variant === 'cancelled';
+  const isExpired    = variant === 'expired';
+  const isDelivering = variant === 'delivering';
+
+  const orderStatus = isCancelled ? 'cancelled' : isCompleted ? 'completed' : 'delivering';
+  const timeline = isCancelled ? TIMELINE_CANCELLED : isCompleted ? TIMELINE_COMPLETED : TIMELINE_DELIVERING;
+
+  return (
+    <div style={{ maxWidth: 640, margin: '0 auto', padding: '0 24px', animation: 'fadeSlideIn .3s ease-out' }}>
+      {/* Session expired overlay */}
+      {isExpired && (
+        <div style={{ background: '#fff', border: '1px solid var(--warning)', padding: '16px 20px', marginBottom: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span className="material-icons-outlined" style={{ fontSize: 22, color: 'var(--warning)', flexShrink: 0 }}>timer_off</span>
+          <div style={{ flex: 1 }}>
+            <p style={{ font: '500 15px/1.4 var(--font-sans)', color: 'var(--fg)', marginBottom: 4 }}>查詢結果已失效</p>
+            <p style={{ font: '400 14px/1.4 var(--font-sans)', color: 'var(--fg-muted)' }}>超過 30 分鐘未操作，為保護您的訂單資訊，請重新查詢</p>
+          </div>
+          <button style={{ height: 36, padding: '0 16px', border: '1px solid var(--ink-900)', background: '#fff', font: '500 14px/1 var(--font-sans)', color: 'var(--fg)', cursor: 'pointer', flexShrink: 0 }}>
+            重新查詢
+          </button>
+        </div>
+      )}
+
+      {/* Main card */}
+      <div style={{ background: '#fff', border: '1px solid var(--line-300)', borderRadius: 12, filter: isExpired ? 'blur(3px)' : 'none', pointerEvents: isExpired ? 'none' : 'auto', userSelect: isExpired ? 'none' : 'auto' }}>
+
+        {/* Card header */}
+        <div style={{ padding: '24px 28px', borderBottom: '1px solid var(--line-200)', display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+          <div>
+            <div style={{ font: '500 14px/1 var(--font-sans)', letterSpacing: '.12em', textTransform: 'uppercase', color: 'var(--fg-subtle)', marginBottom: 8 }}>ORDER DETAILS</div>
+            <div style={{ font: '700 20px/1.2 var(--font-sans)', color: 'var(--fg)', marginBottom: 10 }}>{MOCK_ORDER.orderNo}</div>
+            <StatusTag status={orderStatus} />
+          </div>
+          <button
+            onClick={onReset}
+            style={{ height: 36, padding: '0 14px', border: '1px solid var(--line-400)', background: '#fff', font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}
+          >
+            <span className="material-icons-outlined" style={{ fontSize: 16 }}>search</span>
+            重新查詢
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: '24px 28px', display: 'flex', flexDirection: 'column', gap: 28 }}>
+
+          {/* Order info grid */}
+          <div>
+            <SectionHeading en="ORDER INFO" zh="訂單資訊" />
+            <div>
+              <InfoRow label="下單日期" value={MOCK_ORDER.date} />
+              <InfoRow label="收件地點" value={MOCK_ORDER.location} />
+              {isCancelled && (
+                <InfoRow
+                  label="取消原因"
+                  value="付款逾時，訂單已自動取消，庫存已回補"
+                  valueStyle={{ color: 'var(--danger)', font: '400 14px/1.5 var(--font-sans)' }}
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Products */}
+          <div>
+            <SectionHeading en="ITEMS" zh="訂購商品" />
+            <div>
+              {MOCK_PRODUCTS.map(p => <ProductRow key={p.id} {...p} />)}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '14px 0 0', borderTop: 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)' }}>訂單總計</span>
+                <span style={{ font: '600 20px/1 var(--font-sans)', fontVariantNumeric: 'tabular-nums', color: 'var(--fg)' }}>NT$ {MOCK_ORDER.total.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Logistics */}
+          {!isCancelled && (
+            <div>
+              <SectionHeading en="SHIPPING" zh="物流進度" />
+              <div style={{ marginBottom: 16 }}>
+                <InfoRow label="配送方式" value={MOCK_ORDER.logistics} />
+                <InfoRow
+                  label="追蹤號碼"
+                  value={
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      {MOCK_ORDER.trackNo}
+                      <a href="#" style={{ color: 'var(--fg)', textDecoration: 'underline', textUnderlineOffset: 3, font: '400 14px/1 var(--font-sans)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                        查看物流進度
+                        <span className="material-icons-outlined" style={{ fontSize: 14 }}>open_in_new</span>
+                      </a>
+                    </span>
+                  }
+                />
+              </div>
+              <div className="timeline">
+                {timeline.map((item, idx) => (
+                  <TimelineItem
+                    key={idx}
+                    {...item}
+                    isLast={idx === timeline.length - 1}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Return/exchange (completed + 7 days) */}
+          {isCompleted && (
+            <div style={{ background: 'var(--fill-400)', border: '1px solid var(--line-300)', padding: '16px 20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+              <div>
+                <div style={{ font: '500 15px/1 var(--font-sans)', color: 'var(--fg)', marginBottom: 4 }}>訂單完成 · 需要申請退換貨？</div>
+                <div style={{ font: '400 14px/1.4 var(--font-sans)', color: 'var(--fg-muted)' }}>訂單完成後 7 天內可申請退換貨</div>
+              </div>
+              <button
+                style={{ height: 40, padding: '0 20px', border: '1px solid var(--danger)', background: 'var(--danger-soft)', font: '500 14px/1 var(--font-sans)', color: 'var(--danger)', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6 }}
+                onClick={() => SiteAlert && SiteAlert.info('退換貨申請', '即將進入退換貨申請流程，請再次驗證您的訂單資訊。')}
+              >
+                <span className="material-icons-outlined" style={{ fontSize: 16 }}>swap_horiz</span>
+                申請退換貨
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Member CTA banner */}
+      <div className="member-banner" style={{ marginTop: 20 }}>
+        <div style={{ flex: 1 }}>
+          <div style={{ font: '500 14px/1 var(--font-sans)', letterSpacing: '.1em', textTransform: 'uppercase', color: '#3b5bdb', marginBottom: 6 }}>JOIN US</div>
+          <div style={{ font: '600 17px/1.3 var(--font-sans)', color: 'var(--fg)', marginBottom: 6 }}>加入會員，下次查詢更方便</div>
+          <p style={{ font: '400 14px/1.5 var(--font-sans)', color: 'var(--fg-muted)' }}>建立帳號後可隨時查看訂單、管理退換貨，並享受點數回饋</p>
+        </div>
+        <button
+          style={{ height: 44, padding: '0 22px', border: 'none', background: 'var(--brand)', color: '#fff', font: '500 15px/1 var(--font-sans)', letterSpacing: '.02em', cursor: 'pointer', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 6 }}
+        >
+          <span className="material-icons-outlined" style={{ fontSize: 17 }}>person_add</span>
+          立即加入會員
+        </button>
+      </div>
+    </div>
+  );
+};
+
+// ─── Footer ───────────────────────────────────────────────────────────────────
+const Footer = () => (
+  <footer style={{ borderTop: '1px solid var(--line-300)', padding: '28px 40px', marginTop: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+    <div style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)', letterSpacing: '.04em', textTransform: 'uppercase' }}>
+      Evomni Store
+    </div>
+    <div style={{ display: 'flex', gap: 20 }}>
+      {['查詢訂單', '聯絡客服', '退換貨政策', '隱私權政策'].map(t => (
+        <a key={t} href="#" style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)', textDecoration: 'none' }}>{t}</a>
+      ))}
+    </div>
+  </footer>
+);
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+const STATES = [
+  { key: 'initial',    label: '初始（空白表單）' },
+  { key: 'fail',       label: '查詢失敗（表單提示）' },
+  { key: 'no-result',  label: '空資料（查無訂單）' },
+  { key: 'skeleton',   label: '載入中（Skeleton）' },
+  { key: 'delivering', label: '有資料：配送中' },
+  { key: 'completed',  label: '有資料：已完成（可退換貨）' },
+  { key: 'cancelled',  label: '有資料：已取消' },
+  { key: 'expired',    label: '有資料：查詢逾時' },
+];
+
+function App() {
+  const [state, setState] = useState('initial');
+
+  const showForm     = state === 'initial' || state === 'fail' || state === 'loading';
+  const showEmpty    = state === 'no-result';
+  const showSkeleton = state === 'skeleton';
+  const showResult   = ['delivering', 'completed', 'cancelled', 'expired'].includes(state);
+
+  return (
+    <div>
+      <StateBar states={STATES} current={state} onChange={setState} />
+      <Header cartCount={0} active="" />
+      <AnnouncementBar />
+
+      {/* Page container */}
+      <main style={{ maxWidth: 'var(--container)', margin: '0 auto', padding: '48px 0 0' }}>
+
+        {/* Page title band */}
+        <div style={{ textAlign: 'center', marginBottom: 40, padding: '0 24px' }}>
+          <div style={{ font: '500 14px/1 var(--font-sans)', letterSpacing: '.16em', textTransform: 'uppercase', color: 'var(--fg-subtle)', marginBottom: 10 }}>ORDER INQUIRY</div>
+          <h1 style={{ font: '700 36px/1.15 var(--font-sans)', color: 'var(--fg)', letterSpacing: '-.01em' }}>
+            {showResult ? '您的訂單狀態' : showEmpty ? '查無符合的訂單' : showSkeleton ? '查詢中' : '查詢您的訂單'}
+          </h1>
+          {showResult && (
+            <p style={{ font: '400 15px/1.6 var(--font-sans)', color: 'var(--fg-muted)', marginTop: 8 }}>
+              查詢結果保留 30 分鐘，之後請重新輸入訂單資訊
+            </p>
+          )}
+        </div>
+
+        {/* Main content */}
+        {showForm     && <QueryForm protoState={state} onStateChange={setState} />}
+        {showEmpty    && <QueryEmpty onRetry={() => setState('initial')} />}
+        {showSkeleton && <SkeletonResults />}
+        {showResult   && <OrderResults variant={state} onReset={() => setState('initial')} />}
+
+      </main>
+
+      <Footer />
+
+      {/* Spin animation for loading button */}
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
+    </div>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>

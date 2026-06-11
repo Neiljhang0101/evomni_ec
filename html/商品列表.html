@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>全部商品 — Evomni Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<link rel="stylesheet" href="../frontend-design-system/colors_and_type.css">
+<link rel="stylesheet" href="../frontend-design-system/rwd.css">
+<link rel="stylesheet" href="../evomnialert/evomnialert.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../evomnialert/evomnialert.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { min-height: 100%; }
+  body { font-family: var(--font-sans); font-size: 16px; background: var(--fill-300); color: var(--fg); -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--line-300); }
+  a { color: var(--fg); text-decoration: none; }
+  button { cursor: pointer; font-family: var(--font-sans); }
+  input, select { font-family: var(--font-sans); outline: none; }
+  .proto-bar { background: var(--ink-900); display: flex; align-items: center; padding: 0 24px; overflow-x: auto; }
+  .proto-bar-label { font-size: 14px; letter-spacing: .08em; color: rgba(255,255,255,.45); text-transform: uppercase; padding-right: 12px; white-space: nowrap; }
+  .proto-btn { padding: 9px 14px; border: none; background: none; border-bottom: 2px solid transparent; font: 500 14px/1 var(--font-sans); letter-spacing: .04em; color: rgba(255,255,255,.55); cursor: pointer; white-space: nowrap; transition: color .15s; }
+  .proto-btn.active { border-bottom-color: #fff; color: #fff; }
+  /* Listing page responsive grid */
+  .listing-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+  .mobile-cat-chips { display: none; }
+  .listing-filter-bar { display: none; }
+  @media (max-width: 900px) {
+    .listing-grid { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .listing-layout { display: block !important; }
+    .listing-sidebar { display: none !important; }
+    .mobile-cat-chips { display: flex !important; }
+    .listing-filter-bar { display: flex !important; }
+    .listing-title-h1 { font-size: 22px !important; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="../frontend-design-system/ui_kits/storefront/ui.jsx"></script>
+<script type="text/babel" src="../frontend-design-system/ui_kits/storefront/sections.jsx"></script>
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const StateBar = ({ states, current, onChange }) => (
+  <div className="proto-bar">
+    <span className="proto-bar-label">Prototype State</span>
+    {states.map(s => (
+      <button key={s.key} className={`proto-btn${current === s.key ? ' active' : ''}`} onClick={() => onChange(s.key)}>
+        {s.label}
+      </button>
+    ))}
+    <a href="訪客訂單查詢.html" style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5, padding: '9px 0 9px 16px', letterSpacing: '.04em', whiteSpace: 'nowrap', borderLeft: '1px solid rgba(255,255,255,.12)', marginLeft: 8 }}>
+      訪客訂單查詢
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M1 10L10 1M10 1H4M10 1V7"/></svg>
+    </a>
+  </div>
+);
+
+// ─── Star Rating ──────────────────────────────────────────────────────────────
+const StarRating = ({ value, count, size = 14 }) => {
+  const stars = Array.from({ length: 5 }, (_, i) => {
+    if (value >= i + 1) return 'star';
+    if (value >= i + 0.5) return 'star_half';
+    return 'star_border';
+  });
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      {stars.map((s, i) => (
+        <span key={i} className="material-icons-outlined" style={{ fontSize: size, color: '#e6a23c', lineHeight: 1 }}>{s}</span>
+      ))}
+      {count != null && (
+        <span style={{ font: `400 ${size}px/1 var(--font-sans)`, color: 'var(--fg-subtle)', marginLeft: 5 }}>({count})</span>
+      )}
+    </div>
+  );
+};
+
+// ─── Product Data ─────────────────────────────────────────────────────────────
+const ALL_PRODUCTS = [
+  { id: 1,  name: '輕透水潤精華乳',     cat: 'SKINCARE',   catLabel: '保養',     price: 890,  img: '../assets/img2.png',  rating: 4.8, reviews: 124, sales: 890,  badge: 'BESTSELLER', badgeTone: 'ink' },
+  { id: 2,  name: '植萃保濕眼霜',        cat: 'SKINCARE',   catLabel: '保養',     price: 1280, img: '../assets/img4.png',  rating: 4.5, reviews: 67,  sales: 230 },
+  { id: 3,  name: '煥膚嫩白精華液',      cat: 'SKINCARE',   catLabel: '保養',     price: 1490, img: '../assets/img5.png',  rating: 4.9, reviews: 201, sales: 1240, badge: 'NEW',        badgeTone: 'ink' },
+  { id: 4,  name: '胜肽緊緻精華',        cat: 'SKINCARE',   catLabel: '保養',     price: 1890, original: 2200, img: '../assets/img6.png', rating: 4.8, reviews: 98, sales: 560, badge: 'SALE', badgeTone: 'danger' },
+  { id: 5,  name: '深層修護面膜五片裝',  cat: 'TREATMENT',  catLabel: '面膜修護', price: 650,  original: 980,  img: '../assets/img3.png',  rating: 4.6, reviews: 83,  sales: 412, badge: 'SALE', badgeTone: 'danger' },
+  { id: 6,  name: '晚安修護安睡面膜',    cat: 'TREATMENT',  catLabel: '面膜修護', price: 890,  img: '../assets/img10.png', rating: 4.6, reviews: 72,  sales: 445 },
+  { id: 7,  name: '毛孔清潔潔顏慕斯',    cat: 'CLEANSE',    catLabel: '清潔',     price: 490,  original: 690,  img: '../assets/img7.png',  rating: 4.3, reviews: 55,  sales: 320, badge: 'SALE', badgeTone: 'danger' },
+  { id: 8,  name: '玫瑰精油卸妝油',      cat: 'CLEANSE',    catLabel: '清潔',     price: 650,  img: '../assets/img8.png',  rating: 4.4, reviews: 38,  sales: 175 },
+  { id: 9,  name: '防曬隔離乳 SPF50+',   cat: 'SUN CARE',   catLabel: '防曬',     price: 780,  img: '../assets/img9.png',  rating: 4.7, reviews: 145, sales: 780 },
+  { id: 10, name: '控油平衡爽膚水',      cat: 'TONER',      catLabel: '化妝水',   price: 580,  img: '../assets/img2.png',  rating: 4.2, reviews: 29,  sales: 110, soldOut: true },
+  { id: 11, name: '植萃滋養身體乳',      cat: 'BODY CARE',  catLabel: '身體保養', price: 490,  img: '../assets/img3.png',  rating: 4.1, reviews: 22,  sales: 88 },
+  { id: 12, name: '修護護唇膏組合',      cat: 'LIP CARE',   catLabel: '護唇',     price: 280,  img: '../assets/img4.png',  rating: 4.5, reviews: 44,  sales: 210, soldOut: true },
+];
+
+const CATS = [
+  { key: '全部', label: '全部商品' },
+  { key: 'SKINCARE',  label: '保養' },
+  { key: 'TREATMENT', label: '面膜修護' },
+  { key: 'CLEANSE',   label: '清潔' },
+  { key: 'SUN CARE',  label: '防曬' },
+  { key: 'TONER',     label: '化妝水' },
+  { key: 'BODY CARE', label: '身體保養' },
+  { key: 'LIP CARE',  label: '護唇' },
+];
+
+const SORT_OPTIONS = [
+  { key: 'sales',      label: '銷售量' },
+  { key: 'newest',     label: '最新上架' },
+  { key: 'price_asc',  label: '價格：低到高' },
+  { key: 'price_desc', label: '價格：高到低' },
+  { key: 'rating',     label: '評分' },
+];
+
+// ─── Listing Card ─────────────────────────────────────────────────────────────
+const ListingCard = ({ product }) => {
+  const [hover, setHover] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  return (
+    <div
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      onClick={() => { window.location.href = '商品詳情.html'; }}
+      style={{ background: '#fff', border: hover ? '1px solid transparent' : '1px solid var(--line-300)', boxShadow: hover ? 'var(--shadow-hover)' : 'none', transition: 'box-shadow .25s var(--ease), border-color .25s var(--ease)', cursor: 'pointer' }}
+    >
+      {/* Image */}
+      <div style={{ position: 'relative', overflow: 'hidden', aspectRatio: '3/4' }}>
+        {product.img
+          ? <img src={product.img} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transform: hover && !product.soldOut ? 'scale(1.04)' : 'scale(1)', transition: 'transform .4s var(--ease)', opacity: product.soldOut ? 0.55 : 1 }} />
+          : <Photo tint="#f0ede8" ratio="3/4" style={{ opacity: product.soldOut ? 0.55 : 1 }} />
+        }
+        {/* Badge */}
+        {product.badge && !product.soldOut && (
+          <div style={{ position: 'absolute', top: 12, left: 12 }}><Badge tone={product.badgeTone}>{product.badge}</Badge></div>
+        )}
+        {/* Sold out overlay */}
+        {product.soldOut && (
+          <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <span style={{ font: '600 14px/1 var(--font-sans)', letterSpacing: '.1em', color: '#fff', textTransform: 'uppercase', background: 'rgba(48,49,51,.65)', padding: '8px 16px' }}>SOLD OUT</span>
+          </div>
+        )}
+        {/* Wishlist */}
+        <button
+          onClick={(e) => { e.stopPropagation(); setSaved(!saved); if (!saved) SiteAlert.success('已加入心願清單', product.name); }}
+          style={{ position: 'absolute', top: 10, right: 10, border: 'none', background: 'rgba(255,255,255,.88)', width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}
+        >
+          <span className="material-icons-outlined" style={{ fontSize: 17, color: saved ? '#303133' : 'var(--fg-subtle)', lineHeight: 1 }}>{saved ? 'favorite' : 'favorite_border'}</span>
+        </button>
+        {/* CTA — slides up on hover */}
+        <div style={{ position: 'absolute', left: 0, right: 0, bottom: 0, transform: hover ? 'translateY(0)' : 'translateY(100%)', transition: 'transform .25s var(--ease)' }}>
+          {product.soldOut ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); SiteAlert.info('到貨通知', `補貨時將通知您：${product.name}`); }}
+              style={{ width: '100%', height: 44, border: 'none', background: 'var(--ink-700)', color: '#fff', font: '500 14px/1 var(--font-sans)', letterSpacing: '.04em', cursor: 'pointer' }}
+            >到貨通知我</button>
+          ) : (
+            <button
+              onClick={(e) => { e.stopPropagation(); SiteAlert.success('已加入購物車', product.name); }}
+              style={{ width: '100%', height: 44, border: 'none', background: 'var(--ink-900)', color: '#fff', font: '500 14px/1 var(--font-sans)', letterSpacing: '.04em', cursor: 'pointer' }}
+            >加入購物車</button>
+          )}
+        </div>
+      </div>
+
+      {/* Info */}
+      <div style={{ padding: '14px 16px 18px', display: 'flex', flexDirection: 'column', gap: 7 }}>
+        <Eyebrow style={{ fontSize: 14 }}>{product.catLabel}</Eyebrow>
+        <div style={{ font: '500 15px/1.4 var(--font-sans)', color: 'var(--fg)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+          {product.name}
+        </div>
+        <StarRating value={product.rating} count={product.reviews} />
+        <Price amount={product.price} original={product.original} size={15} />
+      </div>
+    </div>
+  );
+};
+
+// ─── Filter Sidebar ───────────────────────────────────────────────────────────
+const FilterSidebar = ({ activeCat, onCatChange, searchText, onSearchChange, priceFilter, onPriceToggle }) => {
+  const counts = {};
+  ALL_PRODUCTS.forEach(p => { counts[p.cat] = (counts[p.cat] || 0) + 1; });
+
+  const catBtnStyle = (active) => ({
+    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+    padding: '9px 0 9px 10px', cursor: 'pointer', border: 'none', background: 'none',
+    width: '100%', textAlign: 'left',
+    font: `${active ? '600' : '400'} 14px/1 var(--font-sans)`,
+    color: active ? 'var(--fg)' : 'var(--fg-muted)',
+    borderLeft: active ? '2px solid var(--ink-900)' : '2px solid transparent',
+    transition: 'color .12s, border-color .12s',
+  });
+
+  const PRICE_FILTERS = [
+    { key: 'under500',   label: 'NT$ 500 以下' },
+    { key: '500to1000',  label: 'NT$ 500–1,000' },
+    { key: 'over1000',   label: 'NT$ 1,000 以上' },
+  ];
+
+  return (
+    <div className="listing-sidebar" style={{ width: 220, flexShrink: 0, position: 'sticky', top: 88, alignSelf: 'flex-start' }}>
+      {/* Search */}
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ font: '600 14px/1 var(--font-sans)', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--fg-muted)', marginBottom: 10 }}>搜尋</div>
+        <div style={{ position: 'relative' }}>
+          <input
+            value={searchText}
+            onChange={e => onSearchChange(e.target.value)}
+            placeholder="輸入商品名稱"
+            style={{ width: '100%', height: 36, border: '1px solid var(--line-400)', padding: '0 32px 0 10px', font: '400 14px/1 var(--font-sans)', color: 'var(--fg)', background: 'var(--bg)' }}
+          />
+          <span className="material-icons-outlined" style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', fontSize: 16, color: 'var(--fg-subtle)', lineHeight: 1, pointerEvents: 'none' }}>search</span>
+        </div>
+      </div>
+
+      {/* Category */}
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ font: '600 14px/1 var(--font-sans)', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--fg-muted)', marginBottom: 6 }}>商品分類</div>
+        {CATS.map(c => (
+          <button key={c.key} style={catBtnStyle(activeCat === c.key)} onClick={() => onCatChange(c.key)}>
+            <span>{c.label}</span>
+            <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginRight: 4 }}>
+              {c.key === '全部' ? ALL_PRODUCTS.length : (counts[c.key] || 0)}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* Price filter */}
+      <div>
+        <div style={{ font: '600 14px/1 var(--font-sans)', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--fg-muted)', marginBottom: 10 }}>價格區間</div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {PRICE_FILTERS.map(f => (
+            <label key={f.key} style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>
+              <input type="checkbox" checked={priceFilter.includes(f.key)} onChange={() => onPriceToggle(f.key)} style={{ width: 14, height: 14, cursor: 'pointer', accentColor: 'var(--ink-900)', flexShrink: 0 }} />
+              {f.label}
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── Empty State ──────────────────────────────────────────────────────────────
+const EmptyState = ({ onClear }) => (
+  <div style={{ padding: '80px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16, textAlign: 'center' }}>
+    <span className="material-icons-outlined" style={{ fontSize: 64, color: 'var(--ink-300)', lineHeight: 1 }}>search_off</span>
+    <div>
+      <Eyebrow style={{ marginBottom: 10 }}>NO RESULTS</Eyebrow>
+      <p style={{ font: '400 16px/1.6 var(--font-sans)', color: 'var(--fg-muted)' }}>找不到符合條件的商品，請調整篩選條件後再試。</p>
+    </div>
+    <button onClick={onClear} style={{ height: 44, padding: '0 24px', border: '1px solid var(--ink-900)', background: 'none', font: '500 14px/1 var(--font-sans)', color: 'var(--ink-900)', cursor: 'pointer', letterSpacing: '.04em', marginTop: 8 }}>
+      清除所有篩選
+    </button>
+  </div>
+);
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+const App = () => {
+  const [pageState, setPageState] = useState('all');
+  const [activeCat, setActiveCat] = useState('全部');
+  const [sort, setSort] = useState('sales');
+  const [searchText, setSearchText] = useState('');
+  const [priceFilter, setPriceFilter] = useState([]);
+  const [cartCount, setCartCount] = useState(0);
+
+  const handleStateChange = (s) => {
+    setPageState(s);
+    setSearchText('');
+    setPriceFilter([]);
+    if (s === 'filtered') setActiveCat('SKINCARE');
+    else if (s === 'sale') setActiveCat('全部');
+    else if (s === 'empty') setActiveCat('全部');
+    else setActiveCat('全部');
+  };
+
+  const togglePrice = (key) => {
+    setPriceFilter(p => p.includes(key) ? p.filter(k => k !== key) : [...p, key]);
+  };
+
+  const clearFilters = () => {
+    setActiveCat('全部');
+    setSearchText('');
+    setPriceFilter([]);
+    if (pageState === 'empty') setPageState('all');
+  };
+
+  const filtered = useMemo(() => {
+    if (pageState === 'empty') return [];
+
+    let list = ALL_PRODUCTS;
+
+    // State: sale — only sale items
+    if (pageState === 'sale') list = list.filter(p => p.badge === 'SALE');
+
+    // Category
+    if (activeCat !== '全部') list = list.filter(p => p.cat === activeCat);
+
+    // Search
+    if (searchText.trim()) {
+      const q = searchText.trim().toLowerCase();
+      list = list.filter(p => p.name.toLowerCase().includes(q));
+    }
+
+    // Price
+    if (priceFilter.length > 0) {
+      list = list.filter(p => {
+        const price = p.price;
+        return priceFilter.some(f =>
+          (f === 'under500'  && price < 500) ||
+          (f === '500to1000' && price >= 500 && price <= 1000) ||
+          (f === 'over1000'  && price > 1000)
+        );
+      });
+    }
+
+    // Sort
+    const sorted = [...list];
+    if (sort === 'sales')      sorted.sort((a, b) => b.sales - a.sales);
+    else if (sort === 'newest')     sorted.sort((a, b) => b.id - a.id);
+    else if (sort === 'price_asc')  sorted.sort((a, b) => a.price - b.price);
+    else if (sort === 'price_desc') sorted.sort((a, b) => b.price - a.price);
+    else if (sort === 'rating')     sorted.sort((a, b) => b.rating - a.rating);
+
+    return sorted;
+  }, [pageState, activeCat, sort, searchText, priceFilter]);
+
+  const activeCatLabel = CATS.find(c => c.key === activeCat)?.label || '全部商品';
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--fill-300)' }}>
+      <AnnouncementBar />
+      <Header cartCount={cartCount} onCart={() => { window.location.href = '購物車.html'; }} onNav={() => {}} active="SHOP" />
+      <StateBar
+        states={[
+          { key: 'all',      label: '全部商品' },
+          { key: 'filtered', label: '分類篩選（保養）' },
+          { key: 'sale',     label: '特價商品' },
+          { key: 'empty',    label: '無結果' },
+        ]}
+        current={pageState}
+        onChange={handleStateChange}
+      />
+
+      <main className="page-main" style={{ maxWidth: 'var(--container)', margin: '0 auto', padding: '40px var(--gutter) 96px' }}>
+        {/* Breadcrumb */}
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center', marginBottom: 28, font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)' }}>
+          <a href="#" style={{ color: 'var(--fg-subtle)' }}>首頁</a>
+          <span className="material-icons-outlined" style={{ fontSize: 14, lineHeight: 1 }}>chevron_right</span>
+          <span style={{ color: 'var(--fg)' }}>{activeCatLabel}</span>
+        </div>
+
+        {/* Page title */}
+        <div style={{ marginBottom: 36 }}>
+          <Eyebrow style={{ marginBottom: 8 }}>SHOP ALL</Eyebrow>
+          <h1 className="listing-title-h1" style={{ font: '600 30px/1 var(--font-sans)', letterSpacing: '-.01em', color: 'var(--fg)' }}>
+            {pageState === 'sale' ? '特價商品' : activeCatLabel}
+          </h1>
+        </div>
+
+        {/* ── Mobile only: category chips + sticky sort bar ───────────────── */}
+        {/* Category chips — horizontal scroll */}
+        <div className="mobile-cat-chips" style={{ overflowX: 'auto', gap: 8, marginBottom: 0, paddingBottom: 12 }}>
+          {CATS.map(c => (
+            <button
+              key={c.key}
+              onClick={() => setActiveCat(c.key)}
+              style={{
+                flexShrink: 0, height: 36, padding: '0 16px',
+                border: `1px solid ${activeCat === c.key ? 'var(--ink-900)' : 'var(--line-300)'}`,
+                background: activeCat === c.key ? 'var(--ink-900)' : 'var(--bg)',
+                color: activeCat === c.key ? '#fff' : 'var(--fg)',
+                font: `${activeCat === c.key ? '500' : '400'} 14px/1 var(--font-sans)`,
+                cursor: 'pointer', whiteSpace: 'nowrap', borderRadius: 999,
+                transition: 'all .15s',
+              }}
+            >{c.label}</button>
+          ))}
+        </div>
+
+        {/* Sort + count bar — shown on mobile */}
+        <div className="listing-filter-bar" style={{ gap: 0, marginBottom: 16, alignItems: 'center', justifyContent: 'space-between', background: 'var(--bg)', padding: '10px 0', borderBottom: '1px solid var(--line-200)' }}>
+          <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>
+            共 <strong style={{ color: 'var(--fg)', fontWeight: 600 }}>{filtered.length}</strong> 件
+            {activeCat !== '全部' && (
+              <button onClick={() => setActiveCat('全部')} style={{ marginLeft: 8, border: 'none', background: 'none', cursor: 'pointer', font: '400 13px/1 var(--font-sans)', color: 'var(--fg-subtle)', padding: 0, textDecoration: 'underline' }}>清除</button>
+            )}
+          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span className="material-icons-outlined" style={{ fontSize: 16, color: 'var(--fg-subtle)', lineHeight: 1 }}>sort</span>
+            <select value={sort} onChange={e => setSort(e.target.value)} style={{ border: 'none', background: 'none', font: '400 14px/1 var(--font-sans)', color: 'var(--fg)', cursor: 'pointer', outline: 'none', padding: 0 }}>
+              {SORT_OPTIONS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {/* Layout */}
+        <div className="listing-layout" style={{ display: 'flex', gap: 48, alignItems: 'flex-start' }}>
+          {/* Sidebar */}
+          <FilterSidebar
+            activeCat={activeCat}
+            onCatChange={setActiveCat}
+            searchText={searchText}
+            onSearchChange={setSearchText}
+            priceFilter={priceFilter}
+            onPriceToggle={togglePrice}
+          />
+
+          {/* Main content */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {/* Sort bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, paddingBottom: 16, borderBottom: '1px solid var(--line-300)' }}>
+              <span style={{ font: '400 15px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>
+                共 <strong style={{ color: 'var(--fg)', fontWeight: 500 }}>{filtered.length}</strong> 件商品
+              </span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <label style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)', whiteSpace: 'nowrap' }}>排序</label>
+                <select
+                  value={sort}
+                  onChange={e => setSort(e.target.value)}
+                  style={{ height: 34, border: '1px solid var(--line-400)', padding: '0 28px 0 10px', font: '400 14px/1 var(--font-sans)', color: 'var(--fg)', background: 'var(--bg)', cursor: 'pointer', appearance: 'none', backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'8\'%3E%3Cpath d=\'M0 0l6 8 6-8z\' fill=\'%23606266\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 10px center' }}
+                >
+                  {SORT_OPTIONS.map(o => <option key={o.key} value={o.key}>{o.label}</option>)}
+                </select>
+              </div>
+            </div>
+
+            {/* Grid or empty state */}
+            {filtered.length === 0 ? (
+              <EmptyState onClear={clearFilters} />
+            ) : (
+              <div className="listing-grid">
+                {filtered.map(p => <ListingCard key={p.id} product={p} />)}
+              </div>
+            )}
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

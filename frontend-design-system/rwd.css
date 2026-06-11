@@ -1,0 +1,126 @@
+/* ==========================================================================
+   EVOMNI STOREFRONT — Responsive Layout
+   Breakpoints:
+     sm  : ≤ 639px   (phone)
+     md  : 640–899px  (tablet portrait)
+     lg  : 900–1199px (tablet landscape / small desktop)
+     xl  : ≥ 1200px  (desktop)
+   ========================================================================== */
+
+/* ── Global overflow & image safety ─────────────────────────────────────── */
+html, body { overflow-x: hidden; }
+img { max-width: 100%; height: auto; display: block; }
+
+/* ── Responsive gutter ───────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  :root { --gutter: 16px; }
+}
+
+/* ── Page main container ─────────────────────────────────────────────────── */
+@media (max-width: 767px) {
+  .page-main {
+    padding-left: var(--gutter) !important;
+    padding-right: var(--gutter) !important;
+    padding-top: 28px !important;
+  }
+}
+
+/* ── Header ──────────────────────────────────────────────────────────────── */
+.site-header-hamburger { display: none !important; }
+
+/* 900px 以下：漢堡選單，隱藏桌面 nav 與輔助圖示 */
+@media (max-width: 899px) {
+  .site-header-inner         { padding: 14px 20px !important; }
+  .site-nav-desktop          { display: none !important; }
+  .site-header-icons-desktop { display: none !important; }
+  .site-header-hamburger     { display: flex !important; }
+}
+
+/* 900-1199px：正常顯示 nav，但收窄側邊距與間距 */
+@media (min-width: 900px) and (max-width: 1199px) {
+  .site-header-inner  { padding: 16px 24px !important; }
+  .site-nav-desktop   { gap: 20px !important; }
+}
+
+/* ── Announcement Bar ─────────────────────────────────────────────────────── */
+@media (max-width: 639px) {
+  .site-announcement { font-size: 13px !important; padding: 8px 12px !important; }
+}
+
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+@media (max-width: 1023px) {
+  .site-footer-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 32px 40px !important;
+  }
+}
+@media (max-width: 639px) {
+  .site-footer      { padding: 40px 20px 24px !important; }
+  .site-footer-grid { grid-template-columns: 1fr !important; }
+}
+
+/* ── Checkout page ────────────────────────────────────────────────────────── */
+@media (max-width: 899px) {
+  .checkout-header { padding: 14px 20px !important; }
+}
+@media (max-width: 639px) {
+  .form-grid-2 { grid-template-columns: 1fr !important; gap: 0 !important; }
+}
+
+/* ── Listing page ─────────────────────────────────────────────────────────── */
+.listing-filter-bar  { display: none !important; }
+.mobile-cat-chips    { display: none !important; }
+
+@media (max-width: 900px) {
+  .listing-layout     { flex-direction: column !important; gap: 0 !important; align-items: stretch !important; }
+  .listing-sidebar    { display: none !important; }
+  .listing-filter-bar { display: flex !important; }
+  .mobile-cat-chips   { display: flex !important; }
+  .listing-grid       { grid-template-columns: repeat(2, 1fr) !important; gap: 16px !important; }
+  .listing-title-h1   { font-size: 22px !important; }
+}
+@media (max-width: 479px) {
+  .listing-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+}
+
+/* ── Product detail — mobile sticky CTA ──────────────────────────────────── */
+.pdp-mobile-cta { display: none !important; }
+@media (max-width: 899px) {
+  .pdp-mobile-cta { display: flex !important; }
+  .pdp-main       { padding-bottom: 100px !important; } /* reserve space for CTA bar */
+}
+
+/* ── Product detail page ──────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .pdp-layout {
+    flex-direction: column !important;
+    gap: 32px !important;
+    align-items: stretch !important;
+  }
+  .pdp-images-col {
+    flex: none !important;
+    width: 100% !important;
+    max-width: 520px !important;
+    margin: 0 auto !important;
+  }
+  .pdp-zoom-panel { display: none !important; }
+}
+
+/* ── Editorial sections (PDP) ────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .editorial-block {
+    grid-template-columns: 1fr !important;
+    gap: 28px !important;
+  }
+  .editorial-block-reverse > *:first-child { order: 2; }
+  .editorial-block-reverse > *:last-child  { order: 1; }
+}
+
+/* ── Related products grid ────────────────────────────────────────────────── */
+@media (max-width: 900px) { .related-grid { grid-template-columns: repeat(2, 1fr) !important; } }
+
+/* ── Cart page ────────────────────────────────────────────────────────────── */
+/* CartItem 已改為 photo + info-block 雙欄結構，自帶響應式，無需 grid 覆寫 */
+@media (max-width: 767px) {
+  .cart-items-inner { padding: 0 16px !important; }
+}

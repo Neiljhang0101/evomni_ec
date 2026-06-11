@@ -8,6 +8,14 @@
     border: 0;
     outline: 0;
     background: transparent;
+    /* 強制垂直 + 水平置中，不依賴瀏覽器 UA stylesheet */
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    max-height: calc(100dvh - 4rem);
+    overflow-y: auto;
 }
 
 .evomnialert::backdrop {

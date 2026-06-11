@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MY ACCOUNT — Evomni</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<link rel="stylesheet" href="../frontend-design-system/colors_and_type.css">
+<link rel="stylesheet" href="../evomnialert/evomnialert.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../evomnialert/evomnialert.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { overflow-y: scroll; }
+html, body, #root { min-height: 100%; }
+body { font-family: var(--font-sans); font-size: 16px; background: var(--fill-300); color: var(--fg); -webkit-font-smoothing: antialiased; overflow-x: hidden; }
+a { color: var(--fg); text-decoration: none; }
+button { cursor: pointer; font-family: var(--font-sans); }
+input, select, textarea { font-family: var(--font-sans); }
+
+/* ── Proto bar ─────────────────────────────────────────────────────── */
+.proto-bar { background: var(--ink-900); display: flex; align-items: center; padding: 0 24px; overflow-x: auto; flex-shrink: 0; }
+.proto-bar-label { font-size: 14px; letter-spacing: .08em; color: rgba(255,255,255,.4); text-transform: uppercase; padding-right: 12px; white-space: nowrap; }
+.proto-btn { padding: 9px 14px; border: none; background: none; border-bottom: 2px solid transparent; font: 500 14px/1 var(--font-sans); letter-spacing: .04em; color: rgba(255,255,255,.5); cursor: pointer; white-space: nowrap; transition: color .15s; }
+.proto-btn.active { border-bottom-color: #fff; color: #fff; }
+
+/* ── Account wrapper ─────────────────────────────────────────────────── */
+.account-wrapper { width: 100%; max-width: var(--container); margin: 0 auto; background: #fff; }
+.member-card { background: #fff; border-bottom: 1px solid var(--line-300); padding: 20px 32px; display: flex; align-items: center; gap: 14px; }
+.member-avatar { width: 40px; height: 40px; border-radius: 9999px; background: var(--ink-900); color: #fff; font: 600 15px/40px var(--font-sans); text-align: center; flex-shrink: 0; }
+.level-badge { font: 500 12px/1 var(--font-sans); letter-spacing: .06em; background: var(--ink-900); color: #fff; padding: 3px 8px; }
+.member-pts { font: 400 14px/1 var(--font-sans); color: var(--fg-muted); cursor: pointer; }
+.member-pts:hover { color: var(--fg); text-decoration: underline; }
+
+/* ── Sidebar ─────────────────────────────────────────────────────────── */
+.account-body { display: flex; align-items: flex-start; }
+.account-sidebar { width: 220px; flex-shrink: 0; background: #fff; border-right: 1px solid var(--line-300); display: flex; flex-direction: column; padding: 8px 0; align-self: stretch; }
+.nav-item { display: flex; align-items: center; gap: 11px; padding: 11px 20px; border: none; background: none; width: 100%; text-align: left; font: 400 14px/1 var(--font-sans); color: var(--fg-muted); cursor: pointer; transition: background .12s; border-left: 3px solid transparent; }
+.nav-text { white-space: nowrap; }
+.nav-item:hover { background: var(--fill-300); }
+.nav-item.active { border-left-color: var(--ink-900); background: var(--fill-300); color: var(--fg); font-weight: 500; }
+.nav-divider { border: none; border-top: 1px solid var(--line-200); margin: 6px 0; }
+.nav-logout { color: var(--danger) !important; }
+
+/* ── Content area ────────────────────────────────────────────────────── */
+.account-content { flex: 1; min-width: 0; padding: 36px 40px; background: #fff; min-height: 640px; }
+
+/* ── Typography ─────────────────────────────────────────────────────── */
+.page-title  { font: 600 22px/1.2 var(--font-sans); color: var(--fg); margin-bottom: 32px; }
+.section-ttl { font: 600 14px/1 var(--font-sans); color: var(--fg); padding-bottom: 10px; border-bottom: 1.5px solid var(--fg); margin-bottom: 0; margin-top: 36px; }
+.section-ttl:first-child { margin-top: 0; }
+
+/* ── Tab bar ─────────────────────────────────────────────────────────── */
+.tab-bar { display: flex; border-bottom: 1px solid var(--line-300); overflow-x: auto; margin-bottom: 24px; }
+.tab-btn { padding: 10px 14px; border: none; background: none; border-bottom: 2px solid transparent; font: 400 14px/1 var(--font-sans); color: var(--fg-muted); cursor: pointer; white-space: nowrap; margin-bottom: -1px; display: flex; align-items: center; gap: 4px; transition: color .15s; }
+.tab-btn.active { border-bottom-color: var(--ink-900); color: var(--fg); font-weight: 500; }
+.tab-badge { min-width: 18px; height: 18px; padding: 0 4px; border-radius: 9999px; font: 600 11px/18px var(--font-sans); color: #fff; text-align: center; background: var(--warning); }
+.tab-badge.red { background: var(--danger); }
+
+/* ── Divider rows (forms / info) ────────────────────────────────────── */
+.drow { padding: 16px 0; border-bottom: 1px solid var(--line-200); display: flex; align-items: center; gap: 12px; }
+.drow:last-of-type { border-bottom: none; }
+.dlbl  { font: 400 13px/1 var(--font-sans); color: var(--fg-subtle); margin-bottom: 6px; }
+.dval  { font: 400 15px/1.4 var(--font-sans); color: var(--fg); }
+.dval.empty { color: var(--fg-subtle); }
+.info-row { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line-200); }
+.info-row:last-child { border-bottom: none; }
+.info-lbl { font: 400 14px/1.5 var(--font-sans); color: var(--fg-muted); min-width: 72px; flex-shrink: 0; }
+.info-val { font: 400 14px/1.5 var(--font-sans); color: var(--fg); }
+
+/* ── Inputs ──────────────────────────────────────────────────────────── */
+.f-input { width: 100%; height: 40px; padding: 0 12px; border: 1px solid var(--line-400); background: #fff; font: 400 15px/1 var(--font-sans); color: var(--fg); outline: none; transition: border-color .15s; }
+.f-input:focus { border-color: var(--ink-900); }
+.f-input::placeholder { color: var(--ink-500); }
+.f-input.ro { background: var(--fill-400); color: var(--fg-muted); cursor: not-allowed; }
+.f-select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24'%3E%3Cpath fill='%23909399' d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 32px; }
+
+/* ── Buttons ─────────────────────────────────────────────────────────── */
+.sbtn { height: 34px; padding: 0 16px; border: 1px solid; font: 400 14px/1 var(--font-sans); cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0; transition: background .15s, color .15s; }
+.sbtn-ghost   { border-color: var(--line-400); background: #fff; color: var(--fg); }
+.sbtn-ghost:hover   { background: var(--fill-200); }
+.sbtn-primary { border-color: var(--brand); background: var(--brand); color: #fff; }
+.sbtn-primary:hover { background: var(--brand-hover); border-color: var(--brand-hover); }
+.sbtn-danger  { border-color: var(--danger); background: #fff; color: var(--danger); }
+.sbtn-danger:hover  { background: var(--danger-soft); }
+.sbtn:disabled { opacity: .45; cursor: not-allowed; }
+
+/* ── Order cards ─────────────────────────────────────────────────────── */
+.order-card { border-bottom: 1px solid var(--line-200); padding: 18px 0; cursor: pointer; transition: background .15s; }
+.order-card:hover { background: var(--fill-300); padding-left: 8px; padding-right: 8px; margin: 0 -8px; }
+.o-thumb { width: 52px; height: 52px; background: var(--fill-400); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.status-tag { display: inline-block; font: 500 12px/1 var(--font-sans); padding: 4px 10px; letter-spacing: .03em; }
+
+/* ── Timeline ────────────────────────────────────────────────────────── */
+.timeline { display: flex; align-items: flex-start; }
+.tl-step  { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; }
+.tl-conn  { position: absolute; top: 11px; left: calc(-50%); width: 100%; height: 2px; background: var(--line-300); z-index: 0; }
+.tl-step:first-child .tl-conn { display: none; }
+.tl-dot   { width: 24px; height: 24px; border-radius: 9999px; border: 2px solid var(--line-300); background: #fff; z-index: 1; display: flex; align-items: center; justify-content: center; }
+.tl-dot.done    { border-color: var(--success); background: var(--success); }
+.tl-dot.current { border-color: var(--brand); background: var(--brand); }
+.tl-lbl   { font: 400 11px/1.4 var(--font-sans); color: var(--fg-subtle); text-align: center; margin-top: 8px; max-width: 72px; }
+.tl-step.done .tl-lbl    { color: var(--success); }
+.tl-step.current .tl-lbl { color: var(--fg); font-weight: 500; }
+.amt-row  { display: flex; justify-content: space-between; padding: 8px 0; font: 400 14px/1 var(--font-sans); color: var(--fg-muted); }
+.amt-row.total { border-top: 1px solid var(--line-300); margin-top: 8px; padding-top: 16px; font: 600 16px/1 var(--font-sans); color: var(--fg); }
+
+/* ── Points ──────────────────────────────────────────────────────────── */
+.pts-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 36px; }
+.pts-card { padding: 20px; background: var(--fill-300); }
+.pts-card.expiry  { background: var(--warning-soft); }
+.pts-card.pending { background: #f0f9ff; }
+.pts-num  { font: 700 26px/1 var(--font-sans); color: var(--fg); font-variant-numeric: tabular-nums; margin: 8px 0 12px; }
+
+/* ── Table ───────────────────────────────────────────────────────────── */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { font: 500 12px/1 var(--font-sans); letter-spacing: .07em; text-transform: uppercase; color: var(--fg-subtle); padding: 10px 0; text-align: left; border-bottom: 1px solid var(--line-300); }
+.data-table td { font: 400 14px/1.4 var(--font-sans); color: var(--fg); padding: 12px 0; border-bottom: 1px solid var(--line-200); }
+.data-table tr:last-child td { border-bottom: none; }
+.plus  { color: var(--success); font-weight: 500; }
+.minus { color: var(--danger);  font-weight: 500; }
+
+/* ── Coupon ──────────────────────────────────────────────────────────── */
+.cpn-row { display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line-200); gap: 14px; }
+.cpn-row:last-child { border-bottom: none; }
+.cpn-stripe { width: 4px; height: 52px; flex-shrink: 0; }
+.cpn-info { flex: 1; }
+.cpn-amount { font: 700 17px/1 var(--font-sans); color: var(--fg); margin-bottom: 5px; }
+.cpn-cond   { font: 400 13px/1.4 var(--font-sans); color: var(--fg-muted); }
+.cpn-expiry { font: 400 13px/1 var(--font-sans); color: var(--fg-subtle); margin-top: 3px; }
+.cpn-expiry.urgent { color: var(--warning); }
+.cpn-row.faded { opacity: .55; }
+
+/* ── Wishlist ────────────────────────────────────────────────────────── */
+.wl-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.wl-card { border: 1px solid var(--line-300); }
+.wl-thumb { position: relative; aspect-ratio: 1/1; background: var(--fill-400); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.wl-overlay { position: absolute; inset: 0; background: rgba(48,49,51,.5); display: flex; align-items: center; justify-content: center; }
+.wl-info { padding: 10px 12px; }
+
+/* ── Security ────────────────────────────────────────────────────────── */
+.sec-row { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--line-200); gap: 12px; }
+.sec-row:last-child { border-bottom: none; }
+.sec-row > div { min-width: 0; overflow-wrap: break-word; }
+.pw-bar-wrap { height: 3px; background: var(--line-200); margin: 8px 0 4px; }
+.pw-bar-fill { height: 100%; transition: width .3s, background .3s; }
+.danger-zone { border: 1px solid var(--danger); padding: 20px; margin-top: 36px; }
+.current-badge { font: 500 11px/1 var(--font-sans); letter-spacing: .05em; border: 1px solid var(--success); color: var(--success); padding: 3px 8px; border-radius: 9999px; }
+
+/* ── Address ─────────────────────────────────────────────────────────── */
+.addr-row { display: flex; align-items: flex-start; padding: 16px 0; border-bottom: 1px solid var(--line-200); gap: 12px; }
+.addr-row:last-of-type { border-bottom: none; }
+.inline-form { background: var(--fill-300); padding: 20px; margin: 12px 0; }
+
+/* ── Referral ────────────────────────────────────────────────────────── */
+.ref-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 32px; }
+.ref-card { padding: 18px; background: var(--fill-300); }
+
+/* ── Empty state ─────────────────────────────────────────────────────── */
+.empty-st { text-align: center; padding: 64px 0; }
+.empty-st-title { font: 500 18px/1.4 var(--font-sans); color: var(--fg); margin: 14px 0 8px; }
+.empty-st-sub   { font: 400 14px/1.6 var(--font-sans); color: var(--fg-muted); margin-bottom: 24px; }
+
+/* ── Mobile bottom tabs ──────────────────────────────────────────────── */
+.bottom-tabs { display: none; }
+
+/* 會員中心自有 sidebar + 底部 Tab 導覽，不用共用 Header 的漢堡選單 */
+.site-header-hamburger { display: none !important; }
+
+@media (max-width: 767px) {
+  .site-nav-desktop { display: none !important; }
+  .site-header-icons-desktop { display: none !important; }
+  .site-header-inner { padding: 12px 16px !important; }
+}
+
+/* ── More sheet (mobile) ─────────────────────────────────────────────── */
+.more-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 300; }
+.more-overlay.open { display: block; }
+.more-sheet { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; z-index: 301; border-radius: 16px 16px 0 0; transform: translateY(100%); transition: transform .28s cubic-bezier(.32,0,.15,1); }
+.more-sheet.open { transform: translateY(0); }
+.more-sheet-handle { width: 36px; height: 4px; background: var(--line-400); border-radius: 2px; margin: 12px auto 4px; }
+.more-sheet-item { display: flex; align-items: center; gap: 14px; width: 100%; padding: 16px 24px; border: none; background: none; font: 400 15px/1 var(--font-sans); color: var(--fg); cursor: pointer; text-align: left; }
+.more-sheet-item:active { background: var(--fill-300); }
+.more-sheet-item.logout { color: var(--danger); }
+.more-sheet-divider { border: none; border-top: 1px solid var(--line-200); margin: 4px 0; }
+
+/* ── Responsive ──────────────────────────────────────────────────────── */
+@media (max-width: 1023px) {
+  .nav-item .nav-text { display: none !important; }
+  .account-sidebar { width: 56px; }
+  .nav-item { padding: 13px 0; justify-content: center; gap: 0; }
+  .account-content { padding: 24px 20px; }
+  .member-card { padding: 16px 20px; }
+}
+@media (max-width: 767px) {
+  .account-sidebar { display: none; }
+  .bottom-tabs { display: grid; grid-template-columns: repeat(5, 1fr); position: fixed; bottom: 0; left: 0; right: 0; height: 56px; background: #fff; border-top: 1px solid var(--line-300); z-index: 200; overflow: hidden; }
+  .btab { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border: none; background: none; font: 400 10px/1 var(--font-sans); color: var(--fg-muted); cursor: pointer; min-width: 0; overflow: hidden; }
+  .btab.active { color: var(--fg); }
+  .account-content { padding: 20px 16px 80px; }
+  .pts-grid { grid-template-columns: 1fr; }
+  .ref-grid { grid-template-columns: repeat(2, 1fr); }
+  .wl-grid  { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="../frontend-design-system/ui_kits/storefront/ui.jsx"></script>
+<script type="text/babel" src="../frontend-design-system/ui_kits/storefront/sections.jsx"></script>
+<script type="text/babel">
+const { useState } = React;
+
+/* ── Mock data ──────────────────────────────────────────────────────── */
+const STATUS_CFG = {
+  pending_payment:    { label: '待付款',       color: 'var(--warning)', bg: 'var(--warning-soft)' },
+  processing:         { label: '待出貨',       color: 'var(--ink-500)', bg: 'var(--fill-400)' },
+  shipped:            { label: '已出貨',       color: 'var(--brand)',   bg: 'var(--brand-soft)' },
+  completed:          { label: '已完成',       color: 'var(--success)', bg: 'var(--success-soft)' },
+  cancelled:          { label: '已取消',       color: 'var(--ink-500)', bg: 'var(--fill-400)' },
+  return_in_progress: { label: '退換貨申請中', color: 'var(--danger)',  bg: 'var(--danger-soft)' },
+};
+const MEMBER = { name: '王小明', initials: '王', level: '金卡會員', points: 1250 };
+const ORDERS = [
+  { id: 'EC-20260601-0042', date: '2026/06/01', status: 'shipped',
+    items: [{ name: '煥顏精華露', spec: '30ml' }], total: 1280 },
+  { id: 'EC-20260528-0039', date: '2026/05/28', status: 'pending_payment',
+    items: [{ name: '水潤保濕面霜' }, { name: '修護精油精華' }], total: 2560 },
+  { id: 'EC-20260520-0031', date: '2026/05/20', status: 'completed',
+    items: [{ name: '深層清潔洗面乳', spec: '150ml' }], total: 680 },
+];
+const DETAIL = {
+  id: 'EC-20260601-0042', status: 'shipped',
+  timeline: [
+    { label: '訂單建立', date: '06/01 10:20', state: 'done' },
+    { label: '付款完成', date: '06/01 10:22', state: 'done' },
+    { label: '備貨中',   date: '06/01 14:00', state: 'done' },
+    { label: '已出貨',   date: '06/02 09:00', state: 'current' },
+    { label: '訂單完成', date: null,           state: 'pending' },
+  ],
+  recipient: '王小明', phone: '0912-345-678', email: 'wangxm@example.com',
+  address: '台北市大安區復興南路一段100號2樓',
+  payMethod: '信用卡（末四碼 1234）', payStatus: '已付款', payTime: '2026/06/01 10:22',
+  logistics: '黑貓宅急便', trackNo: '881234567890', eta: '2026/06/04',
+  items: [{ name: '煥顏精華露', spec: '30ml / 一般膚質', qty: 1, price: 1280 }],
+  subtotal: 1280, shipping: 60, discount: -100, total: 1240,
+};
+const ADDRESSES = [
+  { id: 1, isDefault: true,  name: '王小明', phone: '0912-345-678', city: '台北市', dist: '大安區', addr: '復興南路一段100號2樓' },
+  { id: 2, isDefault: false, name: '王小明', phone: '0912-345-678', city: '台中市', dist: '西屯區', addr: '台灣大道四段1099號' },
+];
+const POINT_HIST = [
+  { date: '2026/06/01', reason: '訂單 #EC-20260601-0042 消費回饋', change: 125,  bal: 1250 },
+  { date: '2026/05/28', reason: '推薦好友獎勵',                     change: 50,   bal: 1125 },
+  { date: '2026/05/20', reason: '訂單 #EC-20260520-0031 使用點數',   change: -100, bal: 1075 },
+  { date: '2026/05/05', reason: '訂單 #EC-20260505-0028 消費回饋',   change: 68,   bal: 1175 },
+  { date: '2026/04/28', reason: '推薦好友獎勵',                     change: 50,   bal: 1107 },
+];
+const COUPONS = {
+  available: [
+    { id: 1, amount: 'NT$ 100 折扣', cond: '消費滿 NT$ 500 可用', scope: '全館商品', expiry: '2026/08/31', daysLeft: 88 },
+    { id: 2, amount: '九折優惠',     cond: '消費滿 NT$ 800 可用', scope: '保養系列', expiry: '2026/06/10', daysLeft: 6 },
+  ],
+  used:    [{ id: 3, amount: 'NT$ 200 折扣', usedDate: '2026/05/20', orderId: 'EC-20260520-0031' }],
+  expired: [{ id: 4, amount: 'NT$ 50 折扣',  expiry: '2026/04/30' }],
+};
+const WISHLIST = [
+  { id: 1, name: '潔面膠囊深層淨膚露', price: 1680, status: 'available' },
+  { id: 2, name: '夜間修護精油',       price: 2280, status: 'sold_out' },
+  { id: 3, name: '春季限定保濕噴霧',   price: 680,  status: 'discontinued' },
+  { id: 4, name: '礦物防曬精華乳',     price: 1280, status: 'available' },
+];
+const REFERRAL = {
+  referred: 5, purchased: 3, earned: 150,
+  history: [
+    { date: '2026/04/20', purchased: true,  points: 50 },
+    { date: '2026/04/15', purchased: true,  points: 50 },
+    { date: '2026/03/10', purchased: false, points: null },
+  ],
+};
+const DEVICES = [
+  { id: 1, name: 'Chrome · macOS',   ip: '1.2.3.4',    last: '2026/06/04 14:32', current: true },
+  { id: 2, name: 'Safari · iPhone',  ip: '5.6.7.8',    last: '2026/06/03 09:12', current: false },
+  { id: 3, name: 'Chrome · Windows', ip: '9.10.11.12', last: '2026/05/28 18:00', current: false },
+];
+
+/* ── Shared ──────────────────────────────────────────────────────────── */
+const StatusTag = ({ status }) => {
+  const c = STATUS_CFG[status] || STATUS_CFG.processing;
+  return <span className="status-tag" style={{ color: c.color, background: c.bg }}>{c.label}</span>;
+};
+
+const Btn = ({ children, variant = 'ghost', onClick, disabled, style = {} }) => (
+  <button className={`sbtn sbtn-${variant}`} style={style} onClick={disabled ? undefined : onClick} disabled={disabled}>
+    {children}
+  </button>
+);
+
+const EmptySt = ({ icon = 'inbox', title, sub, cta, onCta }) => (
+  <div className="empty-st">
+    <Icon name={icon} size={44} style={{ color: 'var(--ink-300)' }} />
+    <div className="empty-st-title">{title}</div>
+    {sub && <div className="empty-st-sub">{sub}</div>}
+    {cta && <Btn onClick={onCta}>{cta}</Btn>}
+  </div>
+);
+
+/* Field divider row */
+const DRow = ({ label, note, children, icon }) => (
+  <div className="drow">
+    <div style={{ flex: 1 }}>
+      <div className="dlbl">{label}{note && <span style={{ marginLeft: 5 }}>({note})</span>}</div>
+      {children}
+    </div>
+    {icon}
+  </div>
+);
+
+/* Pencil icon */
+const EditIco = ({ onClick }) => (
+  <button onClick={onClick} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, color: 'var(--fg-subtle)', display: 'flex', flexShrink: 0 }}
+    onMouseEnter={e => e.currentTarget.style.color = 'var(--fg)'}
+    onMouseLeave={e => e.currentTarget.style.color = 'var(--fg-subtle)'}>
+    <Icon name="edit" size={16} />
+  </button>
+);
+
+/* Section title */
+const STtl = ({ children }) => <div className="section-ttl">{children}</div>;
+
+/* ── Layout: Member card ─────────────────────────────────────────────── */
+const MemberCard = ({ onNav }) => (
+  <div className="member-card">
+    <div className="member-avatar">{MEMBER.initials}</div>
+    <div style={{ flex: 1 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+        <span style={{ font: '600 15px/1 var(--font-sans)', color: 'var(--fg)' }}>{MEMBER.name}</span>
+        <span className="level-badge">{MEMBER.level}</span>
+      </div>
+      <span className="member-pts" onClick={() => onNav('points')}>{MEMBER.points.toLocaleString()} 點</span>
+    </div>
+  </div>
+);
+
+/* ── Layout: Sidebar ─────────────────────────────────────────────────── */
+const NAV_ITEMS = [
+  { key: 'orders',    label: '我的訂單',      icon: 'receipt_long' },
+  { key: 'profile',   label: '個人資料',      icon: 'person_outline' },
+  { key: 'addresses', label: '收件地址',      icon: 'place' },
+  { key: 'points',    label: '點數 / 購物金', icon: 'stars' },
+  { key: 'coupons',   label: '我的優惠券',    icon: 'local_offer' },
+  { key: 'wishlist',  label: '心願清單',      icon: 'favorite_border' },
+  { key: 'referral',  label: '推薦好友',      icon: 'group_add' },
+  { key: 'security',  label: '帳號安全',      icon: 'lock' },
+];
+
+const SideNav = ({ current, onNav }) => {
+  const active = current === 'order_detail' ? 'orders' : current;
+  return (
+    <aside className="account-sidebar">
+      {NAV_ITEMS.map(item => (
+        <button key={item.key} className={`nav-item${active === item.key ? ' active' : ''}`} onClick={() => onNav(item.key)}>
+          <Icon name={item.icon} size={19} style={{ flexShrink: 0 }} />
+          <span className="nav-text">{item.label}</span>
+        </button>
+      ))}
+      <hr className="nav-divider" />
+      <button className="nav-item nav-logout"
+        onClick={() => EvomniAlert.show({ type: 'warning', title: '確定要登出帳號嗎？', desc: '登出後，購物車中的商品不會消失。', onConfirm: () => SiteAlert.info('已登出', '') })}>
+        <Icon name="logout" size={19} style={{ flexShrink: 0 }} />
+        <span className="nav-text">登出</span>
+      </button>
+    </aside>
+  );
+};
+
+/* ── Layout: Mobile more sheet ───────────────────────────────────────── */
+const MORE_ITEMS = [
+  { key: 'addresses', label: '收件地址',      icon: 'place' },
+  { key: 'wishlist',  label: '心願清單',      icon: 'favorite_border' },
+  { key: 'referral',  label: '推薦好友',      icon: 'group_add' },
+  { key: 'security',  label: '帳號安全',      icon: 'lock' },
+];
+const MORE_KEYS = MORE_ITEMS.map(i => i.key);
+
+const MoreSheet = ({ open, onClose, onNav }) => {
+  const handle = key => { onNav(key); onClose(); };
+  return (
+    <>
+      <div className={`more-overlay${open ? ' open' : ''}`} onClick={onClose} />
+      <div className={`more-sheet${open ? ' open' : ''}`}>
+        <div className="more-sheet-handle" />
+        {MORE_ITEMS.map(item => (
+          <button key={item.key} className="more-sheet-item" onClick={() => handle(item.key)}>
+            <Icon name={item.icon} size={20} style={{ color: 'var(--fg-muted)', flexShrink: 0 }} />
+            {item.label}
+          </button>
+        ))}
+        <hr className="more-sheet-divider" />
+        <button className="more-sheet-item logout" onClick={() => {
+          onClose();
+          EvomniAlert.show({ type: 'warning', title: '確定要登出帳號嗎？', desc: '登出後，購物車中的商品不會消失。',
+            onConfirm: () => SiteAlert.info('已登出', '') });
+        }}>
+          <Icon name="logout" size={20} style={{ color: 'var(--danger)', flexShrink: 0 }} />
+          登出
+        </button>
+        <div style={{ height: 16 }} />
+      </div>
+    </>
+  );
+};
+
+/* ── Layout: Mobile bottom tabs ──────────────────────────────────────── */
+const BottomTabs = ({ current, onNav }) => {
+  const [moreOpen, setMoreOpen] = useState(false);
+  const active = current === 'order_detail' ? 'orders' : current;
+  const moreActive = MORE_KEYS.includes(active);
+  return (
+    <>
+      <div className="bottom-tabs">
+        {[['orders','訂單','receipt_long'], ['profile','個人資料','person_outline'], ['points','點數','stars'], ['coupons','優惠券','local_offer']].map(([key, label, icon]) => (
+          <button key={key} className={`btab${active === key ? ' active' : ''}`} onClick={() => onNav(key)}>
+            <Icon name={icon} size={22} />{label}
+          </button>
+        ))}
+        <button className={`btab${moreActive || moreOpen ? ' active' : ''}`} onClick={() => setMoreOpen(true)}>
+          <Icon name="more_horiz" size={22} />更多
+        </button>
+      </div>
+      <MoreSheet open={moreOpen} onClose={() => setMoreOpen(false)} onNav={onNav} />
+    </>
+  );
+};
+
+/* ── Orders ──────────────────────────────────────────────────────────── */
+const ORDER_TABS = [
+  { key: 'all',               label: '全部' },
+  { key: 'pending_payment',   label: '待付款',       filter: 'pending_payment',    badge: 1 },
+  { key: 'processing',        label: '待出貨',       filter: 'processing' },
+  { key: 'shipped',           label: '已出貨',       filter: 'shipped',             badge: 1 },
+  { key: 'completed',         label: '已完成',       filter: 'completed' },
+  { key: 'cancelled',         label: '已取消',       filter: 'cancelled' },
+  { key: 'return_in_progress',label: '退換貨申請中', filter: 'return_in_progress',  badge: 0, red: true },
+];
+const ACTION_MAP = {
+  pending_payment:    [['繼續付款','primary'],['取消訂單','danger']],
+  processing:         [['查看訂單','ghost']],
+  shipped:            [['查看物流','primary'],['確認收貨','ghost']],
+  completed:          [['查看訂單','ghost'],['申請退換貨','ghost'],['再次購買','primary']],
+  cancelled:          [['查看訂單','ghost']],
+  return_in_progress: [['查看申請進度','ghost']],
+};
+
+const OrdersPage = ({ onViewDetail }) => {
+  const [tab, setTab] = useState('all');
+  const [search, setSearch] = useState('');
+  const cfg = ORDER_TABS.find(t => t.key === tab);
+  const baseList = cfg.filter ? ORDERS.filter(o => o.status === cfg.filter) : ORDERS;
+  const list = search ? baseList.filter(o =>
+    o.id.toLowerCase().includes(search.toLowerCase()) ||
+    o.items.some(i => i.name.includes(search))
+  ) : baseList;
+
+  return (
+    <div>
+      <div className="page-title">我的訂單</div>
+      <div className="tab-bar">
+        {ORDER_TABS.map(t => (
+          <button key={t.key} className={`tab-btn${tab === t.key ? ' active' : ''}`} onClick={() => { setTab(t.key); setSearch(''); }}>
+            {t.label}
+            {t.badge > 0 && <span className={`tab-badge${t.red ? ' red' : ''}`}>{t.badge}</span>}
+          </button>
+        ))}
+      </div>
+      <div style={{ position: 'relative', margin: '16px 0' }}>
+        <Icon name="search" size={17} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--fg-muted)', pointerEvents: 'none' }} />
+        <input className="f-input" value={search} onChange={e => setSearch(e.target.value)} placeholder="搜尋訂單編號或商品名稱" style={{ paddingLeft: 36, paddingRight: search ? 36 : 12 }} />
+        {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', color: 'var(--fg-muted)', padding: 0 }}><Icon name="close" size={15} /></button>}
+      </div>
+      {list.length === 0 && search
+        ? <div style={{ padding: '40px 0', textAlign: 'center' }}>
+            <div style={{ font: '400 14px/1.6 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 12 }}>找不到符合「{search}」的訂單</div>
+            <Btn variant="ghost" onClick={() => setSearch('')}>清除搜尋</Btn>
+          </div>
+        : list.length === 0
+        ? <EmptySt icon="inbox" title={`目前沒有${cfg.label}訂單`} sub="逛逛商品，找到喜歡的就加入購物車！" cta="前往購物" />
+        : list.map(o => (
+          <div key={o.id} className="order-card" onClick={() => onViewDetail(o.id)}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+              <div>
+                <div style={{ font: '400 12px/1 var(--font-sans)', color: 'var(--fg-subtle)', letterSpacing: '.04em', marginBottom: 4 }}>訂單編號：{o.id}</div>
+                <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-subtle)' }}>下單日期：{o.date}</div>
+              </div>
+              <StatusTag status={o.status} />
+            </div>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginBottom: 14 }}>
+              {o.items.slice(0, 3).map((_, i) => <div key={i} className="o-thumb"><Icon name="image" size={24} style={{ color: 'var(--ink-300)' }} /></div>)}
+              {o.items.length > 3 && <div className="o-thumb" style={{ font: '400 12px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>+{o.items.length - 3}</div>}
+              <div style={{ marginLeft: 'auto', textAlign: 'right' }}>
+                <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 3 }}>共 {o.items.length} 件</div>
+                <div style={{ font: '600 16px/1 var(--font-sans)', fontVariantNumeric: 'tabular-nums' }}>NT$ {o.total.toLocaleString()}</div>
+              </div>
+            </div>
+            <div onClick={e => e.stopPropagation()} style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+              {(ACTION_MAP[o.status] || [['查看訂單','ghost']]).map(([lbl, v], i) => (
+                <Btn key={i} variant={v}
+                  onClick={() => lbl === '取消訂單' ? EvomniAlert.show({ type: 'danger', title: '確定取消此訂單？', desc: '訂單取消後無法恢復。', onConfirm: () => SiteAlert.success('訂單已取消', '') })
+                    : lbl === '確認收貨' ? EvomniAlert.show({ type: 'info', title: '確認已收到商品？', desc: '確認後訂單狀態將更新為完成。', onConfirm: () => SiteAlert.success('訂單已確認收貨', '') })
+                    : onViewDetail(o.id)}>{lbl}</Btn>
+              ))}
+            </div>
+          </div>
+        ))
+      }
+    </div>
+  );
+};
+
+/* ── Order detail ────────────────────────────────────────────────────── */
+const OrderDetailPage = ({ onBack }) => {
+  const o = DETAIL;
+  return (
+    <div>
+      <button onClick={onBack} style={{ display: 'flex', alignItems: 'center', gap: 6, background: 'none', border: 'none', font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)', cursor: 'pointer', marginBottom: 20, padding: 0 }}>
+        <Icon name="arrow_back" size={15} /> 返回我的訂單
+      </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
+        <div style={{ font: '600 20px/1 var(--font-sans)' }}>#{o.id}</div>
+        <StatusTag status={o.status} />
+      </div>
+
+      <STtl>訂單進度</STtl>
+      <div className="timeline" style={{ marginTop: 20, marginBottom: 36 }}>
+        {o.timeline.map((s, i) => (
+          <div key={i} className={`tl-step ${s.state}`}>
+            <div className="tl-conn" />
+            <div className={`tl-dot ${s.state}`}>
+              {s.state === 'done'    && <Icon name="check" size={13} style={{ color: '#fff' }} />}
+              {s.state === 'current' && <div style={{ width: 8, height: 8, borderRadius: 9999, background: '#fff' }} />}
+            </div>
+            <div className="tl-lbl">{s.label}{s.date && <><br /><span style={{ fontSize: 10 }}>{s.date}</span></>}</div>
+          </div>
+        ))}
+      </div>
+
+      <STtl>收件資訊</STtl>
+      {[['收件人', o.recipient], ['手機', o.phone], ['電子信箱', o.email], ['地址', o.address]].map(([l, v]) => (
+        <div key={l} className="info-row"><span className="info-lbl">{l}</span><span className="info-val">{v}</span></div>
+      ))}
+
+      <STtl>付款資訊</STtl>
+      {[['付款方式', o.payMethod], ['付款狀態', o.payStatus], ['付款時間', o.payTime]].map(([l, v]) => (
+        <div key={l} className="info-row"><span className="info-lbl">{l}</span><span className="info-val">{v}</span></div>
+      ))}
+
+      <STtl>物流資訊</STtl>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', gap: 12, flexWrap: 'wrap' }}>
+        <div>
+          {[['物流商', o.logistics], ['追蹤號碼', o.trackNo], ['預計到貨', o.eta]].map(([l, v]) => (
+            <div key={l} className="info-row"><span className="info-lbl">{l}</span><span className="info-val">{v}</span></div>
+          ))}
+        </div>
+        <Btn variant="primary" onClick={() => SiteAlert.info('查看物流', '即將開啟追蹤頁面')}>查看物流</Btn>
+      </div>
+
+      <STtl>商品明細</STtl>
+      {o.items.map((item, i) => (
+        <div key={i} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: '1px solid var(--line-200)' }}>
+          <div className="o-thumb" style={{ width: 60, height: 60 }}><Icon name="image" size={28} style={{ color: 'var(--ink-300)' }} /></div>
+          <div style={{ flex: 1 }}>
+            <div style={{ font: '500 14px/1.4 var(--font-sans)', marginBottom: 3 }}>{item.name}</div>
+            <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 8 }}>規格：{item.spec}　數量：{item.qty}</div>
+            <div style={{ font: '500 15px/1 var(--font-sans)', fontVariantNumeric: 'tabular-nums' }}>NT$ {item.price.toLocaleString()}</div>
+          </div>
+        </div>
+      ))}
+      <div style={{ marginTop: 16 }}>
+        {[['商品小計', o.subtotal], ['運費', o.shipping], ['優惠券折扣', o.discount]].map(([l, v]) => (
+          <div key={l} className="amt-row"><span>{l}</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>{v < 0 ? `- NT$ ${Math.abs(v).toLocaleString()}` : `NT$ ${v.toLocaleString()}`}</span></div>
+        ))}
+        <div className="amt-row total"><span>訂單總計</span><span style={{ fontVariantNumeric: 'tabular-nums' }}>NT$ {o.total.toLocaleString()}</span></div>
+      </div>
+      <div style={{ display: 'flex', gap: 10, marginTop: 24 }}>
+        <Btn variant="ghost" onClick={onBack}>返回我的訂單</Btn>
+        <Btn variant="ghost" onClick={() => SiteAlert.success('已加入購物車', '')}>再次購買</Btn>
+      </div>
+    </div>
+  );
+};
+
+/* ── Profile ─────────────────────────────────────────────────────────── */
+/* MERCHANT_B2B: 後台設定是否啟用企業欄位（公司名稱、職稱）*/
+const MERCHANT_B2B = true;
+
+const ProfilePage = () => {
+  const [name, setName] = useState('王小明');
+  const [birthYear, setBirthYear] = useState('');
+  const [birthMonth, setBirthMonth] = useState('');
+  const [birthDay, setBirthDay] = useState('');
+  const [gender, setGender] = useState('');
+  const [company, setCompany] = useState('');
+  const [jobTitle, setJobTitle] = useState('');
+  const phone = '0912-345-678';
+  const email = 'wangxm@example.com';
+
+  const [showPhoneForm, setShowPhoneForm] = useState(false);
+  const [newPhone, setNewPhone] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+
+  const [showEmailForm, setShowEmailForm] = useState(false);
+  const [newEmail, setNewEmail] = useState('');
+  const [emailSent, setEmailSent] = useState(false);
+
+  const [dirty, setDirty] = useState(false);
+  const mark = setter => val => { setter(val); setDirty(true); };
+
+  const years = Array.from({ length: 80 }, (_, i) => String(2006 - i));
+  const months = Array.from({ length: 12 }, (_, i) => String(i + 1).padStart(2, '0'));
+  const days = Array.from({ length: birthYear && birthMonth ? new Date(+birthYear, +birthMonth, 0).getDate() : 31 }, (_, i) => String(i + 1).padStart(2, '0'));
+
+  const resetPhone = () => { setShowPhoneForm(false); setNewPhone(''); setOtpSent(false); setOtp(''); };
+  const resetEmail = () => { setShowEmailForm(false); setNewEmail(''); setEmailSent(false); };
+  const resetAll = () => { setName('王小明'); setBirthYear(''); setBirthMonth(''); setBirthDay(''); setGender(''); setCompany(''); setJobTitle(''); resetPhone(); resetEmail(); setDirty(false); };
+
+  return (
+    <div style={{ maxWidth: 560 }}>
+      <div className="page-title">個人資料</div>
+
+      {/* Avatar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, paddingBottom: 20, marginBottom: 4, borderBottom: '1px solid var(--line-200)' }}>
+        <div style={{ width: 80, height: 80, borderRadius: 9999, background: 'var(--ink-900)', color: '#fff', font: '600 28px/80px var(--font-sans)', textAlign: 'center', flexShrink: 0 }}>
+          {name ? name[0] : '？'}
+        </div>
+        <div>
+          <Btn variant="ghost" onClick={() => SiteAlert.info('上傳頭像', '請選擇 JPG 或 PNG 檔案')}>上傳頭像</Btn>
+          <div style={{ font: '400 13px/1.4 var(--font-sans)', color: 'var(--fg-subtle)', marginTop: 6 }}>支援 JPG、PNG 格式，檔案大小不超過 2MB</div>
+        </div>
+      </div>
+
+      {/* 姓名 */}
+      <DRow label="姓名" note="必填">
+        <input className="f-input" value={name} onChange={e => mark(setName)(e.target.value)} style={{ maxWidth: 280, marginTop: 4 }} placeholder="請輸入您的姓名" />
+      </DRow>
+
+      {/* 手機號碼 */}
+      <DRow label="手機號碼">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <span className="dval">{phone}</span>
+          {!showPhoneForm && (
+            <button onClick={() => setShowPhoneForm(true)} style={{ background: 'none', border: 'none', font: '400 14px/1 var(--font-sans)', color: 'var(--brand)', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>更改手機</button>
+          )}
+        </div>
+        {showPhoneForm && (
+          <div className="inline-form" style={{ marginTop: 8 }}>
+            {!otpSent ? (
+              <>
+                <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginBottom: 5 }}>新手機號碼</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <input className="f-input" value={newPhone} onChange={e => setNewPhone(e.target.value)} placeholder="請輸入新的手機號碼" style={{ maxWidth: 200 }} />
+                  <Btn variant="primary" disabled={!newPhone} onClick={() => { SiteAlert.success('驗證碼已發送', `驗證碼已發送至 ${newPhone}，請於 5 分鐘內輸入。`); setOtpSent(true); }}>發送驗證碼</Btn>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginBottom: 5 }}>驗證碼</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+                  <input className="f-input" value={otp} onChange={e => setOtp(e.target.value)} placeholder="請輸入 6 位數驗證碼" style={{ maxWidth: 160 }} />
+                  <button style={{ background: 'none', border: 'none', font: '400 13px/1 var(--font-sans)', color: 'var(--fg-subtle)', cursor: 'default', padding: 0 }}>重新發送（60 秒）</button>
+                  <Btn variant="primary" disabled={otp.length < 6} onClick={() => { SiteAlert.success('手機號碼已更新', ''); resetPhone(); setDirty(true); }}>確認更改</Btn>
+                </div>
+              </>
+            )}
+            <div style={{ marginTop: 8 }}><Btn variant="ghost" onClick={resetPhone}>取消</Btn></div>
+          </div>
+        )}
+      </DRow>
+
+      {/* 電子信箱 */}
+      <DRow label="電子信箱">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+          <span className="dval">{email}</span>
+          {!showEmailForm && (
+            <button onClick={() => setShowEmailForm(true)} style={{ background: 'none', border: 'none', font: '400 14px/1 var(--font-sans)', color: 'var(--brand)', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>更改 Email</button>
+          )}
+        </div>
+        {showEmailForm && (
+          <div className="inline-form" style={{ marginTop: 8 }}>
+            {!emailSent ? (
+              <>
+                <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginBottom: 5 }}>新電子信箱</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  <input className="f-input" value={newEmail} onChange={e => setNewEmail(e.target.value)} placeholder="請輸入新的電子信箱" style={{ maxWidth: 240 }} />
+                  <Btn variant="primary" disabled={!newEmail.includes('@')} onClick={() => { SiteAlert.success('確認信已寄出', `請點擊寄至 ${newEmail} 的連結完成驗證，連結 24 小時內有效。`); setEmailSent(true); }}>發送確認信</Btn>
+                </div>
+              </>
+            ) : (
+              <div style={{ font: '400 14px/1.5 var(--font-sans)', color: 'var(--fg-muted)' }}>
+                確認信已寄出至 {newEmail}，請點擊信件中的連結完成驗證，連結 24 小時內有效。
+                <br /><button onClick={resetEmail} style={{ background: 'none', border: 'none', font: '400 13px/1 var(--font-sans)', color: 'var(--fg-muted)', cursor: 'pointer', padding: 0, textDecoration: 'underline', marginTop: 8 }}>關閉</button>
+              </div>
+            )}
+            {!emailSent && <div style={{ marginTop: 8 }}><Btn variant="ghost" onClick={resetEmail}>取消</Btn></div>}
+          </div>
+        )}
+      </DRow>
+
+      {/* 生日 */}
+      <DRow label="生日">
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4, alignItems: 'center' }}>
+          {[['年', birthYear, setBirthYear, years], ['月', birthMonth, setBirthMonth, months], ['日', birthDay, setBirthDay, days]].map(([placeholder, val, setter, opts]) => (
+            <select key={placeholder} className="f-input f-select" value={val}
+              onChange={e => { setter(e.target.value); setDirty(true); if (placeholder === '月') setBirthDay(''); }}
+              style={{ width: placeholder === '年' ? 100 : 74, height: 40 }}>
+              <option value="">{placeholder}</option>
+              {opts.map(o => <option key={o} value={o}>{o}</option>)}
+            </select>
+          ))}
+          <span style={{ font: '400 12px/1.4 var(--font-sans)', color: 'var(--fg-subtle)' }}>生日設定後如需修改，請聯絡客服。</span>
+        </div>
+      </DRow>
+
+      {/* 性別 */}
+      <DRow label="性別">
+        <div style={{ display: 'flex', gap: 20, flexWrap: 'wrap', marginTop: 4 }}>
+          {['男', '女', '不透露'].map(g => (
+            <label key={g} style={{ display: 'flex', alignItems: 'center', gap: 6, font: '400 14px/1 var(--font-sans)', cursor: 'pointer' }}>
+              <input type="radio" name="gender" value={g} checked={gender === g} onChange={() => mark(setGender)(g)} style={{ accentColor: 'var(--brand)' }} />
+              {g}
+            </label>
+          ))}
+        </div>
+      </DRow>
+
+      {/* B2B 企業欄位（後台設定 MERCHANT_B2B 時顯示）*/}
+      {MERCHANT_B2B && (
+        <>
+          <div style={{ font: '400 12px/1 var(--font-sans)', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--fg-subtle)', padding: '20px 0 8px', marginTop: 4, borderTop: '1px solid var(--line-200)' }}>企業資料（選填）</div>
+          {[['公司名稱', company, setCompany], ['職稱', jobTitle, setJobTitle]].map(([lbl, val, setter]) => (
+            <DRow key={lbl} label={lbl}>
+              <input className="f-input" value={val} onChange={e => mark(setter)(e.target.value)} placeholder={`請輸入${lbl}`} style={{ maxWidth: 280, marginTop: 4 }} />
+            </DRow>
+          ))}
+        </>
+      )}
+
+      {/* 預設收件地址快覽 */}
+      <div style={{ background: 'var(--fill-300)', padding: '14px 16px', margin: '20px 0', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+        <div>
+          <div style={{ font: '400 12px/1 var(--font-sans)', letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--fg-subtle)', marginBottom: 6 }}>預設收件地址</div>
+          <div style={{ font: '400 14px/1.4 var(--font-sans)', color: 'var(--fg)' }}>台北市大安區復興南路一段100號2樓</div>
+        </div>
+        <button style={{ background: 'none', border: 'none', font: '400 14px/1 var(--font-sans)', color: 'var(--brand)', cursor: 'pointer', padding: 0, textDecoration: 'underline', flexShrink: 0 }}>管理地址</button>
+      </div>
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+        <Btn variant="ghost" onClick={resetAll}>取消</Btn>
+        <Btn variant="primary" disabled={!dirty} onClick={() => { SiteAlert.success('個人資料已更新', ''); setDirty(false); }}>儲存變更</Btn>
+      </div>
+    </div>
+  );
+};
+
+/* ── Addresses ───────────────────────────────────────────────────────── */
+const CITY_DIST = {
+  '台北市': ['中正區','大同區','中山區','松山區','大安區','萬華區','信義區','士林區','北投區','內湖區','南港區','文山區'],
+  '新北市': ['板橋區','三重區','中和區','永和區','新莊區','新店區','樹林區','鶯歌區','三峽區','淡水區','汐止區','瑞芳區'],
+  '台中市': ['中區','東區','南區','西區','北區','北屯區','南屯區','西屯區','清水區','大里區','太平區','豐原區'],
+  '台南市': ['中西區','東區','南區','北區','安平區','安南區','永康區','歸仁區','新化區','玉井區','楠西區','南化區'],
+  '高雄市': ['楠梓區','左營區','鼓山區','三民區','鹽埕區','前金區','新興區','苓雅區','前鎮區','旗津區','小港區','鳳山區'],
+  '桃園市': ['桃園區','中壢區','大溪區','楊梅區','蘆竹區','大園區','龜山區','八德區','龍潭區','平鎮區','新屋區','觀音區'],
+};
+
+const AddressesPage = () => {
+  const [addrs, setAddrs] = useState(ADDRESSES);
+  const [showForm, setShowForm] = useState(false);
+  const [formCity, setFormCity] = useState('');
+  const [formDist, setFormDist] = useState('');
+  const setDefault = id => { setAddrs(addrs.map(a => ({ ...a, isDefault: a.id === id }))); SiteAlert.success('已更新預設地址', ''); };
+  const del = (id, isDefault) => EvomniAlert.show({ type: 'danger', title: '確定刪除此地址？', desc: isDefault ? '此為您的預設地址，刪除後請重新設定。' : '刪除後無法復原。', onConfirm: () => { setAddrs(addrs.filter(a => a.id !== id)); SiteAlert.success('地址已刪除', ''); } });
+  return (
+    <div>
+      <div className="page-title">收件地址</div>
+      <p style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 24 }}>最多可儲存 5 筆收件地址。結帳時將自動帶入預設地址。</p>
+      {addrs.map(a => (
+        <div key={a.id} className="addr-row">
+          <div style={{ flex: 1 }}>
+            {a.isDefault && <span style={{ display: 'inline-block', font: '500 11px/1 var(--font-sans)', letterSpacing: '.06em', background: 'var(--ink-900)', color: '#fff', padding: '3px 8px', marginBottom: 8 }}>預設</span>}
+            {a.isDefault && <br />}
+            <div style={{ font: '500 15px/1.4 var(--font-sans)', marginBottom: 3 }}>{a.city}{a.dist}{a.addr}</div>
+            <div style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>{a.name}　{a.phone}</div>
+          </div>
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+            {!a.isDefault && <Btn variant="ghost" onClick={() => setDefault(a.id)}>設為預設</Btn>}
+            <Btn variant="ghost">編輯</Btn>
+            <Btn variant="danger" onClick={() => del(a.id, a.isDefault)}>刪除</Btn>
+          </div>
+        </div>
+      ))}
+      {!showForm ? (
+        <button onClick={() => setShowForm(true)} disabled={addrs.length >= 5}
+          style={{ marginTop: 16, width: '100%', height: 44, border: '1px dashed var(--line-400)', background: 'none', font: '400 15px/1 var(--font-sans)', color: addrs.length >= 5 ? 'var(--fg-disabled)' : 'var(--fg-muted)', cursor: addrs.length >= 5 ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+          <Icon name="add" size={18} /> 新增地址{addrs.length >= 5 ? '（已達上限 5 筆）' : ''}
+        </button>
+      ) : (
+        <div className="inline-form">
+          <div style={{ font: '500 15px/1 var(--font-sans)', marginBottom: 18 }}>新增地址</div>
+          {[['收件人姓名', '請輸入收件人姓名'], ['手機號碼', '請輸入手機號碼']].map(([l, p]) => (
+            <div key={l} style={{ marginBottom: 14 }}>
+              <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginBottom: 5 }}>{l}</div>
+              <input className="f-input" placeholder={p} />
+            </div>
+          ))}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+            <div>
+              <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginBottom: 5 }}>縣市</div>
+              <select className="f-input f-select" value={formCity} onChange={e => { setFormCity(e.target.value); setFormDist(''); }}>
+                <option value="">請選擇縣市</option>
+                {Object.keys(CITY_DIST).map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+            <div>
+              <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginBottom: 5 }}>行政區</div>
+              <select className="f-input f-select" value={formDist} onChange={e => setFormDist(e.target.value)} disabled={!formCity}>
+                <option value="">請選擇行政區</option>
+                {(CITY_DIST[formCity] || []).map(d => <option key={d} value={d}>{d}</option>)}
+              </select>
+            </div>
+          </div>
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginBottom: 5 }}>詳細地址</div>
+            <input className="f-input" placeholder="請輸入詳細地址（路名、門號、樓層）" />
+          </div>
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, font: '400 14px/1 var(--font-sans)', cursor: 'pointer', marginBottom: 18 }}>
+            <input type="checkbox" style={{ accentColor: 'var(--brand)' }} /> 設為預設地址
+          </label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Btn variant="ghost" onClick={() => { setShowForm(false); setFormCity(''); setFormDist(''); }}>取消</Btn>
+            <Btn variant="primary" onClick={() => { SiteAlert.success('地址已儲存', ''); setShowForm(false); setFormCity(''); setFormDist(''); }}>儲存</Btn>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ── Points ──────────────────────────────────────────────────────────── */
+const PointsPage = () => (
+  <div>
+    <div className="page-title">點數 / 購物金</div>
+    <div className="pts-grid">
+      <div className="pts-card">
+        <div style={{ font: '400 11px/1 var(--font-sans)', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--fg-subtle)' }}>可用點數</div>
+        <div className="pts-num">1,250</div>
+        <Btn variant="primary" onClick={() => SiteAlert.info('前往購物', '')}>去使用點數</Btn>
+      </div>
+      <div className="pts-card expiry">
+        <div style={{ font: '400 11px/1 var(--font-sans)', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--warning)' }}>即將到期</div>
+        <div className="pts-num" style={{ fontSize: 22, color: 'var(--warning)' }}>80</div>
+        <div style={{ font: '400 13px/1.4 var(--font-sans)', color: 'var(--warning)', marginBottom: 10 }}>將於 2026/06/30 到期</div>
+        <Btn variant="ghost" onClick={() => SiteAlert.info('前往購物', '')}>立即使用</Btn>
+      </div>
+      <div className="pts-card pending">
+        <div style={{ font: '400 11px/1 var(--font-sans)', letterSpacing: '.1em', textTransform: 'uppercase', color: 'var(--info)' }}>待入帳點數</div>
+        <div className="pts-num" style={{ fontSize: 22 }}>200</div>
+        <div style={{ font: '400 13px/1.4 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 10 }}>訂單完成後自動發放</div>
+        <Btn variant="ghost">查看訂單</Btn>
+      </div>
+    </div>
+    <STtl>點數異動明細</STtl>
+    <div style={{ display: 'flex', gap: 10, margin: '16px 0' }}>
+      <select className="f-input" style={{ width: 'auto', height: 34 }}><option>全部類型</option><option>點數獲得</option><option>點數使用</option></select>
+      <select className="f-input" style={{ width: 'auto', height: 34 }}><option>近 3 個月</option><option>本月</option><option>近 6 個月</option></select>
+    </div>
+    <table className="data-table">
+      <thead><tr><th>日期</th><th>原因</th><th>點數</th><th style={{ textAlign: 'right' }}>餘額</th></tr></thead>
+      <tbody>
+        {POINT_HIST.map((r, i) => (
+          <tr key={i}>
+            <td style={{ color: 'var(--fg-muted)', whiteSpace: 'nowrap' }}>{r.date}</td>
+            <td>{r.reason}</td>
+            <td><span className={r.change > 0 ? 'plus' : 'minus'}>{r.change > 0 ? `+${r.change}` : r.change} 點</span></td>
+            <td style={{ textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{r.bal.toLocaleString()} 點</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    <div style={{ textAlign: 'center', marginTop: 20 }}><Btn variant="ghost">顯示更多</Btn></div>
+  </div>
+);
+
+/* ── Coupons ─────────────────────────────────────────────────────────── */
+const CouponsPage = () => {
+  const [tab, setTab] = useState('available');
+  const tabs = [{ key: 'available', label: '可使用', count: 2 }, { key: 'used', label: '已使用' }, { key: 'expired', label: '已過期' }];
+  const CpnRow = ({ c, used, expired }) => (
+    <div className={`cpn-row${used || expired ? ' faded' : ''}`}>
+      <div className="cpn-stripe" style={{ background: expired || used ? 'var(--ink-300)' : c.daysLeft <= 7 ? 'var(--warning)' : 'var(--brand)' }} />
+      <div className="cpn-info">
+        <div className="cpn-amount">{c.amount}</div>
+        {c.cond && <div className="cpn-cond">{c.cond}　{c.scope}</div>}
+        {c.expiry && !used && <div className={`cpn-expiry${c.daysLeft <= 7 ? ' urgent' : ''}`}>有效期限：{c.expiry}{c.daysLeft <= 7 ? `（剩 ${c.daysLeft} 天）` : ''}</div>}
+        {used    && <div className="cpn-expiry">已於 {c.usedDate} 使用　訂單 #{c.orderId}</div>}
+        {expired && <div className="cpn-expiry">已於 {c.expiry} 到期</div>}
+      </div>
+      {!used && !expired && <Btn variant="primary" onClick={() => SiteAlert.info('立即使用', '正在導向商品頁面')}>立即使用</Btn>}
+    </div>
+  );
+  return (
+    <div>
+      <div className="page-title">我的優惠券</div>
+      <div className="tab-bar">
+        {tabs.map(t => <button key={t.key} className={`tab-btn${tab === t.key ? ' active' : ''}`} onClick={() => setTab(t.key)}>{t.label}{t.count ? <span className="tab-badge">{t.count}</span> : null}</button>)}
+      </div>
+      {tab === 'available' && COUPONS.available.map(c => <CpnRow key={c.id} c={c} />)}
+      {tab === 'used'      && COUPONS.used.map(c    => <CpnRow key={c.id} c={c} used />)}
+      {tab === 'expired'   && COUPONS.expired.map(c => <CpnRow key={c.id} c={c} expired />)}
+    </div>
+  );
+};
+
+/* ── Wishlist ────────────────────────────────────────────────────────── */
+const WishlistPage = () => {
+  const [items, setItems] = useState(WISHLIST);
+  if (!items.length) return <div><div className="page-title">心願清單</div><EmptySt icon="favorite_border" title="還沒有收藏任何商品" sub="逛逛商品時點擊愛心圖示，即可加入心願清單。" cta="前往購物" /></div>;
+  return (
+    <div>
+      <div className="page-title">心願清單</div>
+      <div style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 20 }}>共 {items.length} 件商品</div>
+      <div className="wl-grid">
+        {items.map(item => (
+          <div key={item.id} className="wl-card">
+            <div className="wl-thumb">
+              <Icon name="image" size={32} style={{ color: 'var(--ink-300)' }} />
+              {item.status !== 'available' && <div className="wl-overlay"><span style={{ font: '500 11px/1 var(--font-sans)', letterSpacing: '.08em', color: '#fff', textTransform: 'uppercase' }}>{item.status === 'sold_out' ? '已售完' : '已下架'}</span></div>}
+              <button onClick={() => { setItems(items.filter(i => i.id !== item.id)); SiteAlert.success('已從心願清單移除', ''); }} style={{ position: 'absolute', top: 6, right: 6, width: 24, height: 24, border: '1px solid var(--line-300)', background: 'rgba(255,255,255,.9)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Icon name="close" size={13} style={{ color: 'var(--fg-muted)' }} />
+              </button>
+            </div>
+            <div className="wl-info">
+              <div style={{ font: '400 13px/1.4 var(--font-sans)', marginBottom: 6 }}>{item.name}</div>
+              <div style={{ font: '500 14px/1 var(--font-sans)', fontVariantNumeric: 'tabular-nums', marginBottom: 8 }}>NT$ {item.price.toLocaleString()}</div>
+              {item.status === 'available'    && <Btn variant="primary" style={{ width: '100%', height: 32, justifyContent: 'center' }} onClick={() => SiteAlert.success('已加入購物車', item.name)}>加入購物車</Btn>}
+              {item.status === 'sold_out'     && <button style={{ background: 'none', border: 'none', font: '400 12px/1 var(--font-sans)', color: 'var(--fg-muted)', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>已售完，到貨通知</button>}
+              {item.status === 'discontinued' && <div style={{ font: '400 12px/1 var(--font-sans)', color: 'var(--fg-subtle)' }}>此商品已下架</div>}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+/* ── Referral ────────────────────────────────────────────────────────── */
+const ReferralPage = () => {
+  const [copied, setCopied] = useState(false);
+  const copy = () => { setCopied(true); setTimeout(() => setCopied(false), 2000); SiteAlert.success('推薦連結已複製', ''); };
+  return (
+    <div>
+      <div className="page-title">推薦好友</div>
+      <p style={{ font: '400 14px/1.6 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 28 }}>推薦好友加入，好友完成首次購物後雙方各獲 50 點！點數將於好友訂單出貨後 3 個工作天內入帳。</p>
+
+      <STtl>我的推薦連結</STtl>
+      <div style={{ display: 'flex', gap: 8, margin: '16px 0' }}>
+        <input className="f-input ro" style={{ flex: 1 }} value="https://shop.evomni.com/ref/wangxm001" readOnly />
+        <Btn variant="primary" onClick={copy}>{copied ? '已複製' : '複製連結'}</Btn>
+        <Btn variant="ghost" onClick={() => SiteAlert.info('分享至 LINE', '')}>分享至 LINE</Btn>
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 36 }}>
+        <div style={{ width: 88, height: 88, background: 'var(--fill-400)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--line-300)', flexShrink: 0 }}>
+          <Icon name="qr_code_2" size={48} style={{ color: 'var(--ink-300)' }} />
+        </div>
+        <button onClick={() => SiteAlert.info('下載 QR Code', '')} style={{ background: 'none', border: 'none', font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}>下載 QR Code</button>
+      </div>
+
+      <STtl>推薦統計</STtl>
+      <div className="ref-grid" style={{ marginTop: 16 }}>
+        {[['已推薦人數', 5, '人'], ['已完成首購', 3, '人'], ['累計獲得點數', 150, '點']].map(([label, val, unit]) => (
+          <div key={label} className="ref-card">
+            <div style={{ font: '400 11px/1 var(--font-sans)', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--fg-subtle)', marginBottom: 10 }}>{label}</div>
+            <div style={{ font: '700 24px/1 var(--font-sans)' }}>{val} <span style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>{unit}</span></div>
+          </div>
+        ))}
+      </div>
+
+      <STtl>推薦記錄</STtl>
+      <table className="data-table" style={{ marginTop: 16 }}>
+        <thead><tr><th>加入日期</th><th>是否已首購</th><th style={{ textAlign: 'right' }}>獲得點數</th></tr></thead>
+        <tbody>
+          {REFERRAL.history.map((r, i) => (
+            <tr key={i}>
+              <td style={{ color: 'var(--fg-muted)' }}>{r.date}</td>
+              <td><span style={{ font: '500 12px/1 var(--font-sans)', padding: '3px 10px', borderRadius: 9999, border: '1px solid', color: r.purchased ? 'var(--success)' : 'var(--warning)', borderColor: r.purchased ? 'var(--success)' : 'var(--warning)', background: r.purchased ? 'var(--success-soft)' : 'var(--warning-soft)' }}>{r.purchased ? '已首購' : '待首購'}</span></td>
+              <td style={{ textAlign: 'right' }}>{r.points ? <span className="plus">+ {r.points} 點</span> : '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+};
+
+/* ── Security ────────────────────────────────────────────────────────── */
+const PLATFORMS = [
+  { key: 'line',     label: 'LINE',     bound: true,  account: '@wangxm001' },
+  { key: 'google',   label: 'Google',   bound: true,  account: 'wangxm@gmail.com' },
+  { key: 'facebook', label: 'Facebook', bound: false, account: null },
+];
+const getStr = pw => {
+  if (!pw) return null;
+  const l = /[a-zA-Z]/.test(pw), n = /[0-9]/.test(pw), s = /[^a-zA-Z0-9]/.test(pw);
+  if (pw.length < 8 || !(l && n)) return { label: '弱', color: 'var(--danger)', w: '33%' };
+  if (!s || pw.length < 12)        return { label: '中', color: 'var(--warning)', w: '66%' };
+  return { label: '強', color: 'var(--success)', w: '100%' };
+};
+const SecurityPage = () => {
+  const [curPw, setCurPw] = useState('');
+  const [newPw, setNewPw] = useState('');
+  const [confirmPw, setConfirmPw] = useState('');
+  const [devices, setDevices] = useState(DEVICES);
+  const [deleteStep, setDeleteStep] = useState(0);
+  const [deleteEmail, setDeleteEmail] = useState('');
+  const [deleteEmailError, setDeleteEmailError] = useState(false);
+  const str = getStr(newPw);
+
+  return (
+    <div>
+      <div className="page-title">帳號安全</div>
+
+      <STtl>修改密碼</STtl>
+      {[['目前密碼', curPw, setCurPw], ['新密碼', newPw, setNewPw]].map(([lbl, val, set]) => (
+        <DRow key={lbl} label={lbl}>
+          <input className="f-input" type="password" style={{ maxWidth: 300 }} value={val} placeholder={`請輸入${lbl}`} onChange={e => set(e.target.value)} />
+        </DRow>
+      ))}
+      {newPw && str && <div style={{ padding: '8px 0 4px' }}><div className="pw-bar-wrap"><div className="pw-bar-fill" style={{ width: str.w, background: str.color }} /></div><div style={{ font: '400 13px/1 var(--font-sans)', color: str.color }}>密碼強度：{str.label}</div></div>}
+      <DRow label="確認新密碼">
+        <input className="f-input" type="password" style={{ maxWidth: 300 }} value={confirmPw} placeholder="請再次輸入新密碼" onChange={e => setConfirmPw(e.target.value)} />
+        {confirmPw && newPw !== confirmPw && <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--danger)', marginTop: 4 }}>兩次密碼不一致</div>}
+      </DRow>
+      <div style={{ display: 'flex', gap: 8, marginTop: 4, marginBottom: 4 }}>
+        <Btn variant="ghost" onClick={() => { setCurPw(''); setNewPw(''); setConfirmPw(''); }}>取消</Btn>
+        <Btn variant="primary" disabled={!curPw || !newPw || newPw !== confirmPw} onClick={() => SiteAlert.success('密碼已更新，請重新登入', '')}>確認修改密碼</Btn>
+      </div>
+
+      <STtl>第三方帳號綁定</STtl>
+      {PLATFORMS.map(p => (
+        <div key={p.key} className="sec-row">
+          <Icon name={p.key === 'line' ? 'chat' : p.key === 'google' ? 'language' : 'thumb_up'} size={19} style={{ color: 'var(--fg-muted)', flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ font: '500 14px/1 var(--font-sans)' }}>{p.label}</div>
+            <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>{p.bound ? `已綁定（${p.account}）` : '未綁定'}</div>
+          </div>
+          {p.bound
+            ? <Btn variant="danger" onClick={() => EvomniAlert.show({ type: 'danger', title: `確定解除與 ${p.label} 的帳號綁定？`, desc: `解除後將無法使用 ${p.label} 快速登入。`, onConfirm: () => SiteAlert.success(`已解除與 ${p.label} 的帳號綁定`, '') })}>解除綁定</Btn>
+            : <Btn variant="primary" onClick={() => SiteAlert.info('立即綁定', `即將跳轉至 ${p.label} 授權頁面`)}>立即綁定</Btn>
+          }
+        </div>
+      ))}
+
+      <STtl>登入裝置管理</STtl>
+      <p style={{ font: '400 14px/1.6 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 16 }}>若發現不認識的裝置，請立即登出以保護帳號安全。</p>
+      {devices.map(d => (
+        <div key={d.id} className="sec-row">
+          <Icon name="devices" size={19} style={{ color: 'var(--fg-muted)', flexShrink: 0 }} />
+          <div style={{ flex: 1 }}>
+            <div style={{ font: '500 14px/1 var(--font-sans)', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+              {d.name} {d.current && <span className="current-badge">目前使用中</span>}
+            </div>
+            <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>IP：{d.ip}　最後活動：{d.last}</div>
+          </div>
+          {!d.current && <Btn variant="danger" onClick={() => EvomniAlert.show({ type: 'warning', title: '確定登出此裝置？', desc: '該裝置下次存取時將被要求重新登入。', onConfirm: () => { setDevices(devices.filter(x => x.id !== d.id)); SiteAlert.success('已登出指定裝置', ''); } })}>登出此裝置</Btn>}
+        </div>
+      ))}
+      {devices.filter(d => !d.current).length > 0 && (
+        <div style={{ marginTop: 16 }}>
+          <Btn variant="danger" onClick={() => EvomniAlert.show({ type: 'danger', title: '登出所有其他裝置？', desc: '所有其他已登入裝置將需重新登入。', onConfirm: () => { setDevices(devices.filter(d => d.current)); SiteAlert.success('已登出所有其他裝置', ''); } })}>登出所有其他裝置</Btn>
+        </div>
+      )}
+
+      <div className="danger-zone">
+        <div style={{ font: '500 14px/1 var(--font-sans)', color: 'var(--danger)', marginBottom: 8 }}>刪除帳號</div>
+        <div style={{ font: '400 14px/1.6 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 12 }}>刪除帳號後，您的個人資料、收件地址、點數餘額、優惠券、心願清單將永久移除，無法復原。您的訂單紀錄將依法規保留 3 年（不顯示於前台）。</div>
+        <button style={{ background: 'none', border: 'none', font: '400 14px/1 var(--font-sans)', color: 'var(--danger)', textDecoration: 'underline', cursor: 'pointer', padding: 0 }}
+          onClick={() => EvomniAlert.show({ type: 'danger', title: '申請刪除帳號', desc: '刪除後以下資料將永久移除：個人資料與收件地址、點數餘額與優惠券、心願清單。\n\n申請後有 30 天冷靜期，冷靜期內重新登入即可取消申請。', onConfirm: () => setDeleteStep(1) })}>
+          申請刪除帳號
+        </button>
+        {deleteStep === 1 && (
+          <div className="inline-form" style={{ marginTop: 12, borderLeft: '3px solid var(--danger)' }}>
+            <div style={{ font: '500 14px/1 var(--font-sans)', color: 'var(--fg)', marginBottom: 12 }}>步驟 2 / 2 — 請輸入帳號 Email 確認刪除申請</div>
+            <input className="f-input" type="email" value={deleteEmail}
+              onChange={e => { setDeleteEmail(e.target.value); setDeleteEmailError(false); }}
+              placeholder="您的帳號 Email" style={{ maxWidth: 280, marginBottom: 4 }} />
+            {deleteEmailError && <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--danger)', marginTop: 4 }}>請輸入正確的帳號 Email。</div>}
+            <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+              <Btn variant="ghost" onClick={() => { setDeleteStep(0); setDeleteEmail(''); setDeleteEmailError(false); }}>取消</Btn>
+              <Btn variant="danger" onClick={() => {
+                if (deleteEmail === 'wangxm@example.com') {
+                  SiteAlert.info('刪除申請已送出', '確認信已寄至您的 Email，30 天冷靜期內重新登入即可取消。');
+                  setDeleteStep(0); setDeleteEmail('');
+                } else { setDeleteEmailError(true); }
+              }}>確認刪除帳號</Btn>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+/* ── Proto bar + App ─────────────────────────────────────────────────── */
+const PROTO_STATES = [
+  { key: 'orders',       label: '訂單列表' },
+  { key: 'order_detail', label: '訂單詳情' },
+  { key: 'profile',      label: '個人資料' },
+  { key: 'addresses',    label: '收件地址' },
+  { key: 'points',       label: '點數/購物金' },
+  { key: 'coupons',      label: '我的優惠券' },
+  { key: 'wishlist',     label: '心願清單' },
+  { key: 'referral',     label: '推薦好友' },
+  { key: 'security',     label: '帳號安全' },
+];
+
+const App = () => {
+  const [page, setPage] = useState('orders');
+  const nav = key => setPage(key);
+
+  const renderPage = () => {
+    switch (page) {
+      case 'orders':       return <OrdersPage onViewDetail={() => setPage('order_detail')} />;
+      case 'order_detail': return <OrderDetailPage onBack={() => setPage('orders')} />;
+      case 'profile':      return <ProfilePage />;
+      case 'addresses':    return <AddressesPage />;
+      case 'points':       return <PointsPage />;
+      case 'coupons':      return <CouponsPage />;
+      case 'wishlist':     return <WishlistPage />;
+      case 'referral':     return <ReferralPage />;
+      case 'security':     return <SecurityPage />;
+      default:             return <OrdersPage onViewDetail={() => setPage('order_detail')} />;
+    }
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Proto bar */}
+      <div className="proto-bar">
+        <span className="proto-bar-label">Prototype</span>
+        {PROTO_STATES.map(s => (
+          <button key={s.key} className={`proto-btn${page === s.key ? ' active' : ''}`} onClick={() => setPage(s.key)}>{s.label}</button>
+        ))}
+        <a href="訪客訂單查詢.html" style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5, padding: '9px 0 9px 16px', letterSpacing: '.04em', whiteSpace: 'nowrap', borderLeft: '1px solid rgba(255,255,255,.12)', marginLeft: 8 }}>
+          訪客訂單查詢
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M1 10L10 1M10 1H4M10 1V7"/></svg>
+        </a>
+      </div>
+
+      {/* Header */}
+      <AnnouncementBar />
+      <Header cartCount={0} onCart={() => { window.location.href = '購物車.html'; }} onNav={() => {}} />
+
+      {/* Main */}
+      <div className="account-wrapper" style={{ flex: 1 }}>
+        <MemberCard onNav={nav} />
+        <div className="account-body">
+          <SideNav current={page} onNav={nav} />
+          <main className="account-content">{renderPage()}</main>
+        </div>
+      </div>
+
+      {/* Mobile bottom tabs */}
+      <BottomTabs current={page} onNav={nav} />
+    </div>
+  );
+};
+
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
+</body>
+</html>

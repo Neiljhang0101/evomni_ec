@@ -1,7 +1,7 @@
 // PageDashboard — 儀表板首頁
 // 統一 Prototype 入口，提供系統各模組快速概覽與導覽
 
-function PageDashboard({ onNavigate }) {
+function PageDashboard({ onNavigate, demoState, onDemoChange }) {
   const [hasData, setHasData] = React.useState(true);
 
   const stats = [
@@ -26,8 +26,66 @@ function PageDashboard({ onNavigate }) {
     { label: '金物流串接', desc: '金流與物流廠商設定', page: 'gs-payment-logistics' },
   ];
 
+  const ds = demoState || {};
+  const activeTab   = ds.tab   || 'planA';
+  const planAChecked = ds.planAChecked || { cms: false, ecommerce: true };
+  const planBActive  = ds.planBActive  || 'ecommerce';
+
+  const S = { border: '1px solid #DCDFE6', borderRadius: 2 };
+  const btnBase = { border: 'none', cursor: 'pointer', fontSize: 12, fontFamily: 'Noto Sans TC,sans-serif', transition: 'background 0.15s, color 0.15s', padding: '4px 14px' };
+
   return (
     <div>
+      {/* 示意控制面板 */}
+      {onDemoChange && (
+        <div style={{ background: '#fff', border: '1px solid #DCDFE6', borderLeft: '3px solid #409EFF', padding: '14px 16px', marginBottom: 20 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+            <span style={{ fontSize: 11, color: '#909399', fontWeight: 600, letterSpacing: '0.06em', textTransform: 'uppercase' }}>左側選單方案示意</span>
+            {/* Plan tab switcher */}
+            <div style={{ display: 'flex', ...S, overflow: 'hidden' }}>
+              {[{ k: 'planA', l: '方案一（複選）' }, { k: 'planB', l: '方案二（切換）' }].map(t => (
+                <button key={t.k} onClick={() => onDemoChange({ tab: t.k })}
+                  style={{ ...btnBase, background: activeTab === t.k ? '#303133' : '#fff', color: activeTab === t.k ? '#fff' : '#606266', fontWeight: activeTab === t.k ? 600 : 400 }}>
+                  {t.l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {activeTab === 'planA' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+              <span style={{ fontSize: 12, color: '#606266' }}>勾選此網站啟用的功能模組：</span>
+              <div style={{ display: 'flex', gap: 16 }}>
+                {[{ k: 'cms', l: '品牌形象站' }, { k: 'ecommerce', l: '電商系統' }].map(opt => (
+                  <label key={opt.k} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer', fontSize: 13, color: '#303133', userSelect: 'none' }}>
+                    <input type="checkbox" checked={!!planAChecked[opt.k]}
+                      onChange={e => onDemoChange({ planAChecked: { ...planAChecked, [opt.k]: e.target.checked } })}
+                      style={{ width: 14, height: 14, accentColor: '#409EFF', cursor: 'pointer' }} />
+                    {opt.l}
+                  </label>
+                ))}
+              </div>
+              <span style={{ fontSize: 11, color: '#C0C4CC' }}>可複選——同時有形象站與電商的商家</span>
+            </div>
+          )}
+
+          {activeTab === 'planB' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <span style={{ fontSize: 12, color: '#606266' }}>目前編輯的網站：</span>
+              <div style={{ display: 'flex', ...S, overflow: 'hidden' }}>
+                {[{ k: 'cms', l: '品牌形象站' }, { k: 'ecommerce', l: '電商網站' }].map(opt => (
+                  <button key={opt.k} onClick={() => onDemoChange({ planBActive: opt.k })}
+                    style={{ ...btnBase, background: planBActive === opt.k ? '#409EFF' : '#fff', color: planBActive === opt.k ? '#fff' : '#606266', fontWeight: planBActive === opt.k ? 600 : 400 }}>
+                    {opt.l}
+                  </button>
+                ))}
+              </div>
+              <span style={{ fontSize: 11, color: '#C0C4CC' }}>切換後側欄只顯示目前選取網站的功能</span>
+            </div>
+          )}
+        </div>
+      )}
+
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
         <h1 style={{ fontSize: 20, fontWeight: 700, color: '#303133' }}>儀表板</h1>
         <button
@@ -107,6 +165,44 @@ function PageDashboard({ onNavigate }) {
               <div style={{ fontWeight: 600, color: '#303133', marginBottom: 4 }}>{item.label}</div>
               <div style={{ fontSize: 12, color: '#909399' }}>{item.desc}</div>
             </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 前台 Prototype 頁面 */}
+      <div style={{ background: '#fff', border: '1px solid #DCDFE6', padding: 24, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+          <div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#303133', marginBottom: 2 }}>前台 Prototype 頁面</div>
+            <div style={{ fontSize: 12, color: '#909399' }}>消費者端（前台）Prototype — 點擊在新分頁開啟</div>
+          </div>
+          <span style={{ padding: '2px 8px', background: '#F0F9EB', border: '1px solid #C2E7B0', color: '#67C23A', fontSize: 11, fontWeight: 600, letterSpacing: '0.04em' }}>STOREFRONT</span>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 8 }}>
+          {[
+            { label: '商品列表',     desc: '/products',       href: 'html/商品列表.html' },
+            { label: '商品詳情',     desc: '/products/:slug', href: 'html/商品詳情.html' },
+            { label: '購物車',       desc: '/cart',           href: 'html/購物車.html' },
+            { label: '結帳頁',       desc: '/checkout',       href: 'html/結帳頁.html' },
+            { label: '訂單確認頁',   desc: '/order/confirm',  href: 'html/訂單確認頁.html' },
+            { label: '會員中心',     desc: '/account',        href: 'html/會員中心.html' },
+            { label: '訪客訂單查詢', desc: '/order-query',    href: 'html/訪客訂單查詢.html' },
+          ].map(item => (
+            <a
+              key={item.href}
+              href={item.href}
+              target="_blank"
+              rel="noopener"
+              style={{ padding: '14px 16px', border: '1px solid #DCDFE6', background: '#fff', textDecoration: 'none', display: 'block', transition: 'border-color 0.15s, box-shadow 0.15s' }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = '#67C23A'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(103,194,58,0.12)'; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = '#DCDFE6'; e.currentTarget.style.boxShadow = 'none'; }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, opacity: 0.4 }}><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" stroke="#303133" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/><polyline points="15 3 21 3 21 9" stroke="#303133" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/><line x1="10" y1="14" x2="21" y2="3" stroke="#303133" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <div style={{ fontWeight: 600, color: '#303133', fontSize: 13 }}>{item.label}</div>
+              </div>
+              <div style={{ fontSize: 11, color: '#C0C4CC', fontFamily: 'SF Mono,Consolas,monospace', letterSpacing: '0.02em' }}>{item.desc}</div>
+            </a>
           ))}
         </div>
       </div>

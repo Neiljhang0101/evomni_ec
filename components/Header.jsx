@@ -13,9 +13,13 @@ if (window.__evomni_isPro === undefined) window.__evomni_isPro = false;
 const _htmlRoot = 'html/';
 
 const FRONTEND_PAGES = [
+  { label: '商品列表', url: _htmlRoot + '商品列表.html', route: '/products' },
+  { label: '商品詳情', url: _htmlRoot + '商品詳情.html', route: '/products/:slug' },
   { label: '購物車', url: _htmlRoot + '購物車.html', route: '/cart' },
   { label: '結帳頁', url: _htmlRoot + '結帳頁.html', route: '/checkout' },
   { label: '訂單確認頁', url: _htmlRoot + '訂單確認頁.html', route: '/order/confirmed' },
+  { label: '會員中心', url: _htmlRoot + '會員中心.html', route: '/account' },
+  { label: '訪客訂單查詢', url: _htmlRoot + '訪客訂單查詢.html', route: '/order-query' },
 ];
 
 function Header({ breadcrumbs = [], onNavigate, onToggleSidebar }) {

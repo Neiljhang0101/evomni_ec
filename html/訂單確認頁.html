@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
 <link rel="stylesheet" href="../frontend-design-system/colors_and_type.css">
+<link rel="stylesheet" href="../frontend-design-system/rwd.css">
 <link rel="stylesheet" href="../evomnialert/evomnialert.css">
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
@@ -61,6 +62,10 @@ const StateBar = ({ states, current, onChange }) => (
         {s.label}
       </button>
     ))}
+    <a href="訪客訂單查詢.html" style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5, padding: '9px 0 9px 16px', letterSpacing: '.04em', whiteSpace: 'nowrap', borderLeft: '1px solid rgba(255,255,255,.12)', marginLeft: 8 }}>
+      訪客訂單查詢
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M1 10L10 1M10 1H4M10 1V7"/></svg>
+    </a>
   </div>
 );
 

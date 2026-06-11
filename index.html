@@ -179,6 +179,22 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = React.useState(false);
   const { show, Toast } = useToast();
 
+  // Demo state: controls sidebar structure
+  const [demoState, setDemoState] = React.useState({
+    tab:          'planA',
+    planAChecked: { cms: false, ecommerce: true },
+    planBActive:  'ecommerce',
+  });
+
+  const onDemoChange = React.useCallback((patch) => {
+    setDemoState(prev => ({ ...prev, ...patch }));
+  }, []);
+
+  // Compute whether to show ecommerce section
+  const showEcommerce = demoState.tab === 'planA'
+    ? !!demoState.planAChecked.ecommerce
+    : demoState.planBActive === 'ecommerce';
+
   const navigate = React.useCallback((page) => {
     setCurrentPage(page);
   }, []);
@@ -190,7 +206,7 @@ function App() {
 
   const renderContent = () => {
     if (currentPage === 'dashboard') {
-      return <PageDashboard onNavigate={navigate} />;
+      return <PageDashboard onNavigate={navigate} demoState={demoState} onDemoChange={onDemoChange} />;
     }
     if (PRODUCTS_PAGES.has(currentPage)) {
       return <PageProducts currentPage={currentPage} onNavigate={navigate} />;
@@ -237,21 +253,47 @@ function App() {
     if (currentPage === 'gs-temp-freight' || currentPage === 'gs-weight-freight') {
       return <PageFreight currentPage={currentPage} onNavigate={navigate} show={show} />;
     }
-    // 未整合的頁面顯示佔位提示
+    // 建置中頁面
+    const WIP_META = {
+      'gs-system':      { title: '系統設定',    desc: '網站基本設定 / 網域與 SSL / SEO 設定 / 語系 / 營運狀態切換' },
+      'gs-permissions': { title: '權限設定',    desc: '後台帳號角色分級設定、各模組操作存取權限管理' },
+      'gs-accounts':    { title: '帳號設定',    desc: '後台管理員帳號列表、密碼修改、二步驟驗證設定' },
+      'gs-ai-plan':     { title: 'AI 方案',     desc: 'AI Token 使用量查詢、方案詳情、購買更多 Token' },
+      'articles':       { title: '文章',        desc: '文章列表、分類管理、文章編輯器（富文本）、SEO 設定' },
+      'media-library':  { title: '媒體庫',      desc: '圖片 / 影片 / 文件統一管理、上傳、分類、搜尋' },
+      'forms':          { title: '表單訊息',    desc: '前台聯絡表單、詢問單收件匣、已讀 / 封存管理' },
+      'notifications':  { title: '通知',        desc: '系統通知、到期提醒、操作紀錄推播設定' },
+      'website-ec':     { title: '電商網站',    desc: '電商前台頁面設計、版型設定（與形象站獨立管理）' },
+    };
+    const wip = WIP_META[currentPage];
     return (
-      <div style={{ textAlign: 'center', padding: '80px 24px', color: '#909399' }}>
-        <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#F5F7FA', border: '2px solid #EBEEF5', margin: '0 auto 16px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>
-          ○
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 24 }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#303133' }}>
+            {wip ? wip.title : currentPage}
+          </h1>
+          <span style={{ padding: '2px 8px', background: '#FDF6EC', border: '1px solid #FAECD8', color: '#E6A23C', fontSize: 11, borderRadius: 2, fontWeight: 500, lineHeight: '18px' }}>建置中</span>
         </div>
-        <div style={{ fontSize: 15, fontWeight: 600, color: '#606266', marginBottom: 6 }}>{currentPage}</div>
-        <div style={{ fontSize: 13 }}>此功能即將推出，敬請期待</div>
+        <div style={{ background: '#fff', border: '1px solid #DCDFE6', borderRadius: 3, padding: '64px 32px', textAlign: 'center' }}>
+          <div style={{ width: 56, height: 56, borderRadius: 8, background: '#F5F7FA', border: '1px solid #EBEEF5', margin: '0 auto 20px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="#C0C4CC" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: '#606266', marginBottom: 8 }}>此功能正在建置中</div>
+          {wip && wip.desc && (
+            <div style={{ fontSize: 13, color: '#909399', lineHeight: 1.9, maxWidth: 420, margin: '0 auto' }}>
+              預計功能範圍：{wip.desc}
+            </div>
+          )}
+        </div>
       </div>
     );
   };
 
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      <Sidebar currentPage={currentPage} onNavigate={navigate} collapsed={sidebarCollapsed} />
+      <Sidebar key={String(showEcommerce)} currentPage={currentPage} onNavigate={navigate} collapsed={sidebarCollapsed} showEcommerce={showEcommerce} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
         <Header onNavigate={navigate} onToggleSidebar={() => setSidebarCollapsed(c => !c)} />
         <main style={{ flex: 1, overflowY: 'auto', padding: 40, background: '#F5F7FA' }}>

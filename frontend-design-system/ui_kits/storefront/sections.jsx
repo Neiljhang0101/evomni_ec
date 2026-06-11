@@ -4,7 +4,7 @@ const { useState: useStateS } = React;
 
 function AnnouncementBar() {
   return (
-    <div style={{ background: "var(--ink-900)", color: "#fff", textAlign: "center",
+    <div className="site-announcement" style={{ background: "var(--ink-900)", color: "#fff", textAlign: "center",
       font: "400 14px/1 var(--font-sans)", letterSpacing: ".08em", padding: "9px 8px" }}>
       免運門檻 NT$ 1,500 · 全館會員多重好禮
     </div>
@@ -12,35 +12,151 @@ function AnnouncementBar() {
 }
 
 function Header({ cartCount, onCart, onNav, active = "SHOP" }) {
-  const links = [["SHOP", "SHOP"], ["保養", "保養"], ["彩妝", "彩妝"], ["香氛", "香氛"], ["JOURNAL", "JOURNAL"]];
+  const [mobileOpen, setMobileOpen] = useStateS(false);
+
+  const links = [
+    { key: "SHOP",    label: "SHOP",    href: "商品列表.html" },
+    { key: "保養",    label: "保養",    href: "商品列表.html" },
+    { key: "彩妝",    label: "彩妝",    href: "商品列表.html" },
+    { key: "香氛",    label: "香氛",    href: "商品列表.html" },
+    { key: "JOURNAL", label: "JOURNAL", href: "#" },
+  ];
+
+  const navLink = (key, label, href) => (
+    <a key={key} href={href} style={{
+      font: "500 14px/1 var(--font-sans)", letterSpacing: ".06em", textTransform: "uppercase",
+      color: "var(--fg)", textDecoration: "none", cursor: "pointer",
+      borderBottom: active === key ? "2px solid var(--ink-900)" : "2px solid transparent", paddingBottom: 4,
+    }}>{label}</a>
+  );
+
   return (
-    <header style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "18px 40px", borderBottom: "1px solid var(--line-300)", background: "#fff", position: "sticky", top: 0, zIndex: 20 }}>
-      <div onClick={() => onNav("home")} style={{ cursor: "pointer" }}>
-        <img src="../frontend-design-system/uploads/logo.jpg" alt="Evomni" style={{ height: 36, width: "auto", display: "block" }} />
-      </div>
-      <nav style={{ display: "flex", gap: 30 }}>
-        {links.map(([k, label]) => (
-          <a key={k} onClick={() => onNav("home")} style={{
-            font: "500 14px/1 var(--font-sans)", letterSpacing: ".06em", textTransform: "uppercase",
-            color: "var(--fg)", textDecoration: "none", cursor: "pointer",
-            borderBottom: active === k ? "2px solid var(--ink-900)" : "2px solid transparent", paddingBottom: 4,
-          }}>{label}</a>
-        ))}
-      </nav>
-      <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
-        <Icon name="search" style={{ cursor: "pointer" }} />
-        <Icon name="person_outline" style={{ cursor: "pointer" }} />
-        <div onClick={onCart} style={{ position: "relative", cursor: "pointer", display: "flex" }}>
-          <Icon name="shopping_bag" />
-          {cartCount > 0 && (
-            <span style={{ position: "absolute", top: -7, right: -8, minWidth: 16, height: 16, padding: "0 4px",
-              background: "var(--ink-900)", color: "#fff", borderRadius: 9999, font: "600 14px/20px var(--font-sans)", textAlign: "center",
-              minWidth: 20, height: 20 }}>{cartCount}</span>
-          )}
+  <React.Fragment>
+    <header style={{ position: "sticky", top: 0, zIndex: 100, background: "#fff", borderBottom: "1px solid var(--line-300)" }}>
+      <div className="site-header-inner" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 40px" }}>
+        <a href="商品列表.html" style={{ display: "block" }}>
+          <img src="../frontend-design-system/uploads/logo.jpg" alt="Evomni" style={{ height: 36, width: "auto", display: "block" }} />
+        </a>
+
+        {/* Desktop nav */}
+        <nav className="site-nav-desktop" style={{ display: "flex", gap: 30 }}>
+          {links.map(({ key, label, href }) => navLink(key, label, href))}
+        </nav>
+
+        {/* Right actions */}
+        <div style={{ display: "flex", gap: 20, alignItems: "center" }}>
+          <span className="site-header-icons-desktop" style={{ display: "flex", gap: 20, alignItems: "center" }}>
+            <Icon name="search" style={{ cursor: "pointer" }} />
+            <a href="會員中心.html" style={{ display: "flex", color: "inherit" }}><Icon name="person_outline" style={{ cursor: "pointer" }} /></a>
+          </span>
+          <div onClick={onCart} style={{ position: "relative", cursor: "pointer", display: "flex" }}>
+            <Icon name="shopping_bag" />
+            {cartCount > 0 && (
+              <span style={{ position: "absolute", top: -7, right: -8, minWidth: 20, height: 20, padding: "0 4px",
+                background: "var(--ink-900)", color: "#fff", borderRadius: 9999,
+                font: "600 14px/20px var(--font-sans)", textAlign: "center" }}>{cartCount}</span>
+            )}
+          </div>
+          {/* Hamburger — CSS hides on desktop, shows on mobile */}
+          <button
+            className="site-header-hamburger"
+            onClick={() => setMobileOpen(o => !o)}
+            aria-label="開啟選單"
+            style={{ border: "none", background: "none", cursor: "pointer", padding: "4px 2px",
+              flexDirection: "column", gap: 5, alignItems: "center", justifyContent: "center" }}
+          >
+            <span style={{ display: "block", width: 22, height: 1.5, background: "var(--fg)", transition: "transform .2s",
+              transform: mobileOpen ? "translateY(6.5px) rotate(45deg)" : "none" }} />
+            <span style={{ display: "block", width: 22, height: 1.5, background: "var(--fg)", transition: "opacity .2s",
+              opacity: mobileOpen ? 0 : 1 }} />
+            <span style={{ display: "block", width: 22, height: 1.5, background: "var(--fg)", transition: "transform .2s",
+              transform: mobileOpen ? "translateY(-6.5px) rotate(-45deg)" : "none" }} />
+          </button>
         </div>
       </div>
+
     </header>
+
+    {/* ── Mobile nav — full-screen overlay + left drawer ─────────────────── */}
+    {mobileOpen && (
+      <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex" }}>
+        {/* Backdrop */}
+        <div
+          onClick={() => setMobileOpen(false)}
+          style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.5)" }}
+        />
+        {/* Drawer panel */}
+        <div style={{
+          position: "relative", zIndex: 1,
+          width: "min(320px, 85vw)", height: "100%",
+          background: "#fff", display: "flex", flexDirection: "column",
+          overflowY: "auto",
+        }}>
+          {/* Drawer header */}
+          <div style={{
+            display: "flex", alignItems: "center", justifyContent: "space-between",
+            padding: "18px 20px", borderBottom: "1px solid var(--line-200)", flexShrink: 0,
+          }}>
+            <a href="商品列表.html">
+              <img src="../frontend-design-system/uploads/logo.jpg" alt="Evomni"
+                style={{ height: 32, width: "auto", display: "block" }} />
+            </a>
+            <button onClick={() => setMobileOpen(false)} style={{
+              border: "none", background: "none", cursor: "pointer", padding: 6,
+              display: "flex", alignItems: "center", color: "var(--fg)",
+            }}>
+              <Icon name="close" size={22} />
+            </button>
+          </div>
+          {/* Nav links — large touch targets */}
+          <nav style={{ flex: 1 }}>
+            {links.map(({ key, label, href }) => (
+              <a key={key} href={href} onClick={() => setMobileOpen(false)} style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "20px 24px",
+                font: `${active === key ? "600" : "400"} 16px/1 var(--font-sans)`,
+                letterSpacing: ".06em", textTransform: "uppercase",
+                color: active === key ? "var(--fg)" : "var(--fg-muted)",
+                textDecoration: "none",
+                borderBottom: "1px solid var(--line-100)",
+                borderLeft: active === key ? "3px solid var(--ink-900)" : "3px solid transparent",
+                background: active === key ? "var(--fill-200)" : "#fff",
+              }}>
+                {label}
+                <Icon name="chevron_right" size={16} style={{ color: "var(--fg-subtle)" }} />
+              </a>
+            ))}
+          </nav>
+          {/* Bottom utility links */}
+          <div style={{ borderTop: "1px solid var(--line-200)", flexShrink: 0 }}>
+            <a href="#" style={{
+              display: "flex", alignItems: "center", gap: 14, padding: "18px 24px",
+              font: "400 15px/1 var(--font-sans)", color: "var(--fg-muted)", textDecoration: "none",
+              borderBottom: "1px solid var(--line-100)",
+            }}>
+              <Icon name="search" size={20} style={{ flexShrink: 0 }} />
+              搜尋商品
+            </a>
+            <a href="會員中心.html" style={{
+              display: "flex", alignItems: "center", gap: 14, padding: "18px 24px",
+              font: "400 15px/1 var(--font-sans)", color: "var(--fg-muted)", textDecoration: "none",
+              borderBottom: "1px solid var(--line-100)",
+            }}>
+              <Icon name="person_outline" size={20} style={{ flexShrink: 0 }} />
+              會員中心
+            </a>
+            <a href="購物車.html" style={{
+              display: "flex", alignItems: "center", gap: 14, padding: "18px 24px",
+              font: "400 15px/1 var(--font-sans)", color: "var(--fg-muted)", textDecoration: "none",
+            }}>
+              <Icon name="shopping_bag" size={20} style={{ flexShrink: 0 }} />
+              購物車
+            </a>
+          </div>
+        </div>
+      </div>
+    )}
+  </React.Fragment>
   );
 }
 
@@ -139,13 +255,29 @@ function EditorialSplit({ onShop }) {
 
 function Footer() {
   const cols = [
-    ["客戶服務", ["配送與退貨", "常見問題", "聯絡我們", "門市據點"]],
-    ["關於 EVOMNI", ["品牌故事", "成分理念", "永續承諾", "人才招募"]],
-    ["會員", ["登入 / 註冊", "我的訂單", "會員權益", "電子報"]],
+    ["客戶服務", [
+      { label: "查詢訂單", href: "訪客訂單查詢.html" },
+      { label: "配送與退貨" },
+      { label: "常見問題" },
+      { label: "聯絡我們" },
+      { label: "門市據點" },
+    ]],
+    ["關於 EVOMNI", [
+      { label: "品牌故事" },
+      { label: "成分理念" },
+      { label: "永續承諾" },
+      { label: "人才招募" },
+    ]],
+    ["會員", [
+      { label: "登入 / 註冊" },
+      { label: "我的訂單" },
+      { label: "會員權益" },
+      { label: "電子報" },
+    ]],
   ];
   return (
-    <footer style={{ background: "#fff", borderTop: "1px solid var(--line-300)", padding: "56px 40px 32px" }}>
-      <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: 40, paddingBottom: 40, borderBottom: "1px solid var(--line-200)" }}>
+    <footer className="site-footer" style={{ background: "#fff", borderTop: "1px solid var(--line-300)", padding: "56px 40px 32px" }}>
+      <div className="site-footer-grid" style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr 1fr 1fr", gap: 40, paddingBottom: 40, borderBottom: "1px solid var(--line-200)" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <img src="../frontend-design-system/uploads/logo.jpg" alt="Evomni" style={{ height: 28, width: "auto", display: "block", alignSelf: "flex-start" }} />
           <p style={{ margin: 0, font: "400 14px/1.7 var(--font-sans)", color: "var(--fg-subtle)", maxWidth: 260 }}>潔淨植萃 · 科學保養。為每一種肌膚，找到屬於它的答案。</p>
@@ -153,7 +285,7 @@ function Footer() {
         {cols.map(([h, items]) => (
           <div key={h} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
             <div style={{ font: "600 14px/1 var(--font-sans)", letterSpacing: ".08em", textTransform: "uppercase", color: "var(--fg)" }}>{h}</div>
-            {items.map((i) => <a key={i} style={{ font: "400 14px/1 var(--font-sans)", color: "var(--fg-muted)", textDecoration: "none", cursor: "pointer" }}>{i}</a>)}
+            {items.map((i) => <a key={i.label} href={i.href || undefined} style={{ font: "400 14px/1 var(--font-sans)", color: "var(--fg-muted)", textDecoration: "none", cursor: "pointer" }}>{i.label}</a>)}
           </div>
         ))}
       </div>

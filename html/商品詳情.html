@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>輕透水潤精華乳 — Evomni Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<link rel="stylesheet" href="../frontend-design-system/colors_and_type.css">
+<link rel="stylesheet" href="../frontend-design-system/rwd.css">
+<link rel="stylesheet" href="../evomnialert/evomnialert.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../evomnialert/evomnialert.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { min-height: 100%; }
+  body { font-family: var(--font-sans); font-size: 16px; background: var(--fill-300); color: var(--fg); -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--line-300); }
+  a { color: var(--fg); text-decoration: none; }
+  button { cursor: pointer; font-family: var(--font-sans); }
+  input { font-family: var(--font-sans); outline: none; }
+  .proto-bar { background: var(--ink-900); display: flex; align-items: center; padding: 0 24px; overflow-x: auto; }
+  .proto-bar-label { font-size: 14px; letter-spacing: .08em; color: rgba(255,255,255,.45); text-transform: uppercase; padding-right: 12px; white-space: nowrap; }
+  .proto-btn { padding: 9px 14px; border: none; background: none; border-bottom: 2px solid transparent; font: 500 14px/1 var(--font-sans); letter-spacing: .04em; color: rgba(255,255,255,.55); cursor: pointer; white-space: nowrap; transition: color .15s; }
+  .proto-btn.active { border-bottom-color: #fff; color: #fff; }
+  /* product description rich text */
+  .desc-body h3 { font: 600 17px/1.4 var(--font-sans); color: var(--fg); margin: 20px 0 8px; }
+  .desc-body p  { font: 400 15px/1.7 var(--font-sans); color: var(--fg-muted); margin-bottom: 12px; }
+  .desc-body ul { padding-left: 18px; margin-bottom: 12px; }
+  .desc-body li { font: 400 15px/1.8 var(--font-sans); color: var(--fg-muted); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="../frontend-design-system/ui_kits/storefront/ui.jsx"></script>
+<script type="text/babel" src="../frontend-design-system/ui_kits/storefront/sections.jsx"></script>
+<script type="text/babel">
+const { useState, useRef, useMemo } = React;
+
+const StateBar = ({ states, current, onChange }) => (
+  <div className="proto-bar">
+    <span className="proto-bar-label">Prototype State</span>
+    {states.map(s => (
+      <button key={s.key} className={`proto-btn${current === s.key ? ' active' : ''}`} onClick={() => onChange(s.key)}>
+        {s.label}
+      </button>
+    ))}
+    <a href="訪客訂單查詢.html" style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5, padding: '9px 0 9px 16px', letterSpacing: '.04em', whiteSpace: 'nowrap', borderLeft: '1px solid rgba(255,255,255,.12)', marginLeft: 8 }}>
+      訪客訂單查詢
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M1 10L10 1M10 1H4M10 1V7"/></svg>
+    </a>
+  </div>
+);
+
+// ─── Star Rating ──────────────────────────────────────────────────────────────
+const StarRating = ({ value, count, size = 15, interactive, onRate }) => {
+  const [hovered, setHovered] = useState(null);
+  const display = hovered ?? value;
+  const stars = Array.from({ length: 5 }, (_, i) => {
+    if (display >= i + 1) return 'star';
+    if (!interactive && display >= i + 0.5) return 'star_half';
+    return 'star_border';
+  });
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      {stars.map((s, i) => (
+        <span key={i} className="material-icons-outlined"
+          style={{ fontSize: size, color: '#e6a23c', lineHeight: 1, cursor: interactive ? 'pointer' : 'default' }}
+          onMouseEnter={() => interactive && setHovered(i + 1)}
+          onMouseLeave={() => interactive && setHovered(null)}
+          onClick={() => interactive && onRate && onRate(i + 1)}
+        >{s}</span>
+      ))}
+      {count != null && (
+        <span style={{ font: `400 ${size}px/1 var(--font-sans)`, color: 'var(--fg-subtle)', marginLeft: 6 }}>{count} 則評論</span>
+      )}
+    </div>
+  );
+};
+
+// ─── Product Data ─────────────────────────────────────────────────────────────
+const IMAGES = [
+  '../assets/img2.png',
+  '../assets/img3.png',
+  '../assets/img4.png',
+  '../assets/img5.png',
+];
+
+const SPEC_GROUPS = [
+  {
+    name: '容量',
+    options: [
+      { value: '30ml' },
+      { value: '50ml' },
+      { value: '100ml', alwaysOut: true },
+    ],
+  },
+  {
+    name: '款式',
+    options: [
+      { value: '清爽型' },
+      { value: '滋潤型' },
+    ],
+  },
+];
+
+const FEATURES = [
+  '玻尿酸複合技術，補水鎖水長達 12 小時',
+  '輕薄質地，快速吸收不黏膩',
+  '積雪草萃取，舒緩修護敏感肌',
+  '菸醯胺提亮，均勻改善暗沉膚色',
+  '無酒精．無香料．敏感肌友善',
+];
+
+const EDITORIAL_INGREDIENTS = [
+  { title: '小分子玻尿酸', desc: '超強滲透力，為每一層肌膚細胞注入長效飽滿水分。' },
+  { title: '神經醯胺（Ceramide NP）', desc: '強化脂質屏障，鎖水防護，減少環境刺激。' },
+  { title: '積雪草萃取', desc: '天然舒緩成分，幫助修護受損肌膚並穩定泛紅。' },
+];
+
+const USAGE_STEPS = [
+  { title: '清潔後立即使用', desc: '潔顏後趁肌膚尚有濕潤感時使用，加速吸收效率。' },
+  { title: '取 2–3 滴於掌心', desc: '利用掌心體溫輕輕溫熱精華，喚醒活性成分。' },
+  { title: '由內向外按壓全臉', desc: '以手掌輕壓方式分區塗抹，避免摩擦拉扯肌膚。' },
+];
+
+const RELATED = [
+  { id: 2, name: '植萃保濕眼霜',       cat: 'SKINCARE',  price: 1280, img: '../assets/img4.png' },
+  { id: 5, name: '深層修護面膜五片裝',  cat: 'TREATMENT', price: 650,  img: '../assets/img3.png' },
+  { id: 7, name: '毛孔清潔潔顏慕斯',    cat: 'CLEANSE',   price: 490,  img: '../assets/img7.png' },
+  { id: 3, name: '煥膚嫩白精華液',      cat: 'SKINCARE',  price: 1490, img: '../assets/img5.png' },
+];
+
+const ADDONS = [
+  { id: 1, name: '保濕精華液小樣', price: 99,  original: 199, img: '../assets/img3.png' },
+  { id: 2, name: '防曬乳試用裝',   price: 149, original: 299, img: null },
+  { id: 3, name: '卸妝油旅行組',   price: 199, original: 399, img: '../assets/img4.png' },
+  { id: 4, name: '淨膚潔面乳',     price: 129, original: 249, img: null },
+];
+
+const REVIEWS = [
+  { id: 1, name: '李 O 雯', rating: 5, date: '2026-05-15', content: '使用後肌膚明顯變得水潤，質地輕薄不黏膩，推薦給喜歡清爽保濕感的朋友！', verified: true, specs: '50ml · 清爽型' },
+  { id: 2, name: '陳 O 君', rating: 5, date: '2026-04-28', content: '連用兩週後發現膚色有均勻一些，很驚喜。瓶裝設計也很好用，一滴一滴能精準控量。', verified: true, specs: '50ml · 滋潤型' },
+  { id: 3, name: '王 O 玲', rating: 4, date: '2026-04-10', content: '好推開，沒有假滑感，肌膚吸收快。氣味偏重，介意香氣的朋友要留意。', verified: true, specs: '30ml · 清爽型' },
+  { id: 4, name: '張 O 豪', rating: 5, date: '2026-03-22', content: '老婆指定購買，說上了年紀後保濕很重要，已經買了第二瓶。', verified: true, specs: '100ml · 滋潤型' },
+  { id: 5, name: '林 O 芳', rating: 4, date: '2026-03-05', content: '成分乾淨，敏感肌友善，但價格對我來說稍高，希望多推出優惠組合。', verified: false, specs: '50ml · 清爽型' },
+  { id: 6, name: '吳 O 宇', rating: 5, date: '2026-02-14', content: '情人節送給另一半的禮物，包裝精美，對方非常喜歡，會回購。', verified: true, specs: '50ml · 滋潤型' },
+  { id: 7, name: '黃 O 珊', rating: 3, date: '2026-01-30', content: '效果還不錯，但對我的膚質來說偏油，夏天可能不太適合，冬天使用應該很好。', verified: true, specs: '30ml · 滋潤型' },
+];
+
+const RATING_BREAKDOWN = { 5: 68, 4: 32, 3: 14, 2: 6, 1: 4 };
+const TOTAL_REVIEWS = Object.values(RATING_BREAKDOWN).reduce((a, b) => a + b, 0);
+
+// Per-state product data
+const PRODUCT_BY_STATE = {
+  normal:     { price: 890,  original: null,  totalStock: 25, lowStockThreshold: 5 },
+  low_stock:  { price: 890,  original: null,  totalStock: 3,  lowStockThreshold: 5 },
+  soldout:    { price: 890,  original: null,  totalStock: 0,  lowStockThreshold: 5 },
+  sale:       { price: 690,  original: 890,   totalStock: 18, lowStockThreshold: 5 },
+};
+
+// ─── Image Gallery ────────────────────────────────────────────────────────────
+const ImageGallery = ({ images }) => {
+  const [activeIdx, setActiveIdx] = useState(0);
+  const [zoomPos, setZoomPos] = useState(null);
+  const imgWrapRef = useRef(null);
+
+  const handleMouseMove = (e) => {
+    const rect = imgWrapRef.current.getBoundingClientRect();
+    const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+    const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+    setZoomPos({ x, y });
+  };
+
+  return (
+    <div style={{ position: 'relative' }}>
+      {/* Main image */}
+      <div
+        ref={imgWrapRef}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={() => setZoomPos(null)}
+        style={{ position: 'relative', overflow: 'hidden', aspectRatio: '3/4', cursor: zoomPos ? 'crosshair' : 'zoom-in', background: '#f5f1ed' }}
+      >
+        <img
+          src={images[activeIdx]}
+          alt="商品主圖"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
+        />
+        {/* Lens indicator */}
+        {zoomPos && (
+          <div style={{ position: 'absolute', width: 110, height: 110, border: '1.5px solid rgba(255,255,255,.75)', background: 'rgba(255,255,255,.12)', transform: 'translate(-50%, -50%)', left: `${zoomPos.x}%`, top: `${zoomPos.y}%`, pointerEvents: 'none' }} />
+        )}
+      </div>
+
+      {/* Zoom panel — floats to the right of the image column */}
+      {zoomPos && (
+        <div className="pdp-zoom-panel" style={{
+          position: 'absolute', top: 0, left: 'calc(100% + 16px)',
+          width: 380, height: 380, flexShrink: 0,
+          backgroundImage: `url(${images[activeIdx]})`,
+          backgroundSize: '280%',
+          backgroundPosition: `${zoomPos.x}% ${zoomPos.y}%`,
+          border: '1px solid var(--line-300)',
+          boxShadow: 'var(--shadow-overlay)',
+          zIndex: 20,
+        }} />
+      )}
+
+      {/* Thumbnails */}
+      <div style={{ display: 'flex', gap: 8, marginTop: 10 }}>
+        {images.map((img, i) => (
+          <button
+            key={i}
+            onClick={() => { setActiveIdx(i); setZoomPos(null); }}
+            style={{ width: 72, height: 72, padding: 0, border: `2px solid ${activeIdx === i ? 'var(--ink-900)' : 'var(--line-300)'}`, background: 'none', cursor: 'pointer', overflow: 'hidden', flexShrink: 0, transition: 'border-color .15s' }}
+          >
+            <img src={img} alt={`縮圖 ${i + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ─── Quantity Control ─────────────────────────────────────────────────────────
+const QtyControl = ({ value, onChange, max, disabled }) => {
+  const btnS = (active) => ({
+    width: 36, height: 36, border: '1px solid var(--border)', background: 'none',
+    color: active && !disabled ? 'var(--fg)' : 'var(--fg-disabled)',
+    cursor: active && !disabled ? 'pointer' : 'not-allowed',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+  });
+  return (
+    <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid var(--border)', width: 'fit-content' }}>
+      <button style={btnS(value > 1)} onClick={() => !disabled && value > 1 && onChange(value - 1)} disabled={disabled || value <= 1}>
+        <Icon name="remove" size={16} />
+      </button>
+      <span style={{ width: 48, textAlign: 'center', font: '400 16px/36px var(--font-sans)', color: disabled ? 'var(--fg-disabled)' : 'var(--fg)', borderLeft: '1px solid var(--border)', borderRight: '1px solid var(--border)' }}>{value}</span>
+      <button style={btnS(value < max)} onClick={() => !disabled && value < max && onChange(value + 1)} disabled={disabled || value >= max}>
+        <Icon name="add" size={16} />
+      </button>
+    </div>
+  );
+};
+
+// ─── Rating Breakdown ─────────────────────────────────────────────────────────
+const RatingBreakdown = ({ avg, total, breakdown }) => (
+  <div style={{ display: 'flex', gap: 40, alignItems: 'center', padding: '24px 0', borderBottom: '1px solid var(--line-300)' }}>
+    {/* Big number */}
+    <div style={{ textAlign: 'center', flexShrink: 0 }}>
+      <div style={{ font: '300 56px/1 var(--font-sans)', color: 'var(--fg)', fontVariantNumeric: 'tabular-nums' }}>{avg}</div>
+      <div style={{ marginTop: 6 }}>
+        {Array.from({ length: 5 }, (_, i) => (
+          <span key={i} className="material-icons-outlined" style={{ fontSize: 16, color: '#e6a23c', lineHeight: 1 }}>{avg >= i + 1 ? 'star' : avg >= i + 0.5 ? 'star_half' : 'star_border'}</span>
+        ))}
+      </div>
+      <div style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginTop: 6 }}>{total} 則評論</div>
+    </div>
+    {/* Bars */}
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {[5, 4, 3, 2, 1].map(star => {
+        const pct = Math.round((breakdown[star] / total) * 100);
+        return (
+          <div key={star} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)', width: 14, textAlign: 'right', flexShrink: 0 }}>{star}</span>
+            <span className="material-icons-outlined" style={{ fontSize: 14, color: '#e6a23c', lineHeight: 1, flexShrink: 0 }}>star</span>
+            <div style={{ flex: 1, height: 6, background: 'var(--line-200)' }}>
+              <div style={{ height: 6, width: `${pct}%`, background: '#e6a23c', transition: 'width .4s var(--ease)' }} />
+            </div>
+            <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)', width: 32, flexShrink: 0 }}>{pct}%</span>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+);
+
+// ─── Review Card ──────────────────────────────────────────────────────────────
+const ReviewCard = ({ review }) => (
+  <div style={{ padding: '24px 0', borderBottom: '1px solid var(--line-200)' }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--ink-900)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <span style={{ font: '500 14px/1 var(--font-sans)', color: '#fff' }}>{review.name[0]}</span>
+        </div>
+        <div>
+          <div style={{ font: '500 15px/1 var(--font-sans)', color: 'var(--fg)' }}>{review.name}</div>
+          <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginTop: 4 }}>
+            {review.specs}
+            {review.verified && <span style={{ marginLeft: 8, color: 'var(--success)', font: '400 13px/1 var(--font-sans)' }}>已驗證購買</span>}
+          </div>
+        </div>
+      </div>
+      <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)', flexShrink: 0, marginLeft: 16 }}>{review.date}</span>
+    </div>
+    <div style={{ marginBottom: 8 }}>
+      {Array.from({ length: 5 }, (_, i) => (
+        <span key={i} className="material-icons-outlined" style={{ fontSize: 14, color: '#e6a23c', lineHeight: 1 }}>{review.rating >= i + 1 ? 'star' : 'star_border'}</span>
+      ))}
+    </div>
+    <p style={{ font: '400 15px/1.65 var(--font-sans)', color: 'var(--fg-muted)' }}>{review.content}</p>
+  </div>
+);
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+const App = () => {
+  const [pageState, setPageState] = useState('normal');
+  const [selectedSpecs, setSelectedSpecs] = useState({});
+  const [specErrors, setSpecErrors] = useState({});
+  const [qty, setQty] = useState(1);
+  const [saved, setSaved] = useState(false);
+  const [descTab, setDescTab] = useState('desc');
+  const [showAllReviews, setShowAllReviews] = useState(false);
+  const [cartCount, setCartCount] = useState(0);
+  const [addonCart, setAddonCart] = useState({});
+
+  const product = PRODUCT_BY_STATE[pageState];
+  const isSoldOut = product.totalStock === 0;
+  const isLowStock = !isSoldOut && product.totalStock <= product.lowStockThreshold;
+
+  const handleStateChange = (s) => {
+    setPageState(s);
+    setSelectedSpecs({});
+    setSpecErrors({});
+    setQty(1);
+  };
+
+  const handleSpecSelect = (groupName, value) => {
+    setSelectedSpecs(prev => ({ ...prev, [groupName]: value }));
+    setSpecErrors(prev => ({ ...prev, [groupName]: null }));
+  };
+
+  const handleAddToCart = () => {
+    if (isSoldOut) return;
+    const errors = {};
+    SPEC_GROUPS.forEach(g => {
+      if (!selectedSpecs[g.name]) errors[g.name] = `請先選擇${g.name}`;
+    });
+    if (Object.keys(errors).length > 0) {
+      setSpecErrors(errors);
+      return;
+    }
+    const label = SPEC_GROUPS.map(g => selectedSpecs[g.name]).join(' / ');
+    setCartCount(c => c + qty);
+    SiteAlert.success('已加入購物車', `輕透水潤精華乳 · ${label} × ${qty}`);
+  };
+
+  const handleBuyNow = () => {
+    if (isSoldOut) return;
+    const errors = {};
+    SPEC_GROUPS.forEach(g => {
+      if (!selectedSpecs[g.name]) errors[g.name] = `請先選擇${g.name}`;
+    });
+    if (Object.keys(errors).length > 0) {
+      setSpecErrors(errors);
+      return;
+    }
+    EvomniAlert.show({
+      type: 'info',
+      title: '立即購買',
+      desc: '確認後將直接前往結帳頁',
+      confirmText: '確認購買',
+      onConfirm: () => { window.location.href = '結帳頁.html'; }
+    });
+  };
+
+  const visibleReviews = showAllReviews ? REVIEWS : REVIEWS.slice(0, 5);
+  const avgRating = (4.8).toFixed(1);
+
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--fill-300)' }}>
+      <AnnouncementBar />
+      <Header cartCount={cartCount} onCart={() => { window.location.href = '購物車.html'; }} onNav={() => {}} active="SHOP" />
+      <StateBar
+        states={[
+          { key: 'normal',    label: '正常' },
+          { key: 'low_stock', label: '庫存警示' },
+          { key: 'soldout',   label: '已售完' },
+          { key: 'sale',      label: '特價商品' },
+        ]}
+        current={pageState}
+        onChange={handleStateChange}
+      />
+
+      <main className="page-main pdp-main" style={{ maxWidth: 'var(--container)', margin: '0 auto', padding: '40px var(--gutter) 100px' }}>
+        {/* Breadcrumb */}
+        <div style={{ display: 'flex', gap: 4, alignItems: 'center', marginBottom: 28, font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)' }}>
+          <a href="#" style={{ color: 'var(--fg-subtle)' }}>首頁</a>
+          <span className="material-icons-outlined" style={{ fontSize: 14, lineHeight: 1 }}>chevron_right</span>
+          <a href="商品列表.html" style={{ color: 'var(--fg-subtle)' }}>保養</a>
+          <span className="material-icons-outlined" style={{ fontSize: 14, lineHeight: 1 }}>chevron_right</span>
+          <span style={{ color: 'var(--fg)' }}>輕透水潤精華乳</span>
+        </div>
+
+        {/* ── Product Section ─────────────────────────────────────────────── */}
+        <div className="pdp-layout" style={{ display: 'flex', gap: 56, alignItems: 'flex-start', marginBottom: 64 }}>
+          {/* Images column — overflow visible so zoom panel can extend right */}
+          <div className="pdp-images-col" style={{ flex: '0 0 58%', position: 'relative' }}>
+            <ImageGallery images={IMAGES} />
+          </div>
+
+          {/* Product info column */}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <Eyebrow style={{ marginBottom: 8 }}>SKINCARE</Eyebrow>
+            <h1 style={{ font: '600 28px/1.25 var(--font-sans)', letterSpacing: '-.01em', color: 'var(--fg)', marginBottom: 12 }}>輕透水潤精華乳</h1>
+
+            {/* Rating + social proof */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
+              <StarRating value={4.8} count={124} size={15} />
+              <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)' }}>已售出 890 件</span>
+            </div>
+
+            {/* Price */}
+            <div style={{ marginBottom: 20 }}>
+              {product.original ? (
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                  <span style={{ font: '600 26px/1 var(--font-sans)', color: 'var(--danger)', fontVariantNumeric: 'tabular-nums' }}>NT$ {product.price.toLocaleString()}</span>
+                  <span style={{ font: '400 16px/1 var(--font-sans)', color: 'var(--fg-subtle)', textDecoration: 'line-through', fontVariantNumeric: 'tabular-nums' }}>NT$ {product.original.toLocaleString()}</span>
+                  <Badge tone="danger">SALE</Badge>
+                </div>
+              ) : (
+                <span style={{ font: '600 26px/1 var(--font-sans)', color: 'var(--fg)', fontVariantNumeric: 'tabular-nums' }}>NT$ {product.price.toLocaleString()}</span>
+              )}
+            </div>
+
+            <div style={{ height: 1, background: 'var(--line-300)', marginBottom: 20 }} />
+
+            {/* Short description + features */}
+            <p style={{ font: '400 15px/1.7 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 16 }}>
+              輕透水潤精華乳採用多層次玻尿酸技術，深層補水同時鎖住肌膚水分，質地輕盈，適合日常早晚護膚使用。
+            </p>
+            <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 20 }}>
+              {FEATURES.map((f, i) => (
+                <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10 }}>
+                  <span className="material-icons-outlined" style={{ fontSize: 16, color: 'var(--fg)', lineHeight: '22px', flexShrink: 0 }}>check_circle</span>
+                  <span style={{ font: '400 14px/1.5 var(--font-sans)', color: 'var(--fg-muted)' }}>{f}</span>
+                </li>
+              ))}
+            </ul>
+            <div style={{ height: 1, background: 'var(--line-200)', marginBottom: 24 }} />
+
+            {/* Spec selectors */}
+            {!isSoldOut && SPEC_GROUPS.map(group => (
+              <div key={group.name} style={{ marginBottom: 20 }}>
+                <div style={{ font: '500 14px/1 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 10 }}>
+                  {group.name}
+                  {selectedSpecs[group.name] && <span style={{ color: 'var(--fg)', marginLeft: 8 }}>· {selectedSpecs[group.name]}</span>}
+                </div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  {group.options.map(opt => {
+                    const isOut = opt.alwaysOut || (pageState === 'soldout');
+                    const isSelected = selectedSpecs[group.name] === opt.value;
+                    return (
+                      <button
+                        key={opt.value}
+                        disabled={isOut}
+                        onClick={() => !isOut && handleSpecSelect(group.name, opt.value)}
+                        style={{
+                          padding: '9px 18px', border: `1px solid ${isOut ? 'var(--line-200)' : isSelected ? 'var(--ink-900)' : specErrors[group.name] ? 'var(--danger)' : 'var(--line-400)'}`,
+                          background: isSelected ? 'var(--ink-900)' : 'var(--bg)',
+                          color: isOut ? 'var(--fg-disabled)' : isSelected ? '#fff' : 'var(--fg)',
+                          font: `${isSelected ? '500' : '400'} 14px/1 var(--font-sans)`,
+                          cursor: isOut ? 'not-allowed' : 'pointer',
+                          textDecoration: isOut ? 'line-through' : 'none',
+                          transition: 'border-color .12s, background .12s',
+                        }}
+                      >{opt.value}</button>
+                    );
+                  })}
+                </div>
+                {specErrors[group.name] && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 6 }}>
+                    <Icon name="error_outline" size={14} style={{ color: 'var(--danger)', flexShrink: 0, width: 14, height: 14, overflow: 'hidden' }} />
+                    <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--danger)' }}>{specErrors[group.name]}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {/* Qty + stock status */}
+            {!isSoldOut && (
+              <div style={{ marginBottom: 24 }}>
+                <div style={{ font: '500 14px/1 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 10 }}>數量</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                  <QtyControl value={qty} onChange={setQty} max={product.totalStock} disabled={false} />
+                  {isLowStock && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Icon name="warning_amber" size={15} style={{ color: 'var(--danger)', flexShrink: 0, width: 15, height: 15, overflow: 'hidden' }} />
+                      <span style={{ font: '500 14px/1 var(--font-sans)', color: 'var(--danger)' }}>僅剩 {product.totalStock} 件</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* CTAs */}
+            <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+              {isSoldOut ? (
+                <button
+                  onClick={() => SiteAlert.info('到貨通知', '補貨時將以 Email 通知您')}
+                  style={{ flex: 1, height: 52, border: '1px solid var(--ink-900)', background: 'none', font: '500 16px/1 var(--font-sans)', color: 'var(--ink-900)', cursor: 'pointer', letterSpacing: '.04em' }}
+                >到貨通知我</button>
+              ) : (
+                <>
+                  <button
+                    onClick={handleAddToCart}
+                    style={{ flex: 1, height: 52, border: '1px solid var(--ink-900)', background: 'none', font: '500 16px/1 var(--font-sans)', color: 'var(--ink-900)', cursor: 'pointer', letterSpacing: '.04em', transition: 'background .15s, color .15s' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--fill-200)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'none'; }}
+                  >加入購物車</button>
+                  <button
+                    onClick={handleBuyNow}
+                    style={{ flex: 1, height: 52, border: 'none', background: 'var(--ink-900)', font: '500 16px/1 var(--font-sans)', color: '#fff', cursor: 'pointer', letterSpacing: '.04em', transition: 'background .15s' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--brand-hover)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = 'var(--ink-900)'; }}
+                  >立即購買</button>
+                </>
+              )}
+            </div>
+
+            {/* Wishlist + Share */}
+            <div style={{ display: 'flex', gap: 16, marginBottom: 24 }}>
+              <button
+                onClick={() => { setSaved(!saved); if (!saved) SiteAlert.success('已加入心願清單', '輕透水潤精華乳'); }}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, border: 'none', background: 'none', cursor: 'pointer', font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)', padding: 0 }}
+              >
+                <span className="material-icons-outlined" style={{ fontSize: 18, color: saved ? '#303133' : 'var(--fg-subtle)', lineHeight: 1 }}>{saved ? 'favorite' : 'favorite_border'}</span>
+                {saved ? '已加入心願清單' : '加入心願清單'}
+              </button>
+              <button
+                onClick={() => SiteAlert.info('分享連結已複製', '貼到 LINE 或 Facebook 即可分享')}
+                style={{ display: 'flex', alignItems: 'center', gap: 6, border: 'none', background: 'none', cursor: 'pointer', font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)', padding: 0 }}
+              >
+                <Icon name="share" size={18} style={{ color: 'var(--fg-subtle)' }} />
+                分享
+              </button>
+            </div>
+
+            {/* Trust badges */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '16px 0', borderTop: '1px solid var(--line-200)' }}>
+              {[
+                { icon: 'local_shipping', text: '消費滿 NT$ 1,500 免運費（台灣本島）' },
+                { icon: 'replay',         text: '7 天無理由退換貨' },
+                { icon: 'verified_user',  text: '安全加密付款' },
+              ].map((b, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Icon name={b.icon} size={16} style={{ color: 'var(--fg-subtle)', flexShrink: 0 }} />
+                  <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>{b.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* ── Add-ons ─────────────────────────────────────────────────────── */}
+        <div style={{ marginBottom: 56 }}>
+          <div style={{ font: '600 20px/1 var(--font-sans)', color: 'var(--fg)', marginBottom: 20 }}>加購推薦</div>
+          <div style={{ display: 'flex', gap: 16, overflowX: 'auto', paddingBottom: 4 }}>
+            {ADDONS.map(item => (
+              <div key={item.id} style={{ flexShrink: 0, width: 160, display: 'flex', flexDirection: 'column', gap: 8, background: '#fff', border: '1px solid var(--line-200)', padding: '12px 12px 14px' }}>
+                {item.img
+                  ? <img src={item.img} alt={item.name} style={{ width: '100%', aspectRatio: '1', objectFit: 'cover', display: 'block' }} />
+                  : <Photo tint="#f0ede8" ratio="1/1" />
+                }
+                <div style={{ font: '500 14px/1.4 var(--font-sans)', color: 'var(--fg)' }}>{item.name}</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <span style={{ font: '500 14px/1 var(--font-sans)', color: 'var(--danger)', fontVariantNumeric: 'tabular-nums' }}>NT$ {item.price}</span>
+                  <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)', textDecoration: 'line-through', fontVariantNumeric: 'tabular-nums' }}>NT$ {item.original}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setAddonCart(c => ({ ...c, [item.id]: true }));
+                    SiteAlert.success('已加入購物車', item.name);
+                  }}
+                  style={{ height: 34, border: `1px solid ${addonCart[item.id] ? 'var(--line-300)' : 'var(--ink-900)'}`, background: addonCart[item.id] ? 'var(--fill-200)' : 'none', font: '500 14px/1 var(--font-sans)', color: addonCart[item.id] ? 'var(--fg-muted)' : 'var(--ink-900)', cursor: addonCart[item.id] ? 'default' : 'pointer', letterSpacing: '.02em' }}
+                >
+                  {addonCart[item.id] ? '已加入' : '加入購物車'}
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── 商品說明 / 成分表 Tabs ──────────────────────────────────────────── */}
+        <div style={{ marginBottom: 56, paddingTop: 36, borderTop: '1px solid var(--line-200)' }}>
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--line-300)', marginBottom: 28 }}>
+            {[['desc', '商品說明'], ['ingredients', '成分表']].map(([key, label]) => (
+              <button key={key} onClick={() => setDescTab(key)}
+                style={{ padding: '10px 20px', border: 'none', background: 'none', font: `${descTab === key ? '600' : '400'} 15px/1 var(--font-sans)`, color: descTab === key ? 'var(--fg)' : 'var(--fg-muted)', borderBottom: `2px solid ${descTab === key ? 'var(--ink-900)' : 'transparent'}`, marginBottom: -1, cursor: 'pointer', letterSpacing: '.02em', transition: 'color .15s, border-color .15s' }}>
+                {label}
+              </button>
+            ))}
+          </div>
+          {descTab === 'desc' ? (
+            <div className="desc-body" style={{ maxWidth: 720 }}>
+              <h3>產品特色</h3>
+              <p>輕透水潤精華乳採用多層次玻尿酸技術，深層補水同時鎖住肌膚水分，質地輕盈，適合日常早晚護膚使用。</p>
+              <h3>主要功效</h3>
+              <ul>
+                <li>多層次補水：大 / 中 / 小分子玻尿酸組合，由外至內深層滲透</li>
+                <li>強效鎖水：神經醯胺修護皮脂膜，減少水分蒸散</li>
+                <li>舒緩敏感：積雪草萃取物幫助修護受損肌膚屏障</li>
+                <li>均勻透亮：菸醯胺漸進改善暗沉與不均勻膚色</li>
+              </ul>
+              <h3>使用建議</h3>
+              <p>早晚潔顏後，取適量於掌心，輕拍均勻至全臉，可搭配乳液或面霜加強鎖水效果。敏感肌膚建議先進行局部測試。</p>
+            </div>
+          ) : (
+            <div style={{ maxWidth: 720 }}>
+              <h3 style={{ font: '600 17px/1.4 var(--font-sans)', color: 'var(--fg)', marginBottom: 12 }}>全成分標示</h3>
+              <p style={{ font: '400 13px/1.8 var(--font-mono)', color: 'var(--fg-muted)', letterSpacing: '.02em', marginBottom: 16 }}>Water, Glycerin, Niacinamide, Butylene Glycol, Sodium Hyaluronate, Panthenol, Tocopheryl Acetate, Centella Asiatica Extract, Ceramide NP, Allantoin, Phenoxyethanol, Ethylhexylglycerin.</p>
+              <p style={{ font: '400 13px/1.5 var(--font-sans)', color: 'var(--fg-subtle)' }}>不含酒精、香料、礦物油、矽靈、人工色素。</p>
+            </div>
+          )}
+        </div>
+
+        {/* ── Editorial Detail Sections ─────────────────────────────────────── */}
+        <section style={{ background: '#fff', borderTop: '1px solid var(--line-200)', borderBottom: '1px solid var(--line-200)', marginBottom: 72, padding: '72px 0' }}>
+          <div style={{ maxWidth: 1020, margin: '0 auto', display: 'flex', flexDirection: 'column', gap: 80 }}>
+
+            {/* Block 1 — 核心成分解析 */}
+            <div className="editorial-block" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
+              <div>
+                <Eyebrow style={{ marginBottom: 12 }}>INGREDIENTS</Eyebrow>
+                <h2 style={{ font: '600 24px/1.3 var(--font-sans)', letterSpacing: '-.01em', color: 'var(--fg)', marginBottom: 6, paddingBottom: 10, borderBottom: '2px solid var(--ink-900)', display: 'inline-block' }}>核心成分解析</h2>
+                <p style={{ font: '400 15px/1.7 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 24, marginTop: 16 }}>
+                  每一滴精華都精準調配，由三種關鍵成分協同作用，從深層到表面全面修護肌膚屏障。
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {EDITORIAL_INGREDIENTS.map((item, i) => (
+                    <div key={i} style={{ padding: '14px 16px', background: i === 0 ? 'var(--fill-300)' : 'var(--fill-200)', borderLeft: `3px solid ${i === 0 ? 'var(--ink-900)' : 'var(--line-300)'}` }}>
+                      <div style={{ font: '600 14px/1 var(--font-sans)', color: 'var(--fg)', marginBottom: 5 }}>{item.title}</div>
+                      <p style={{ font: '400 14px/1.5 var(--font-sans)', color: 'var(--fg-muted)', margin: 0 }}>{item.desc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div style={{ aspectRatio: '4/5', overflow: 'hidden' }}>
+                <img src="../assets/img5.png" alt="核心成分" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              </div>
+            </div>
+
+            {/* Block 2 — 使用儀式 */}
+            <div className="editorial-block editorial-block-reverse" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'center' }}>
+              <div style={{ aspectRatio: '4/5', overflow: 'hidden' }}>
+                <img src="../assets/img6.png" alt="使用儀式" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              </div>
+              <div>
+                <Eyebrow style={{ marginBottom: 12 }}>HOW TO USE</Eyebrow>
+                <h2 style={{ font: '600 24px/1.3 var(--font-sans)', letterSpacing: '-.01em', color: 'var(--fg)', marginBottom: 6, paddingBottom: 10, borderBottom: '2px solid var(--ink-900)', display: 'inline-block' }}>使用儀式</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 28, marginTop: 28 }}>
+                  {USAGE_STEPS.map((step, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 20 }}>
+                      <span style={{ font: '300 44px/1 var(--font-sans)', color: 'var(--line-300)', flexShrink: 0, width: 52, letterSpacing: '-.02em' }}>0{i + 1}</span>
+                      <div>
+                        <div style={{ font: '600 15px/1 var(--font-sans)', color: 'var(--fg)', marginBottom: 8 }}>{step.title}</div>
+                        <p style={{ font: '400 14px/1.6 var(--font-sans)', color: 'var(--fg-muted)', margin: 0 }}>{step.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Ingredients accordion */}
+                <details style={{ marginTop: 32, borderTop: '1px solid var(--line-200)', paddingTop: 16 }}>
+                  <summary style={{ font: '500 14px/1 var(--font-sans)', color: 'var(--fg-muted)', cursor: 'pointer', listStyle: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    全成分標示
+                    <Icon name="expand_more" size={18} />
+                  </summary>
+                  <p style={{ font: '400 13px/1.8 var(--font-mono)', color: 'var(--fg-muted)', marginTop: 12, letterSpacing: '.02em' }}>
+                    Water, Glycerin, Niacinamide, Butylene Glycol, Sodium Hyaluronate, Panthenol, Tocopheryl Acetate, Centella Asiatica Extract, Ceramide NP, Allantoin, Phenoxyethanol, Ethylhexylglycerin.
+                  </p>
+                  <p style={{ font: '400 13px/1.5 var(--font-sans)', color: 'var(--fg-subtle)', marginTop: 8 }}>不含酒精、香料、礦物油、矽靈、人工色素。</p>
+                </details>
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        {/* ── Related Products ──────────────────────────────────────────────── */}
+        <div style={{ marginBottom: 72 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 28 }}>
+            <div>
+              <Eyebrow style={{ marginBottom: 8 }}>RELATED ESSENTIALS</Eyebrow>
+              <h2 style={{ font: '600 22px/1 var(--font-sans)', letterSpacing: '-.01em', color: 'var(--fg)' }}>相關產品</h2>
+            </div>
+            <a href="商品列表.html" style={{ font: '500 14px/1 var(--font-sans)', color: 'var(--fg)', textDecoration: 'underline', textUnderlineOffset: 4, whiteSpace: 'nowrap' }}>查看全部</a>
+          </div>
+          <div className="related-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 24 }}>
+            {RELATED.map(p => (
+              <a key={p.id} href="商品詳情.html" style={{ display: 'block', textDecoration: 'none' }}>
+                <div style={{ aspectRatio: '3/4', overflow: 'hidden', marginBottom: 12, background: '#f5f1ed' }}>
+                  <img src={p.img} alt={p.name}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', transition: 'transform .4s var(--ease)' }}
+                    onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.04)'; }}
+                    onMouseLeave={e => { e.currentTarget.style.transform = 'scale(1)'; }}
+                  />
+                </div>
+                <Eyebrow style={{ fontSize: 12, marginBottom: 5 }}>{p.cat}</Eyebrow>
+                <div style={{ font: '500 14px/1.4 var(--font-sans)', color: 'var(--fg)', marginBottom: 6 }}>{p.name}</div>
+                <Price amount={p.price} size={14} />
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Reviews ─────────────────────────────────────────────────────── */}
+        <div>
+          <div style={{ font: '600 20px/1 var(--font-sans)', color: 'var(--fg)', marginBottom: 24 }}>消費者評論</div>
+          <RatingBreakdown avg={avgRating} total={TOTAL_REVIEWS} breakdown={RATING_BREAKDOWN} />
+          <div>
+            {visibleReviews.map(r => <ReviewCard key={r.id} review={r} />)}
+          </div>
+          {!showAllReviews && REVIEWS.length > 5 && (
+            <button
+              onClick={() => setShowAllReviews(true)}
+              style={{ marginTop: 24, display: 'flex', alignItems: 'center', gap: 6, border: '1px solid var(--line-400)', background: 'var(--bg)', height: 44, padding: '0 24px', font: '500 14px/1 var(--font-sans)', color: 'var(--fg)', cursor: 'pointer', letterSpacing: '.02em' }}
+            >
+              查看全部 {REVIEWS.length} 則評論
+              <Icon name="expand_more" size={18} />
+            </button>
+          )}
+        </div>
+      </main>
+      <Footer />
+
+      {/* ── Mobile sticky bottom CTA ─────────────────────────────────────── */}
+      <div className="pdp-mobile-cta" style={{
+        display: 'none', position: 'fixed', bottom: 0, left: 0, right: 0,
+        zIndex: 50, background: 'var(--bg)',
+        borderTop: '1px solid var(--line-300)',
+        padding: '12px 16px 16px',
+        alignItems: 'center', gap: 14,
+      }}>
+        <div style={{ flex: 1 }}>
+          {product.original ? (
+            <div>
+              <span style={{ font: '600 18px/1 var(--font-sans)', color: 'var(--danger)', fontVariantNumeric: 'tabular-nums' }}>
+                NT$ {product.price.toLocaleString()}
+              </span>
+              <span style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-subtle)', textDecoration: 'line-through', marginLeft: 6, fontVariantNumeric: 'tabular-nums' }}>
+                NT$ {product.original.toLocaleString()}
+              </span>
+            </div>
+          ) : (
+            <span style={{ font: '600 18px/1 var(--font-sans)', color: 'var(--fg)', fontVariantNumeric: 'tabular-nums' }}>
+              NT$ {product.price.toLocaleString()}
+            </span>
+          )}
+          <div style={{ font: '400 12px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginTop: 4 }}>
+            {isSoldOut ? '目前缺貨' : isLowStock ? `僅剩 ${product.totalStock} 件` : '現貨供應'}
+          </div>
+        </div>
+        {isSoldOut ? (
+          <button
+            onClick={() => SiteAlert.info('到貨通知', '補貨時將以 Email 通知您')}
+            style={{ height: 48, padding: '0 24px', border: '1px solid var(--ink-900)', background: 'none', font: '500 15px/1 var(--font-sans)', color: 'var(--ink-900)', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}
+          >到貨通知</button>
+        ) : (
+          <div style={{ display: 'flex', gap: 10, flexShrink: 0 }}>
+            <button
+              onClick={handleAddToCart}
+              style={{ height: 48, padding: '0 20px', border: '1px solid var(--ink-900)', background: 'none', font: '500 15px/1 var(--font-sans)', color: 'var(--ink-900)', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >加入購物車</button>
+            <button
+              onClick={handleBuyNow}
+              style={{ height: 48, padding: '0 24px', border: 'none', background: 'var(--ink-900)', color: '#fff', font: '500 15px/1 var(--font-sans)', cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >立即購買</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

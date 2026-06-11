@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
 <link rel="stylesheet" href="../frontend-design-system/colors_and_type.css">
+<link rel="stylesheet" href="../frontend-design-system/rwd.css">
 <link rel="stylesheet" href="../evomnialert/evomnialert.css">
 <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
@@ -32,7 +33,7 @@
   @media (max-width: 899px) {
     .mobile-cta { display: block; position: sticky; bottom: 0; z-index: 50; background: var(--bg); border-top: 1px solid var(--line-300); padding: 12px 16px; }
     .sidebar-col { display: none; }
-    .checkout-layout { flex-direction: column; }
+    .checkout-layout { flex-direction: column; align-items: stretch; }
   }
 </style>
 </head>
@@ -96,6 +97,10 @@ const StateBar = ({ states, current, onChange }) => (
         {s.label}
       </button>
     ))}
+    <a href="訪客訂單查詢.html" style={{ fontSize: 12, color: 'rgba(255,255,255,.45)', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 5, padding: '9px 0 9px 16px', letterSpacing: '.04em', whiteSpace: 'nowrap', borderLeft: '1px solid rgba(255,255,255,.12)', marginLeft: 8 }}>
+      訪客訂單查詢
+      <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><path d="M1 10L10 1M10 1H4M10 1V7"/></svg>
+    </a>
   </div>
 );
 
@@ -173,7 +178,7 @@ const Spinner = () => (
 
 // ─── Checkout Header ──────────────────────────────────────────────────────────
 const CheckoutHeader = () => (
-  <header style={{ background: 'var(--bg)', borderBottom: '1px solid var(--line-300)', padding: '18px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 20 }}>
+  <header className="checkout-header" style={{ background: 'var(--bg)', borderBottom: '1px solid var(--line-300)', padding: '18px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', position: 'sticky', top: 0, zIndex: 20 }}>
     <img src="../frontend-design-system/uploads/logo.jpg" alt="Evomni" style={{ height: 36, width: 'auto', display: 'block' }} />
     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
       <Icon name="lock_outline" size={14} style={{ color: 'var(--fg-subtle)' }} />
@@ -261,7 +266,7 @@ const ShippingSection = ({ isGuest, form, setForm, deliveryMethod }) => {
 
       {(isGuest || showNewForm) && (
         <div>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+          <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
             <FormField label="收件人姓名" required>
               <TextInput value={form.name} onChange={v => setForm(f => ({ ...f, name: v }))} placeholder="請輸入姓名" maxLength={20} />
             </FormField>
@@ -282,7 +287,7 @@ const ShippingSection = ({ isGuest, form, setForm, deliveryMethod }) => {
             </FormField>
           ) : (
             <div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+              <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
                 <FormField label="縣市" required>
                   <SelectBox value={form.county} onChange={v => setForm(f => ({ ...f, county: v, district: '' }))} options={COUNTIES} placeholder="請選擇縣市" />
                 </FormField>
@@ -348,7 +353,7 @@ const InvoiceSection = ({ invoiceType, setInvoiceType, invoiceData, setInvoiceDa
                 </FormField>
               )}
               {t.id === 'company' && (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+                <div className="form-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
                   <FormField label="統一編號" hint="8 位數字">
                     <TextInput value={invoiceData.taxId || ''} onChange={v => setInvoiceData(d => ({ ...d, taxId: v }))} placeholder="12345678" maxLength={8} />
                   </FormField>
@@ -497,7 +502,7 @@ const App = () => {
     <div style={{ minHeight: '100vh', background: 'var(--fill-300)' }}>
       <CheckoutHeader />
       <StateBar states={STATES} current={pageState} onChange={setPageState} />
-      <div style={{ maxWidth: 'var(--container)', margin: '0 auto', padding: '40px var(--gutter) 96px' }}>
+      <div className="page-main" style={{ maxWidth: 'var(--container)', margin: '0 auto', padding: '40px var(--gutter) 96px' }}>
         <StepsBreadcrumb />
         <div className="checkout-layout">
           {/* Left column */}

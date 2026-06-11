@@ -1,0 +1,1765 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evomni — 後台左側選單架構方案比較</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-height: 100%; }
+body { font-family: 'Noto Sans TC', -apple-system, sans-serif; font-size: 15px; color: #303133; background: #F5F7FA; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-thumb { background: #DCDFE6; border-radius: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+
+// ─── Icons ────────────────────────────────────────────────────────────────────
+
+const Icon = {
+  dashboard: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" fill="currentColor" opacity="0.9"/><rect x="9" y="1" width="6" height="6" rx="1" fill="currentColor" opacity="0.9"/><rect x="1" y="9" width="6" height="6" rx="1" fill="currentColor" opacity="0.9"/><rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" opacity="0.9"/></svg>,
+  products: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6.5" height="6.5" rx="1" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/><rect x="8.5" y="1" width="6.5" height="6.5" rx="1" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/><rect x="1" y="8.5" width="6.5" height="6.5" rx="1" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/><rect x="8.5" y="8.5" width="6.5" height="6.5" rx="1" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/></svg>,
+  orders: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="1" width="12" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/><line x1="5" y1="5" x2="11" y2="5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/><line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/><line x1="5" y1="11" x2="8.5" y2="11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/></svg>,
+  members: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="5" r="3" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/><path d="M2 14c0-3.314 2.686-6 6-6s6 2.686 6 6" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" fill="none" opacity="0.9"/></svg>,
+  marketing: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 1.5L9.6 5.7L14.2 6.1L10.8 9.1L11.9 13.6L8 11.3L4.1 13.6L5.2 9.1L1.8 6.1L6.4 5.7L8 1.5Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" fill="none" opacity="0.9"/></svg>,
+  analytics: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="8" width="3" height="6" rx="0.5" fill="currentColor" opacity="0.9"/><rect x="6.5" y="5" width="3" height="9" rx="0.5" fill="currentColor" opacity="0.9"/><rect x="11" y="2" width="3" height="12" rx="0.5" fill="currentColor" opacity="0.9"/></svg>,
+  website: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/><path d="M8 1c-2 3-2 9 0 14M8 1c2 3 2 9 0 14" stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.9"/><line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" strokeWidth="1.2" opacity="0.9"/></svg>,
+  settings: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/><path d="M8 1v1.5M8 13.5V15M15 8h-1.5M2.5 8H1M12.7 3.3l-1.06 1.06M4.36 11.64l-1.06 1.06M12.7 12.7l-1.06-1.06M4.36 4.36L3.3 3.3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.9"/></svg>,
+  articles: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 1h7l3 3v10a1 1 0 01-1 1H3a1 1 0 01-1-1V2a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/><path d="M10 1v3h3" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/><line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.9"/><line x1="5" y1="11" x2="9" y2="11" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.9"/></svg>,
+  media: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/><circle cx="5.5" cy="7.5" r="1.5" stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.9"/><path d="M1 11l4-3 3.5 2.5 2-1.5L15 12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/></svg>,
+  ecommerce: <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M1 2.5h2.5L5.5 10h7l2-5.5H4.5" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/><circle cx="6.5" cy="13" r="1.3" fill="currentColor" opacity="0.9"/><circle cx="11.5" cy="13" r="1.3" fill="currentColor" opacity="0.9"/></svg>,
+  switch: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 5L7 2L12 5V9L7 12L2 9V5Z" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinejoin="round"/><path d="M7 2V12M2 5L12 9M2 9L12 5" stroke="currentColor" strokeWidth="1" opacity="0.4"/></svg>,
+  chevron: (open) => <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ flexShrink: 0, transition: 'transform 0.2s', transform: open ? 'rotate(180deg)' : 'none' }}><path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+};
+
+// ─── Colour tokens ────────────────────────────────────────────────────────────
+const C = {
+  accent:    '#4F8EF7',
+  accentBg:  'rgba(79,142,247,0.08)',
+  hover:     '#F5F7FA',
+  textMain:  '#303133',
+  textSub:   '#909399',
+  border:    '#DCDFE6',
+  success:   '#67C23A',
+  successBg: '#F0F9EB',
+  warn:      '#E6A23C',
+  warnBg:    '#FDF6EC',
+};
+
+// ─── Shared Sidebar Row components ───────────────────────────────────────────
+
+function L2Row({ child, active, onNavigate }) {
+  const isActive = active === child.id;
+  const [hovered, setHovered] = React.useState(false);
+  return (
+    <div
+      onClick={() => onNavigate(child.id)}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{ display: 'flex', alignItems: 'center', padding: '0 14px 0 40px', height: 40, cursor: 'pointer', background: isActive ? C.accentBg : (hovered ? C.hover : 'transparent'), color: isActive ? C.accent : C.textSub, fontSize: 13, fontWeight: isActive ? 500 : 400, borderLeft: `2px solid ${isActive ? C.accent : 'transparent'}`, userSelect: 'none', transition: 'background 0.15s' }}>
+      {child.label}
+    </div>
+  );
+}
+
+function L1Row({ item, active, expanded, onToggle, onNavigate }) {
+  const parentActive = active === item.id || (item.children || []).some(c => active === c.id);
+  const isOpen = expanded[item.id];
+  const [hovered, setHovered] = React.useState(false);
+  return (
+    <div>
+      {item.sectionLabel && (
+        <div style={{ padding: '20px 16px 2px', fontSize: 12, color: '#B0B6BF', letterSpacing: '0.06em', fontWeight: 600, userSelect: 'none', textTransform: 'uppercase' }}>
+          {item.sectionLabel}
+        </div>
+      )}
+      <div
+        onClick={() => item.children ? onToggle(item.id) : onNavigate(item.id)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', height: 44, cursor: 'pointer', background: hovered ? C.hover : (parentActive && !item.children ? C.accentBg : 'transparent'), color: parentActive ? C.textMain : C.textSub, fontSize: 13.5, fontWeight: parentActive ? 500 : 400, userSelect: 'none', transition: 'background 0.15s' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ color: parentActive ? C.accent : C.textSub, display: 'flex' }}>{item.icon}</span>
+          <span>{item.label}</span>
+        </div>
+        {item.children && Icon.chevron(isOpen)}
+      </div>
+      {item.children && (
+        <div style={{ overflow: 'hidden', maxHeight: isOpen ? item.children.length * 40 + 16 + 'px' : '0', transition: 'max-height 0.2s cubic-bezier(.4,0,.2,1)' }}>
+          {item.children.map(child => (
+            <L2Row key={child.id} child={child} active={active} onNavigate={onNavigate} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Plan A Sidebar (Caesar) — sectioned single list ─────────────────────────
+
+const PLAN_A_MENU = [
+  { id: 'dashboard', label: '儀表板', icon: Icon.dashboard },
+  {
+    id: 'products', label: '商品', icon: Icon.products,
+    children: [
+      { id: 'product-list', label: '商品管理' },
+      { id: 'category',     label: '商品分類' },
+      { id: 'inventory',    label: '庫存管理' },
+    ],
+  },
+  { id: 'articles', label: '文章', icon: Icon.articles },
+  {
+    id: 'members', label: '顧客', icon: Icon.members,
+    children: [
+      { id: 'customer-mgmt', label: '顧客管理' },
+      { id: 'member-seg',    label: '分眾篩選' },
+      { id: 'member-set',    label: '設定' },
+    ],
+  },
+  {
+    id: 'analytics', label: '數據中心', icon: Icon.analytics,
+    children: [
+      { id: 'ana-sales',  label: '銷售概覽' },
+      { id: 'ana-prod',   label: '商品分析' },
+      { id: 'ana-member', label: '會員分析' },
+      { id: 'ana-mkt',    label: '行銷成效' },
+    ],
+  },
+  { id: 'media', label: '媒體庫', icon: Icon.media },
+  // ── 電商系統 section ──────────────────────────────────────────────────────
+  {
+    id: 'orders', label: '訂單管理', icon: Icon.orders, sectionLabel: '電商系統',
+    children: [
+      { id: 'order-list', label: '全部訂單' },
+      { id: 'returns',    label: '退換貨申請' },
+      { id: 'invoice',    label: '電子發票管理' },
+    ],
+  },
+  {
+    id: 'marketing', label: '行銷中心', icon: Icon.marketing,
+    children: [
+      { id: 'promotions', label: '優惠活動' },
+      { id: 'journey',    label: '自動化旅程' },
+      { id: 'lp',         label: '一頁式商店' },
+      { id: 'ad-tools',   label: '廣告投放工具' },
+    ],
+  },
+  {
+    id: 'ec-settings', label: '電商設定', icon: Icon.settings,
+    children: [
+      { id: 'ec-basic',      label: '電商基本設定' },
+      { id: 'payment-hub',   label: '金物流串接' },
+      { id: 'ec-advanced',   label: '電商進階設定' },
+    ],
+  },
+  // ── 網站設計 section ──────────────────────────────────────────────────────
+  {
+    id: 'website-cms', label: '品牌形象站', icon: Icon.website, sectionLabel: '網站設計',
+    children: [
+      { id: 'menu-mgmt',    label: '選單管理' },
+      { id: 'system-pages', label: '系統分頁' },
+    ],
+  },
+  { id: 'website-ec', label: '電商網站', icon: Icon.ecommerce },
+  // ── 設定 section ─────────────────────────────────────────────────────────
+  {
+    id: 'global-settings', label: '全域設定', icon: Icon.settings, sectionLabel: '設定',
+    children: [
+      { id: 'gs-system', label: '系統設定' },
+      { id: 'gs-perms',  label: '權限設定' },
+      { id: 'gs-acct',   label: '帳號設定' },
+    ],
+  },
+];
+
+function SidebarA({ active, onNavigate }) {
+  const [expanded, setExpanded] = React.useState(() => {
+    const m = {};
+    PLAN_A_MENU.forEach(i => { if (i.children) m[i.id] = true; });
+    return m;
+  });
+  const toggle = id => setExpanded(p => ({ ...p, [id]: !p[id] }));
+
+  return (
+    <div style={{ width: 220, minWidth: 220, height: '100%', background: '#fff', borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+      <div style={{ height: 48, display: 'flex', alignItems: 'center', padding: '0 16px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+        <span style={{ fontWeight: 700, fontSize: 15, color: '#303133', letterSpacing: '0.02em' }}>Evomni</span>
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}>
+        {PLAN_A_MENU.map(item => (
+          <L1Row key={item.id} item={item} active={active} expanded={expanded} onToggle={toggle} onNavigate={onNavigate} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Plan B Sidebar (Randy) — context switcher ────────────────────────────────
+
+const PLAN_B_EC_MENU = [
+  { id: 'dashboard',  label: '儀表板', icon: Icon.dashboard },
+  {
+    id: 'products', label: '產品', icon: Icon.products,
+    children: [
+      { id: 'product-list', label: '商品管理' },
+      { id: 'category',     label: '商品分類' },
+      { id: 'inventory',    label: '庫存管理' },
+    ],
+  },
+  { id: 'articles', label: '文章', icon: Icon.articles },
+  {
+    id: 'orders', label: '訂單管理', icon: Icon.orders,
+    children: [
+      { id: 'order-list', label: '全部訂單' },
+      { id: 'returns',    label: '退換貨申請' },
+      { id: 'invoice',    label: '電子發票管理' },
+    ],
+  },
+  {
+    id: 'members', label: '顧客', icon: Icon.members,
+    children: [
+      { id: 'customer-mgmt', label: '顧客管理' },
+      { id: 'member-seg',    label: '分眾篩選' },
+      { id: 'member-set',    label: '設定' },
+    ],
+  },
+  {
+    id: 'marketing', label: '行銷中心', icon: Icon.marketing,
+    children: [
+      { id: 'promotions', label: '優惠活動' },
+      { id: 'journey',    label: '自動化旅程' },
+      { id: 'lp',         label: '一頁式商店' },
+    ],
+  },
+  {
+    id: 'analytics', label: '數據中心', icon: Icon.analytics,
+    children: [
+      { id: 'ana-sales',  label: '銷售概覽' },
+      { id: 'ana-prod',   label: '商品分析' },
+      { id: 'ana-member', label: '會員分析' },
+    ],
+  },
+  {
+    id: 'ec-settings', label: '電商設定', icon: Icon.settings,
+    children: [
+      { id: 'ec-basic',    label: '電商基本設定' },
+      { id: 'payment-hub', label: '金物流串接' },
+      { id: 'ec-advanced', label: '電商進階設定' },
+    ],
+  },
+  {
+    id: 'global-settings', label: '全域設定', icon: Icon.settings,
+    children: [
+      { id: 'gs-system', label: '系統設定' },
+      { id: 'gs-perms',  label: '權限設定' },
+      { id: 'gs-acct',   label: '帳號設定' },
+    ],
+  },
+];
+
+const PLAN_B_CMS_MENU = [
+  { id: 'dashboard', label: '儀表板', icon: Icon.dashboard },
+  {
+    id: 'products', label: '產品', icon: Icon.products,
+    children: [
+      { id: 'product-list', label: '商品管理' },
+      { id: 'category',     label: '商品分類' },
+      { id: 'inventory',    label: '庫存管理' },
+    ],
+  },
+  { id: 'articles', label: '文章', icon: Icon.articles },
+  {
+    id: 'members', label: '顧客', icon: Icon.members,
+    children: [
+      { id: 'customer-mgmt', label: '顧客管理' },
+      { id: 'member-seg',    label: '分眾篩選' },
+      { id: 'member-set',    label: '設定' },
+    ],
+  },
+  { id: 'media',    label: '媒體庫',   icon: Icon.media },
+  {
+    id: 'website-cms', label: '品牌形象站', icon: Icon.website, sectionLabel: '網站設計',
+    children: [
+      { id: 'menu-mgmt',    label: '選單管理' },
+      { id: 'system-pages', label: '系統分頁' },
+    ],
+  },
+  {
+    id: 'global-settings', label: '全域設定', icon: Icon.settings, sectionLabel: '設定',
+    children: [
+      { id: 'gs-system', label: '系統設定' },
+      { id: 'gs-perms',  label: '權限設定' },
+      { id: 'gs-acct',   label: '帳號設定' },
+    ],
+  },
+];
+
+function SidebarB({ context, onContextChange, active, onNavigate }) {
+  const [showSharedDetail, setShowSharedDetail] = React.useState(false);
+  const menuData = context === 'ec' ? PLAN_B_EC_MENU : PLAN_B_CMS_MENU;
+  const [expanded, setExpanded] = React.useState(() => {
+    const m = {};
+    PLAN_B_EC_MENU.forEach(i => { if (i.children) m[i.id] = true; });
+    return m;
+  });
+
+  const switchContext = (ctx) => {
+    onContextChange(ctx);
+    const menu = ctx === 'ec' ? PLAN_B_EC_MENU : PLAN_B_CMS_MENU;
+    const m = {};
+    menu.forEach(i => { if (i.children) m[i.id] = true; });
+    setExpanded(m);
+    setShowSharedDetail(false);
+    const allIds = new Set([
+      ...menu.map(i => i.id),
+      ...menu.flatMap(i => (i.children || []).map(c => c.id)),
+    ]);
+    if (!allIds.has(active)) onNavigate('dashboard');
+  };
+
+  const toggle = id => setExpanded(p => ({ ...p, [id]: !p[id] }));
+  const sharedCount = menuData.filter(item => B_SHARED_IDS.has(item.id)).length;
+
+  return (
+    <div style={{ width: 220, minWidth: 220, height: '100%', background: '#fff', borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+      {/* Logo */}
+      <div style={{ height: 48, display: 'flex', alignItems: 'center', padding: '0 16px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+        <span style={{ fontWeight: 700, fontSize: 15, color: '#303133', letterSpacing: '0.02em' }}>Evomni</span>
+      </div>
+
+      {/* Context Switcher */}
+      <div style={{ padding: '8px 10px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+        <div style={{ fontSize: 11, color: C.textSub, marginBottom: 5, paddingLeft: 2, letterSpacing: '0.04em' }}>目前管理</div>
+        <div style={{ display: 'flex', borderRadius: 6, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+          {[
+            { key: 'ec',  label: '電商後台' },
+            { key: 'cms', label: '形象站' },
+          ].map(opt => (
+            <button key={opt.key} onClick={() => switchContext(opt.key)}
+              style={{ flex: 1, padding: '6px 4px', border: 'none', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', fontWeight: context === opt.key ? 600 : 400, background: context === opt.key ? C.accent : '#fff', color: context === opt.key ? '#fff' : C.textSub, transition: 'background 0.15s, color 0.15s' }}>
+              {opt.label}
+            </button>
+          ))}
+        </div>
+        <div style={{ fontSize: 11, color: context === 'ec' ? '#4F8EF7' : '#909399', marginTop: 5, paddingLeft: 2, minHeight: 14 }}>
+          {context === 'ec' ? '顯示電商相關功能' : '顯示形象站相關功能'}
+        </div>
+
+        {/* Shared items warning — click to expand */}
+        <div
+          onClick={() => setShowSharedDetail(v => !v)}
+          style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 4, padding: '5px 7px', background: '#FFF8EC', border: '1px solid #FAECD8', borderRadius: 4, cursor: 'pointer', userSelect: 'none' }}>
+          <span style={{ fontSize: 12, color: '#E6A23C', flexShrink: 0, fontWeight: 700 }}>!</span>
+          <span style={{ fontSize: 11, color: '#7D5A00', flex: 1, lineHeight: 1.4 }}>
+            {sharedCount} 個項目在兩個情境均顯示
+          </span>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" style={{ flexShrink: 0, transition: 'transform 0.2s', transform: showSharedDetail ? 'rotate(180deg)' : 'none' }}>
+            <path d="M1.5 3L5 6.5L8.5 3" stroke="#E6A23C" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        </div>
+        {showSharedDetail && (
+          <div style={{ marginTop: 3, padding: '7px 8px', background: '#FFF8EC', border: '1px solid #FAECD8', borderRadius: 4, fontSize: 11, color: '#7D5A00', lineHeight: 1.65 }}>
+            <strong style={{ display: 'block', marginBottom: 3 }}>儀表板、產品、文章、顧客、全域設定</strong>
+            資料由電商與形象站共用，在兩個情境均可操作。商家可能困惑：「切換到形象站後，這些功能我應該在哪個情境下操作？修改的是同一筆資料嗎？」
+          </div>
+        )}
+      </div>
+
+      {/* Nav */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}>
+        {menuData.map(item => (
+          <L1RowB
+            key={item.id + '_' + context}
+            item={item}
+            active={active}
+            expanded={expanded}
+            onToggle={toggle}
+            onNavigate={onNavigate}
+            badge={B_SHARED_IDS.has(item.id) ? <SharedBadgeB /> : null}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Annotation Bubble ────────────────────────────────────────────────────────
+
+function Bubble({ color, children }) {
+  return (
+    <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '8px 10px', background: color + '12', borderLeft: `3px solid ${color}`, borderRadius: '0 4px 4px 0', marginBottom: 8, fontSize: 14, color: '#303133', lineHeight: 1.55 }}>
+      {children}
+    </div>
+  );
+}
+
+// ─── Scenario Cards ───────────────────────────────────────────────────────────
+
+function ScenarioCard({ title, steps, planA, planB, verdict, winner }) {
+  const wClr = winner === 'A' ? '#4F8EF7' : winner === 'B' ? '#E6A23C' : '#67C23A';
+  const wLabel = winner === 'A' ? '方案 A 較優' : winner === 'B' ? '方案 B 較優' : '兩方案持平';
+  return (
+    <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 6, padding: '16px 18px', marginBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+        <div style={{ fontSize: 13, fontWeight: 600, color: C.textMain, flex: 1 }}>{title}</div>
+        {winner && <div style={{ fontSize: 11, padding: '2px 10px', borderRadius: 10, background: wClr + '18', color: wClr, fontWeight: 600, flexShrink: 0 }}>{wLabel}</div>}
+      </div>
+      {steps ? (
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: verdict ? 10 : 0, fontSize: 13 }}>
+          <thead>
+            <tr>
+              <th style={{ width: 40, padding: '5px 8px', fontSize: 11, color: C.textSub, textAlign: 'center', fontWeight: 600, background: '#F5F7FA', borderBottom: `1px solid ${C.border}` }}>步驟</th>
+              <th style={{ padding: '5px 10px', fontSize: 11, color: '#4F8EF7', textAlign: 'left', fontWeight: 600, background: '#F5F7FA', borderBottom: `1px solid ${C.border}`, borderLeft: `1px solid ${C.border}` }}>方案 A（分區整合）</th>
+              <th style={{ padding: '5px 10px', fontSize: 11, color: '#E6A23C', textAlign: 'left', fontWeight: 600, background: '#F5F7FA', borderBottom: `1px solid ${C.border}`, borderLeft: `1px solid ${C.border}` }}>方案 B（情境切換）</th>
+            </tr>
+          </thead>
+          <tbody>
+            {steps.map((s, i) => (
+              <tr key={i} style={{ background: i % 2 === 0 ? '#fff' : '#FAFAFA' }}>
+                <td style={{ padding: '7px 8px', color: C.textSub, textAlign: 'center', borderBottom: `1px solid ${C.border}`, fontSize: 12 }}>{i + 1}</td>
+                <td style={{ padding: '7px 10px', color: C.textMain, borderBottom: `1px solid ${C.border}`, borderLeft: `1px solid ${C.border}`, lineHeight: 1.45 }}>{s.a}</td>
+                <td style={{ padding: '7px 10px', color: s.extra ? '#E6A23C' : (s.b === '—' ? C.textSub : C.textMain), fontWeight: s.extra ? 500 : 400, fontStyle: s.b === '—' ? 'italic' : 'normal', borderBottom: `1px solid ${C.border}`, borderLeft: `1px solid ${C.border}`, lineHeight: 1.45 }}>{s.b}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: verdict ? 10 : 0 }}>
+          <div>
+            <div style={{ fontSize: 12, color: '#4F8EF7', fontWeight: 600, marginBottom: 4 }}>方案 A（分區整合）</div>
+            <div style={{ fontSize: 13, color: C.textSub, lineHeight: 1.55 }}>{planA}</div>
+          </div>
+          <div>
+            <div style={{ fontSize: 12, color: '#E6A23C', fontWeight: 600, marginBottom: 4 }}>方案 B（情境切換）</div>
+            <div style={{ fontSize: 13, color: C.textSub, lineHeight: 1.55 }}>{planB}</div>
+          </div>
+        </div>
+      )}
+      {verdict && (
+        <div style={{ padding: '8px 12px', background: wClr + '12', borderLeft: `3px solid ${wClr}`, borderRadius: '0 4px 4px 0', fontSize: 13, color: '#606266', lineHeight: 1.55 }}>{verdict}</div>
+      )}
+    </div>
+  );
+}
+
+// ─── Plan B Sidebar Enhancements ─────────────────────────────────────────────
+
+// Items whose data is shared between EC and 形象站 — must appear in both contexts
+const B_SHARED_IDS = new Set(['dashboard', 'products', 'articles', 'members', 'global-settings']);
+
+function SharedBadgeB() {
+  return (
+    <span
+      title="此功能的資料由電商後台與形象站共用，在兩個情境均可操作。商家可能難以判斷「目前在哪個情境下操作的是哪一份資料」。"
+      style={{
+        fontSize: 10, padding: '1px 4px', borderRadius: 2, marginLeft: 4,
+        background: 'rgba(79,142,247,0.1)', color: '#4F8EF7',
+        border: '1px solid rgba(79,142,247,0.3)',
+        whiteSpace: 'nowrap', flexShrink: 0, cursor: 'help',
+        display: 'inline-block', lineHeight: 1.3,
+      }}>共用</span>
+  );
+}
+
+// L1Row variant with optional badge after the label
+function L1RowB({ item, active, expanded, onToggle, onNavigate, badge }) {
+  const parentActive = active === item.id || (item.children || []).some(c => active === c.id);
+  const isOpen = expanded[item.id];
+  const [hovered, setHovered] = React.useState(false);
+  return (
+    <div>
+      {item.sectionLabel && (
+        <div style={{ padding: '20px 16px 2px', fontSize: 12, color: '#B0B6BF', letterSpacing: '0.06em', fontWeight: 600, userSelect: 'none', textTransform: 'uppercase' }}>
+          {item.sectionLabel}
+        </div>
+      )}
+      <div
+        onClick={() => item.children ? onToggle(item.id) : onNavigate(item.id)}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{ display: 'flex', alignItems: 'center', padding: '0 14px', height: 44, cursor: 'pointer', background: hovered ? C.hover : (parentActive && !item.children ? C.accentBg : 'transparent'), color: parentActive ? C.textMain : C.textSub, fontSize: 13.5, fontWeight: parentActive ? 500 : 400, userSelect: 'none', transition: 'background 0.15s' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flex: 1, minWidth: 0 }}>
+          <span style={{ color: parentActive ? C.accent : C.textSub, display: 'flex', flexShrink: 0 }}>{item.icon}</span>
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.label}</span>
+          {badge}
+        </div>
+        {item.children && Icon.chevron(isOpen)}
+      </div>
+      {item.children && (
+        <div style={{ overflow: 'hidden', maxHeight: isOpen ? item.children.length * 40 + 16 + 'px' : '0', transition: 'max-height 0.2s cubic-bezier(.4,0,.2,1)' }}>
+          {item.children.map(child => (
+            <L2Row key={child.id} child={child} active={active} onNavigate={onNavigate} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Page Meta + Content Areas ───────────────────────────────────────────────
+
+const PAGE_META = {
+  dashboard:         { title: '儀表板',      ecLabel: '電商後台總覽',                   cmsLabel: '形象站總覽',                 shared: false },
+  products:          { title: '商品 / 產品',  ecLabel: '商品管理 — 銷售、庫存、上下架',  cmsLabel: '品牌產品 — 形象展示頁內容',    shared: true  },
+  articles:          { title: '文章',         ecLabel: '部落格 — 電商相關文章',           cmsLabel: '文章管理 — 形象站內容行銷',    shared: true  },
+  members:           { title: '顧客',         ecLabel: '顧客管理 — 訂單與消費行為',       cmsLabel: '會員管理 — 訪問記錄、偏好',    shared: true  },
+  'global-settings': { title: '全域設定',     ecLabel: '付款、配送、稅務等基礎設定',      cmsLabel: '語言、域名、SEO 基礎設定',     shared: true  },
+  orders:            { title: '訂單管理',     ecLabel: '訂單列表 — 處理出貨與退換貨',     shared: false },
+  marketing:         { title: '行銷中心',     ecLabel: '優惠活動、折扣碼、分潤設定',      shared: false },
+  analytics:         { title: '數據中心',     ecLabel: '銷售數據、商品表現分析',           shared: false },
+  'ec-settings':     { title: '電商設定',     ecLabel: '金物流串接、電商功能設定',         shared: false },
+  media:             { title: '媒體庫',        cmsLabel: '圖片、影片等媒體檔案管理',        shared: false },
+  'website-cms':     { title: '品牌形象站',   cmsLabel: '頁面編輯、選單管理、表單設定',    shared: false },
+  'website-ec':      { title: '電商網站',     ecLabel: '電商前台網站設定與佈景',           shared: false },
+};
+
+function resolvePageMeta(activeId, menuData) {
+  if (PAGE_META[activeId]) return PAGE_META[activeId];
+  for (const item of menuData) {
+    if (item.children) {
+      const child = item.children.find(c => c.id === activeId);
+      if (child) {
+        const p = PAGE_META[item.id];
+        if (p) return { ...p, title: child.label };
+      }
+    }
+  }
+  return { title: activeId, ecLabel: '', shared: false };
+}
+
+// Resolves section label + parent item + child item for any activeId
+function resolveMenuContext(activeId, menuData) {
+  let currentSection = null;
+  for (const item of menuData) {
+    if (item.sectionLabel) currentSection = item.sectionLabel;
+    if (item.id === activeId) return { section: currentSection, item, child: null };
+    if (item.children) {
+      const child = item.children.find(c => c.id === activeId);
+      if (child) return { section: currentSection, item, child };
+    }
+  }
+  return { section: null, item: null, child: null };
+}
+
+// 48px top bar — ☰ only, no breadcrumbs
+// AdminLayout passes breadcrumbs={[]} to Header; breadcrumbs appear in PageHeader inside main
+function ContentHeader() {
+  return (
+    <div style={{ height: 48, background: '#fff', borderBottom: '1px solid #DCDFE6', display: 'flex', alignItems: 'center', padding: '0 16px', flexShrink: 0 }}>
+      <span style={{ color: '#606266', fontSize: 18, lineHeight: 1 }}>☰</span>
+    </div>
+  );
+}
+
+// Mock table matching Evomni admin table style (EvoDS.font.listMin = 14)
+function MockRows() {
+  const thS = { padding: '10px 16px', background: '#F5F7FA', borderBottom: '1px solid #DCDFE6', fontSize: 14, fontWeight: 500, color: '#303133', textAlign: 'left', whiteSpace: 'nowrap' };
+  const tdS = { padding: '10px 16px', borderBottom: '1px solid #DCDFE6', fontSize: 14, verticalAlign: 'middle' };
+  const rows = [
+    { w: 60, status: '上架', green: true  },
+    { w: 85, status: '下架', green: false },
+    { w: 70, status: '草稿', green: false },
+  ];
+  return (
+    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <thead>
+        <tr>
+          <th style={{ ...thS, width: 40 }}><div style={{ width: 14, height: 14, borderRadius: 2, border: '1px solid #DCDFE6' }} /></th>
+          <th style={thS}>名稱</th>
+          <th style={thS}>狀態</th>
+          <th style={thS}>更新時間</th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r, i) => {
+          const last = i === rows.length - 1;
+          const td = { ...tdS, borderBottom: last ? 'none' : tdS.borderBottom };
+          return (
+            <tr key={i}>
+              <td style={td}><div style={{ width: 14, height: 14, borderRadius: 2, border: '1px solid #DCDFE6' }} /></td>
+              <td style={td}><div style={{ height: 10, borderRadius: 2, background: '#E8EAED', width: r.w + '%' }} /></td>
+              <td style={td}>
+                <span style={{ display: 'inline-block', padding: '2px 8px', borderRadius: 2, fontSize: 12, background: r.green ? '#F0F9EB' : '#F5F7FA', color: r.green ? '#67C23A' : '#909399' }}>{r.status}</span>
+              </td>
+              <td style={td}><div style={{ height: 10, borderRadius: 2, background: '#E8EAED', width: '80%' }} /></td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
+// Breadcrumb nav — matches PageHeader nav in SharedUI.jsx (fontSize:13, gap:5, #909399/#303133)
+function BreadcrumbNav({ crumbs }) {
+  return (
+    <nav style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13 }}>
+      {crumbs.map((c, i) => {
+        const isLast = i === crumbs.length - 1;
+        return (
+          <React.Fragment key={i}>
+            {i > 0 && <span style={{ color: '#C0C4CC' }}>/</span>}
+            <span style={{ color: isLast ? '#303133' : '#909399' }}>{c}</span>
+          </React.Fragment>
+        );
+      })}
+    </nav>
+  );
+}
+
+// Plan A — clean content area, no shared-data confusion
+function ContentA({ active, menuData }) {
+  const ctx = resolveMenuContext(active, menuData);
+  const meta = resolvePageMeta(active, menuData);
+  const pageTitle = ctx.child ? ctx.child.label : (ctx.item ? ctx.item.label : meta.title);
+  const label = meta.ecLabel || meta.cmsLabel || '';
+
+  // Breadcrumbs sit to the RIGHT of h1, matching SharedUI PageHeader layout
+  const crumbs = ['首頁'];
+  if (ctx.section) crumbs.push(ctx.section);
+  if (ctx.item) crumbs.push(ctx.item.label);
+  if (ctx.child) crumbs.push(ctx.child.label);
+
+  return (
+    <div style={{ flex: 1, background: '#F5F7FA', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <ContentHeader />
+      <main style={{ flex: 1, overflowY: 'auto', padding: 40 }}>
+        {/* PageHeader row: [h1 + breadcrumbs] on left, [action] on right */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <h1 style={{ fontSize: 24, fontWeight: 700, color: '#303133', margin: 0 }}>{pageTitle}</h1>
+            <BreadcrumbNav crumbs={crumbs} />
+          </div>
+          <div style={{ height: 32, padding: '0 14px', background: '#303133', color: '#fff', display: 'flex', alignItems: 'center', fontSize: 13, cursor: 'default', flexShrink: 0 }}>+ 新增</div>
+        </div>
+        <div style={{ background: '#fff', border: `1px solid ${C.border}` }}>
+          <div style={{ padding: '10px 16px', borderBottom: `1px solid ${C.border}` }}>
+            <span style={{ fontSize: 13, color: C.textSub }}>{label}</span>
+          </div>
+          <MockRows />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// Plan B — context name in breadcrumbs, shared items show warning banner below PageHeader
+function ContentB({ active, context, menuData }) {
+  const ctx = resolveMenuContext(active, menuData);
+  const meta = resolvePageMeta(active, menuData);
+  const isShared = meta.shared && active !== 'dashboard';
+  const contextName = context === 'ec' ? '電商後台' : '形象站';
+
+  const pageTitle = ctx.child ? ctx.child.label : (ctx.item ? ctx.item.label : meta.title);
+  const currLabel = context === 'ec' ? (meta.ecLabel || meta.cmsLabel || '') : (meta.cmsLabel || meta.ecLabel || '');
+
+
+  // Breadcrumbs: 首頁 / ContextName / item / [child]
+  const crumbs = ['首頁', contextName];
+  if (ctx.item) crumbs.push(ctx.item.label);
+  if (ctx.child) crumbs.push(ctx.child.label);
+
+  return (
+    <div style={{ flex: 1, background: '#F5F7FA', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <ContentHeader />
+      <main style={{ flex: 1, overflowY: 'auto', padding: 40 }}>
+        {/* PageHeader row */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: isShared ? 12 : 20, gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <h1 style={{ fontSize: 24, fontWeight: 700, color: '#303133', margin: 0 }}>{pageTitle}</h1>
+              {isShared && <SharedBadgeB />}
+            </div>
+            <BreadcrumbNav crumbs={crumbs} />
+          </div>
+          <div style={{ height: 32, padding: '0 14px', background: '#303133', color: '#fff', display: 'flex', alignItems: 'center', fontSize: 13, cursor: 'default', flexShrink: 0 }}>+ 新增</div>
+        </div>
+        {/* Shared data warning banner — appears immediately below PageHeader */}
+        {isShared && (
+          <div style={{ padding: '10px 14px', background: '#FFF8EC', border: '1px solid #FAECD8', borderRadius: 4, marginBottom: 20 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#7D5A00', marginBottom: 4 }}>共用資料提示</div>
+            <div style={{ fontSize: 13, color: '#7D5A00', lineHeight: 1.65 }}>
+              目前在<strong>「{contextName}」</strong>情境下操作。此資料由電商後台與形象站共用，修改會同時影響兩個情境的顯示。
+            </div>
+          </div>
+        )}
+        <div style={{ background: '#fff', border: `1px solid ${C.border}` }}>
+          <div style={{ padding: '10px 16px', borderBottom: `1px solid ${C.border}` }}>
+            <span style={{ fontSize: 13, color: C.textSub }}>{currLabel}</span>
+          </div>
+          <MockRows />
+        </div>
+      </main>
+    </div>
+  );
+}
+
+// Plan A wrapper: manages active state, renders sidebar + content
+function PlanAPanel() {
+  const [active, setActive] = React.useState('order-list');
+  return (
+    <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+      <SidebarA active={active} onNavigate={setActive} />
+      <ContentA active={active} menuData={PLAN_A_MENU} />
+    </div>
+  );
+}
+
+// Plan B wrapper: manages context + active, renders sidebar + content
+function PlanBPanel() {
+  const [context, setContext] = React.useState('ec');
+  const [active, setActive] = React.useState('dashboard');
+  const menuData = context === 'ec' ? PLAN_B_EC_MENU : PLAN_B_CMS_MENU;
+  return (
+    <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+      <SidebarB
+        context={context}
+        onContextChange={setContext}
+        active={active}
+        onNavigate={setActive}
+      />
+      <ContentB active={active} context={context} menuData={menuData} />
+    </div>
+  );
+}
+
+// ─── RWD 規劃 ─────────────────────────────────────────────────────────────────
+
+const R_MENU = [
+  { id: 'dashboard',       label: '儀表板',    icon: Icon.dashboard },
+  { id: 'products',        label: '產品',      icon: Icon.products },
+  { id: 'articles',        label: '文章',      icon: Icon.articles },
+  { id: 'members',         label: '顧客',      icon: Icon.members },
+  { id: 'analytics',       label: '數據中心',  icon: Icon.analytics },
+  { id: 'media',           label: '媒體庫',    icon: Icon.media },
+  { sectionLabel: '電商系統' },
+  { id: 'orders',     label: '訂單管理', icon: Icon.orders,
+    children: [{ id: 'order-list', label: '訂單列表' }, { id: 'returns', label: '退換貨管理' }] },
+  { id: 'marketing',  label: '行銷中心', icon: Icon.marketing,
+    children: [{ id: 'promotions', label: '優惠活動' }, { id: 'coupons', label: '折扣碼' }] },
+  { id: 'ec-settings',     label: '電商設定',  icon: Icon.settings },
+  { sectionLabel: '網站設計' },
+  { id: 'website-cms',     label: '品牌形象站', icon: Icon.website },
+  { id: 'website-ec',      label: '電商網站',  icon: Icon.ecommerce },
+  { sectionLabel: '設定' },
+  { id: 'global-settings', label: '全域設定',  icon: Icon.settings },
+];
+
+const RSC = {
+  bg:         '#fff',
+  hover:      C.hover,
+  active:     C.accentBg,
+  text:       C.textSub,
+  textActive: C.textMain,
+  section:    '#B0B6BF',
+  accent:     C.accent,
+  border:     C.border,
+};
+
+function R_pageLabel(id) {
+  for (const item of R_MENU) {
+    if (item.id === id) return item.label;
+    if (item.children) { const c = item.children.find(c => c.id === id); if (c) return c.label; }
+  }
+  return '';
+}
+
+function R_MockTable() {
+  const rows = [{ w: 65, s: '上架', g: true }, { w: 80, s: '下架', g: false }, { w: 55, s: '草稿', g: false }];
+  const b = '1px solid #DCDFE6';
+  return (
+    <div style={{ background: '#fff', border: b }}>
+      <div style={{ padding: '7px 12px', borderBottom: b, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <span style={{ fontSize: 12, color: '#909399' }}>共 3 筆</span>
+        <div style={{ height: 26, padding: '0 10px', background: '#303133', color: '#fff', display: 'flex', alignItems: 'center', fontSize: 12, cursor: 'default' }}>+ 新增</div>
+      </div>
+      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <thead>
+          <tr>{['名稱','狀態','更新時間'].map(h => (
+            <th key={h} style={{ padding: '7px 12px', background: '#F5F7FA', borderBottom: b, fontSize: 12, fontWeight: 500, color: '#303133', textAlign: 'left', whiteSpace: 'nowrap' }}>{h}</th>
+          ))}</tr>
+        </thead>
+        <tbody>
+          {rows.map((r, i) => (
+            <tr key={i}>
+              <td style={{ padding: '7px 12px', borderBottom: i < 2 ? b : 'none' }}>
+                <div style={{ height: 9, borderRadius: 2, background: '#E8EAED', width: r.w + '%' }} />
+              </td>
+              <td style={{ padding: '7px 12px', borderBottom: i < 2 ? b : 'none' }}>
+                <span style={{ padding: '1px 6px', fontSize: 11, background: r.g ? '#F0F9EB' : '#F5F7FA', color: r.g ? '#67C23A' : '#909399' }}>{r.s}</span>
+              </td>
+              <td style={{ padding: '7px 12px', borderBottom: i < 2 ? b : 'none' }}>
+                <div style={{ height: 9, borderRadius: 2, background: '#E8EAED', width: '80%' }} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function R_Content({ active, onHamburger }) {
+  const label = R_pageLabel(active);
+  return (
+    <div style={{ flex: 1, background: '#F5F7FA', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+      <div style={{ height: 48, background: '#fff', borderBottom: '1px solid #DCDFE6', display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10, flexShrink: 0 }}>
+        <button onClick={onHamburger} style={{ background: 'none', border: 'none', cursor: onHamburger ? 'pointer' : 'default', padding: 4, color: '#606266', fontSize: 18, lineHeight: 1, display: 'flex', alignItems: 'center' }}>☰</button>
+        <div style={{ flex: 1 }} />
+        <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg,#5B21B6,#EC4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700 }}>A</div>
+      </div>
+      <main style={{ flex: 1, overflowY: 'auto', padding: 28 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#303133', margin: 0 }}>{label}</h1>
+          <nav style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+            <span style={{ color: '#909399' }}>首頁</span>
+            <span style={{ color: '#C0C4CC' }}>/</span>
+            <span style={{ color: '#303133' }}>{label}</span>
+          </nav>
+        </div>
+        <R_MockTable />
+      </main>
+    </div>
+  );
+}
+
+function R_SidebarDesktop({ active, onNav }) {
+  const [exp, setExp] = React.useState({ orders: true, marketing: true });
+  const toggle = id => setExp(p => ({ ...p, [id]: !p[id] }));
+  return (
+    <div style={{ width: 220, minWidth: 220, height: '100%', background: '#fff', borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ height: 48, display: 'flex', alignItems: 'center', padding: '0 16px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+        <span style={{ fontWeight: 700, fontSize: 15, color: '#303133', letterSpacing: '0.02em' }}>Evomni</span>
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}>
+        {R_MENU.map((item, idx) => {
+          if (item.sectionLabel) return (
+            <div key={idx} style={{ padding: '16px 16px 2px', fontSize: 12, color: '#B0B6BF', letterSpacing: '.06em', fontWeight: 600, textTransform: 'uppercase' }}>
+              {item.sectionLabel}
+            </div>
+          );
+          const on = active === item.id || (item.children || []).some(c => c.id === active);
+          const open = exp[item.id];
+          return (
+            <div key={item.id}>
+              <div onClick={() => item.children ? toggle(item.id) : onNav(item.id)}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', height: 44, cursor: 'pointer', background: on && !item.children ? C.accentBg : 'transparent', color: on ? C.textMain : C.textSub, borderLeft: on && !item.children ? `2px solid ${C.accent}` : '2px solid transparent', fontSize: 13.5, fontWeight: on ? 500 : 400, transition: 'background .1s' }}
+                onMouseEnter={e => { if (!on || item.children) e.currentTarget.style.background = C.hover; }}
+                onMouseLeave={e => { e.currentTarget.style.background = on && !item.children ? C.accentBg : 'transparent'; }}>
+                <span style={{ color: on ? C.accent : C.textSub, display: 'flex', alignItems: 'center', flexShrink: 0 }}>{item.icon}</span>
+                <span style={{ flex: 1 }}>{item.label}</span>
+                {item.children && Icon.chevron(open)}
+              </div>
+              {item.children && open && item.children.map(child => {
+                const ca = active === child.id;
+                return (
+                  <div key={child.id} onClick={() => onNav(child.id)}
+                    style={{ display: 'flex', alignItems: 'center', padding: '0 14px 0 40px', height: 40, cursor: 'pointer', background: ca ? C.accentBg : 'transparent', color: ca ? C.accent : C.textSub, borderLeft: ca ? `2px solid ${C.accent}` : '2px solid transparent', fontSize: 13, fontWeight: ca ? 500 : 400, transition: 'background .1s' }}
+                    onMouseEnter={e => { if (!ca) e.currentTarget.style.background = C.hover; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = ca ? C.accentBg : 'transparent'; }}>
+                    {child.label}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function R_SidebarTablet({ active, onNav }) {
+  const [flyout, setFlyout] = React.useState(null);
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    const close = () => setFlyout(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, []);
+  const handleIcon = (item, e) => {
+    e.stopPropagation();
+    if (!item.children) { onNav(item.id); setFlyout(null); return; }
+    if (flyout && flyout.id === item.id) { setFlyout(null); return; }
+    const ir = e.currentTarget.getBoundingClientRect();
+    const cr = ref.current.getBoundingClientRect();
+    setFlyout({ id: item.id, top: ir.top - cr.top });
+  };
+  return (
+    <div ref={ref} style={{ width: 56, minWidth: 56, height: '100%', background: '#fff', borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      <div style={{ height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+        <span style={{ fontWeight: 700, fontSize: 15, color: '#303133' }}>E</span>
+      </div>
+      <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+        {R_MENU.map((item, idx) => {
+          if (item.sectionLabel) return (
+            <div key={idx} style={{ width: 28, height: 1, background: C.border, margin: '6px 0' }} />
+          );
+          const on = active === item.id || (item.children || []).some(c => c.id === active);
+          const flyOpen = flyout && flyout.id === item.id;
+          return (
+            <div key={item.id} onClick={e => handleIcon(item, e)} title={item.label}
+              style={{ width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: on ? C.accentBg : flyOpen ? C.hover : 'transparent', borderRadius: 4, borderLeft: on ? `2px solid ${C.accent}` : '2px solid transparent', transition: 'background .1s' }}
+              onMouseEnter={e => { if (!on) e.currentTarget.style.background = C.hover; }}
+              onMouseLeave={e => { e.currentTarget.style.background = on ? C.accentBg : flyOpen ? C.hover : 'transparent'; }}>
+              <span style={{ color: on ? C.accent : C.textSub, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
+            </div>
+          );
+        })}
+      </div>
+      {flyout && (() => {
+        const item = R_MENU.find(i => i.id === flyout.id);
+        if (!item || !item.children) return null;
+        return (
+          <div onClick={e => e.stopPropagation()}
+            style={{ position: 'absolute', left: 56, top: flyout.top, background: '#fff', border: `1px solid ${C.border}`, boxShadow: '0 4px 16px rgba(0,0,0,.1)', minWidth: 148, zIndex: 200 }}>
+            <div style={{ padding: '8px 14px 6px', fontSize: 12, color: C.textSub, borderBottom: `1px solid ${C.border}`, fontWeight: 500 }}>{item.label}</div>
+            {item.children.map(child => {
+              const ca = active === child.id;
+              return (
+                <div key={child.id} onClick={() => { onNav(child.id); setFlyout(null); }}
+                  style={{ padding: '8px 14px', fontSize: 13, color: ca ? C.accent : C.textSub, background: ca ? C.accentBg : '#fff', cursor: 'pointer', borderLeft: ca ? `2px solid ${C.accent}` : '2px solid transparent', transition: 'background .1s' }}
+                  onMouseEnter={e => { if (!ca) e.currentTarget.style.background = C.hover; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = ca ? C.accentBg : '#fff'; }}>
+                  {child.label}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+function R_SidebarMobile({ active, onNav, open, onClose }) {
+  const [exp, setExp] = React.useState({ orders: true, marketing: true });
+  const toggle = id => setExp(p => ({ ...p, [id]: !p[id] }));
+  return (
+    <>
+      {open && <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.48)', zIndex: 50 }} />}
+      <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 220, background: '#fff', transform: open ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform .22s cubic-bezier(.4,0,.2,1)', zIndex: 60, display: 'flex', flexDirection: 'column', boxShadow: '4px 0 20px rgba(0,0,0,.15)' }}>
+        <div style={{ height: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+          <span style={{ fontWeight: 700, fontSize: 15, color: '#303133', letterSpacing: '0.02em' }}>Evomni</span>
+          <span onClick={onClose} style={{ color: C.textSub, cursor: 'pointer', fontSize: 20, lineHeight: 1 }}>×</span>
+        </div>
+        <div style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}>
+          {R_MENU.map((item, idx) => {
+            if (item.sectionLabel) return (
+              <div key={idx} style={{ padding: '16px 16px 2px', fontSize: 12, color: '#B0B6BF', letterSpacing: '.06em', fontWeight: 600, textTransform: 'uppercase' }}>
+                {item.sectionLabel}
+              </div>
+            );
+            const on = active === item.id || (item.children || []).some(c => c.id === active);
+            const isOpen = exp[item.id];
+            return (
+              <div key={item.id}>
+                <div onClick={() => { if (item.children) { toggle(item.id); } else { onNav(item.id); onClose(); } }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', height: 44, cursor: 'pointer', background: on && !item.children ? C.accentBg : 'transparent', color: on ? C.textMain : C.textSub, borderLeft: on && !item.children ? `2px solid ${C.accent}` : '2px solid transparent', fontSize: 13.5, fontWeight: on ? 500 : 400 }}
+                  onMouseEnter={e => { if (!on || item.children) e.currentTarget.style.background = C.hover; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = on && !item.children ? C.accentBg : 'transparent'; }}>
+                  <span style={{ color: on ? C.accent : C.textSub, display: 'flex', alignItems: 'center', flexShrink: 0 }}>{item.icon}</span>
+                  <span style={{ flex: 1 }}>{item.label}</span>
+                  {item.children && Icon.chevron(isOpen)}
+                </div>
+                {item.children && isOpen && item.children.map(child => {
+                  const ca = active === child.id;
+                  return (
+                    <div key={child.id} onClick={() => { onNav(child.id); onClose(); }}
+                      style={{ display: 'flex', alignItems: 'center', padding: '0 14px 0 40px', height: 40, cursor: 'pointer', background: ca ? C.accentBg : 'transparent', color: ca ? C.accent : C.textSub, borderLeft: ca ? `2px solid ${C.accent}` : '2px solid transparent', fontSize: 13, fontWeight: ca ? 500 : 400 }}
+                      onMouseEnter={e => { if (!ca) e.currentTarget.style.background = C.hover; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = ca ? C.accentBg : 'transparent'; }}>
+                      {child.label}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function R_DesktopFrame() {
+  const [active, setActive] = React.useState('order-list');
+  return (
+    <div style={{ display: 'flex', height: '100%' }}>
+      <R_SidebarDesktop active={active} onNav={setActive} />
+      <R_Content active={active} onHamburger={null} />
+    </div>
+  );
+}
+
+function R_TabletFrame() {
+  const [active, setActive] = React.useState('order-list');
+  return (
+    <div style={{ display: 'flex', height: '100%' }}>
+      <R_SidebarTablet active={active} onNav={setActive} />
+      <R_Content active={active} onHamburger={null} />
+    </div>
+  );
+}
+
+function R_MobileFrame() {
+  const [active, setActive] = React.useState('order-list');
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div style={{ display: 'flex', height: '100%', position: 'relative', overflow: 'hidden' }}>
+      <R_Content active={active} onHamburger={() => setOpen(true)} />
+      <R_SidebarMobile active={active} onNav={setActive} open={open} onClose={() => setOpen(false)} />
+    </div>
+  );
+}
+
+// ─── Plan B RWD components ────────────────────────────────────────
+
+const RB_EC_MENU = [
+  { id: 'dashboard',       label: '儀表板',   icon: Icon.dashboard, shared: true },
+  { id: 'products',        label: '產品',     icon: Icon.products,  shared: true },
+  { id: 'articles',        label: '文章',     icon: Icon.articles,  shared: true },
+  { id: 'orders',     label: '訂單管理', icon: Icon.orders,
+    children: [{ id: 'order-list', label: '訂單列表' }, { id: 'returns', label: '退換貨管理' }] },
+  { id: 'members',         label: '顧客',     icon: Icon.members,   shared: true },
+  { id: 'marketing',  label: '行銷中心', icon: Icon.marketing,
+    children: [{ id: 'promotions', label: '優惠活動' }, { id: 'coupons', label: '折扣碼' }] },
+  { id: 'analytics',       label: '數據中心', icon: Icon.analytics },
+  { id: 'ec-settings',     label: '電商設定', icon: Icon.settings },
+  { id: 'global-settings', label: '全域設定', icon: Icon.settings,  shared: true },
+];
+
+const RB_CMS_MENU = [
+  { id: 'dashboard',       label: '儀表板',    icon: Icon.dashboard, shared: true },
+  { id: 'products',        label: '產品',      icon: Icon.products,  shared: true },
+  { id: 'articles',        label: '文章',      icon: Icon.articles,  shared: true },
+  { id: 'members',         label: '顧客',      icon: Icon.members,   shared: true },
+  { id: 'media',           label: '媒體庫',    icon: Icon.media },
+  { sectionLabel: '網站設計' },
+  { id: 'website-cms',     label: '品牌形象站', icon: Icon.website },
+  { sectionLabel: '設定' },
+  { id: 'global-settings', label: '全域設定',  icon: Icon.settings,  shared: true },
+];
+
+function RB_CtxSwitcher({ context, setContext, compact }) {
+  if (compact) {
+    return (
+      <div style={{ padding: '6px 5px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+        {[['ec', 'EC', '電商後台'], ['cms', '形象站', '形象站']].map(([ctx, lbl, title]) => (
+          <button key={ctx} onClick={() => setContext(ctx)} title={title}
+            style={{ display: 'block', width: '100%', padding: '3px 0', marginBottom: ctx === 'ec' ? 3 : 0, fontSize: 10, fontWeight: 700, letterSpacing: '.04em', background: context === ctx ? C.accent : '#fff', color: context === ctx ? '#fff' : C.textSub, border: `1px solid ${context === ctx ? C.accent : C.border}`, cursor: 'pointer', borderRadius: 3, fontFamily: 'inherit', transition: 'background .12s' }}>
+            {lbl}
+          </button>
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div style={{ padding: '8px 10px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+      <div style={{ fontSize: 11, color: C.textSub, marginBottom: 5, paddingLeft: 2, letterSpacing: '.04em' }}>目前管理</div>
+      <div style={{ display: 'flex', borderRadius: 6, border: `1px solid ${C.border}`, overflow: 'hidden' }}>
+        {[['ec', '電商後台'], ['cms', '形象站']].map(([ctx, lbl]) => (
+          <button key={ctx} onClick={() => setContext(ctx)}
+            style={{ flex: 1, padding: '6px 4px', border: 'none', cursor: 'pointer', fontSize: 13, fontFamily: 'inherit', fontWeight: context === ctx ? 600 : 400, background: context === ctx ? C.accent : '#fff', color: context === ctx ? '#fff' : C.textSub, transition: 'background .15s, color .15s' }}>
+            {lbl}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RB_SharedBadge() {
+  return <span style={{ fontSize: 10, padding: '1px 4px', borderRadius: 2, marginLeft: 4, background: 'rgba(79,142,247,0.1)', color: '#4F8EF7', border: '1px solid rgba(79,142,247,0.3)', whiteSpace: 'nowrap', flexShrink: 0, cursor: 'help', display: 'inline-block', lineHeight: 1.3 }}>共用</span>;
+}
+
+function R_SidebarDesktopB({ active, onNav, context, setContext }) {
+  const [exp, setExp] = React.useState({ orders: true, marketing: true });
+  const toggle = id => setExp(p => ({ ...p, [id]: !p[id] }));
+  const menu = context === 'ec' ? RB_EC_MENU : RB_CMS_MENU;
+  return (
+    <div style={{ width: 220, minWidth: 220, height: '100%', background: '#fff', borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column' }}>
+      <div style={{ height: 48, display: 'flex', alignItems: 'center', padding: '0 16px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+        <span style={{ fontWeight: 700, fontSize: 15, color: '#303133', letterSpacing: '0.02em' }}>Evomni</span>
+      </div>
+      <RB_CtxSwitcher context={context} setContext={setContext} compact={false} />
+      <div style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}>
+        {menu.map((item, idx) => {
+          if (item.sectionLabel) return (
+            <div key={idx} style={{ padding: '16px 16px 2px', fontSize: 12, color: '#B0B6BF', letterSpacing: '.06em', fontWeight: 600, textTransform: 'uppercase' }}>{item.sectionLabel}</div>
+          );
+          const on = active === item.id || (item.children || []).some(c => c.id === active);
+          const open = exp[item.id];
+          return (
+            <div key={item.id + context}>
+              <div onClick={() => item.children ? toggle(item.id) : onNav(item.id)}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', height: 44, cursor: 'pointer', background: on && !item.children ? C.accentBg : 'transparent', color: on ? C.textMain : C.textSub, borderLeft: on && !item.children ? `2px solid ${C.accent}` : '2px solid transparent', fontSize: 13.5, fontWeight: on ? 500 : 400, transition: 'background .1s' }}
+                onMouseEnter={e => { if (!on || item.children) e.currentTarget.style.background = C.hover; }}
+                onMouseLeave={e => { e.currentTarget.style.background = on && !item.children ? C.accentBg : 'transparent'; }}>
+                <span style={{ color: on ? C.accent : C.textSub, display: 'flex', alignItems: 'center', flexShrink: 0 }}>{item.icon}</span>
+                <span style={{ flex: 1 }}>{item.label}</span>
+                {item.shared && <RB_SharedBadge />}
+                {item.children && Icon.chevron(open)}
+              </div>
+              {item.children && open && item.children.map(child => {
+                const ca = active === child.id;
+                return (
+                  <div key={child.id} onClick={() => onNav(child.id)}
+                    style={{ display: 'flex', alignItems: 'center', padding: '0 14px 0 40px', height: 40, cursor: 'pointer', background: ca ? C.accentBg : 'transparent', color: ca ? C.accent : C.textSub, borderLeft: ca ? `2px solid ${C.accent}` : '2px solid transparent', fontSize: 13, fontWeight: ca ? 500 : 400, transition: 'background .1s' }}
+                    onMouseEnter={e => { if (!ca) e.currentTarget.style.background = C.hover; }}
+                    onMouseLeave={e => { e.currentTarget.style.background = ca ? C.accentBg : 'transparent'; }}>
+                    {child.label}
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function R_SidebarTabletB({ active, onNav, context, setContext }) {
+  const [flyout, setFlyout] = React.useState(null);
+  const ref = React.useRef(null);
+  React.useEffect(() => {
+    const close = () => setFlyout(null);
+    document.addEventListener('click', close);
+    return () => document.removeEventListener('click', close);
+  }, []);
+  const menu = context === 'ec' ? RB_EC_MENU : RB_CMS_MENU;
+  const handleIcon = (item, e) => {
+    e.stopPropagation();
+    if (!item.children) { onNav(item.id); setFlyout(null); return; }
+    if (flyout && flyout.id === item.id) { setFlyout(null); return; }
+    const ir = e.currentTarget.getBoundingClientRect();
+    const cr = ref.current.getBoundingClientRect();
+    setFlyout({ id: item.id, top: ir.top - cr.top });
+  };
+  return (
+    <div ref={ref} style={{ width: 56, minWidth: 56, height: '100%', background: '#fff', borderRight: `1px solid ${C.border}`, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+      <div style={{ height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+        <span style={{ fontWeight: 700, fontSize: 15, color: '#303133' }}>E</span>
+      </div>
+      <RB_CtxSwitcher context={context} setContext={setContext} compact={true} />
+      <div style={{ flex: 1, overflowY: 'auto', padding: '6px 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+        {menu.map((item, idx) => {
+          if (item.sectionLabel) return (
+            <div key={idx} style={{ width: 28, height: 1, background: C.border, margin: '5px 0' }} />
+          );
+          const on = active === item.id || (item.children || []).some(c => c.id === active);
+          const flyOpen = flyout && flyout.id === item.id;
+          return (
+            <div key={item.id + context} onClick={e => handleIcon(item, e)} title={item.label + (item.shared ? ' (共用)' : '')}
+              style={{ position: 'relative', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', background: on ? C.accentBg : flyOpen ? C.hover : 'transparent', borderRadius: 4, borderLeft: on ? `2px solid ${C.accent}` : '2px solid transparent', transition: 'background .1s' }}
+              onMouseEnter={e => { if (!on) e.currentTarget.style.background = C.hover; }}
+              onMouseLeave={e => { e.currentTarget.style.background = on ? C.accentBg : flyOpen ? C.hover : 'transparent'; }}>
+              <span style={{ color: on ? C.accent : C.textSub, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
+              {item.shared && <span style={{ position: 'absolute', top: 7, right: 6, width: 5, height: 5, borderRadius: '50%', background: C.accent, opacity: .75 }} />}
+            </div>
+          );
+        })}
+      </div>
+      {flyout && (() => {
+        const item = menu.find(i => i.id === flyout.id);
+        if (!item || !item.children) return null;
+        return (
+          <div onClick={e => e.stopPropagation()}
+            style={{ position: 'absolute', left: 56, top: flyout.top, background: '#fff', border: `1px solid ${C.border}`, boxShadow: '0 4px 16px rgba(0,0,0,.1)', minWidth: 148, zIndex: 200 }}>
+            <div style={{ padding: '8px 14px 6px', fontSize: 12, color: C.textSub, borderBottom: `1px solid ${C.border}`, fontWeight: 500 }}>{item.label}</div>
+            {item.children.map(child => {
+              const ca = active === child.id;
+              return (
+                <div key={child.id} onClick={() => { onNav(child.id); setFlyout(null); }}
+                  style={{ padding: '8px 14px', fontSize: 13, color: ca ? C.accent : C.textSub, background: ca ? C.accentBg : '#fff', cursor: 'pointer', borderLeft: ca ? `2px solid ${C.accent}` : '2px solid transparent', transition: 'background .1s' }}
+                  onMouseEnter={e => { if (!ca) e.currentTarget.style.background = C.hover; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = ca ? C.accentBg : '#fff'; }}>
+                  {child.label}
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+    </div>
+  );
+}
+
+function R_SidebarMobileB({ active, onNav, open, onClose, context, setContext }) {
+  const [exp, setExp] = React.useState({ orders: true, marketing: true });
+  const toggle = id => setExp(p => ({ ...p, [id]: !p[id] }));
+  const menu = context === 'ec' ? RB_EC_MENU : RB_CMS_MENU;
+  return (
+    <>
+      {open && <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.48)', zIndex: 50 }} />}
+      <div style={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 220, background: '#fff', transform: open ? 'translateX(0)' : 'translateX(-100%)', transition: 'transform .22s cubic-bezier(.4,0,.2,1)', zIndex: 60, display: 'flex', flexDirection: 'column', boxShadow: '4px 0 20px rgba(0,0,0,.15)' }}>
+        <div style={{ height: 48, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 14px', borderBottom: `1px solid ${C.border}`, flexShrink: 0 }}>
+          <span style={{ fontWeight: 700, fontSize: 15, color: '#303133', letterSpacing: '0.02em' }}>Evomni</span>
+          <span onClick={onClose} style={{ color: C.textSub, cursor: 'pointer', fontSize: 20, lineHeight: 1 }}>×</span>
+        </div>
+        <RB_CtxSwitcher context={context} setContext={setContext} compact={false} />
+        <div style={{ flex: 1, overflowY: 'auto', padding: '6px 0' }}>
+          {menu.map((item, idx) => {
+            if (item.sectionLabel) return (
+              <div key={idx} style={{ padding: '16px 16px 2px', fontSize: 12, color: '#B0B6BF', letterSpacing: '.06em', fontWeight: 600, textTransform: 'uppercase' }}>{item.sectionLabel}</div>
+            );
+            const on = active === item.id || (item.children || []).some(c => c.id === active);
+            const isOpen = exp[item.id];
+            return (
+              <div key={item.id + context}>
+                <div onClick={() => { if (item.children) { toggle(item.id); } else { onNav(item.id); onClose(); } }}
+                  style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 14px', height: 44, cursor: 'pointer', background: on && !item.children ? C.accentBg : 'transparent', color: on ? C.textMain : C.textSub, borderLeft: on && !item.children ? `2px solid ${C.accent}` : '2px solid transparent', fontSize: 13.5, fontWeight: on ? 500 : 400 }}
+                  onMouseEnter={e => { if (!on || item.children) e.currentTarget.style.background = C.hover; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = on && !item.children ? C.accentBg : 'transparent'; }}>
+                  <span style={{ color: on ? C.accent : C.textSub, display: 'flex', alignItems: 'center', flexShrink: 0 }}>{item.icon}</span>
+                  <span style={{ flex: 1 }}>{item.label}</span>
+                  {item.shared && <RB_SharedBadge />}
+                  {item.children && Icon.chevron(isOpen)}
+                </div>
+                {item.children && isOpen && item.children.map(child => {
+                  const ca = active === child.id;
+                  return (
+                    <div key={child.id} onClick={() => { onNav(child.id); onClose(); }}
+                      style={{ display: 'flex', alignItems: 'center', padding: '0 14px 0 40px', height: 40, cursor: 'pointer', background: ca ? C.accentBg : 'transparent', color: ca ? C.accent : C.textSub, borderLeft: ca ? `2px solid ${C.accent}` : '2px solid transparent', fontSize: 13, fontWeight: ca ? 500 : 400 }}
+                      onMouseEnter={e => { if (!ca) e.currentTarget.style.background = C.hover; }}
+                      onMouseLeave={e => { e.currentTarget.style.background = ca ? C.accentBg : 'transparent'; }}>
+                      {child.label}
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function R_ContentB({ active, context, onHamburger }) {
+  const menu = context === 'ec' ? RB_EC_MENU : RB_CMS_MENU;
+  let label = '';
+  for (const item of menu) {
+    if (item.id === active) { label = item.label; break; }
+    if (item.children) { const c = item.children.find(c => c.id === active); if (c) { label = c.label; break; } }
+  }
+  if (!label) label = R_pageLabel(active);
+  const isShared = B_SHARED_IDS.has(active);
+  const contextName = context === 'ec' ? '電商後台' : '形象站';
+  return (
+    <div style={{ flex: 1, background: '#F5F7FA', display: 'flex', flexDirection: 'column', overflow: 'hidden', minWidth: 0 }}>
+      <div style={{ height: 48, background: '#fff', borderBottom: '1px solid #DCDFE6', display: 'flex', alignItems: 'center', padding: '0 14px', gap: 10, flexShrink: 0 }}>
+        <button onClick={onHamburger} style={{ background: 'none', border: 'none', cursor: onHamburger ? 'pointer' : 'default', padding: 4, color: '#606266', fontSize: 18, lineHeight: 1, display: 'flex', alignItems: 'center' }}>☰</button>
+        <div style={{ flex: 1 }} />
+        <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg,#5B21B6,#EC4899)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 11, fontWeight: 700 }}>A</div>
+      </div>
+      <main style={{ flex: 1, overflowY: 'auto', padding: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: isShared ? 10 : 16, flexWrap: 'wrap' }}>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: '#303133', margin: 0 }}>{label}</h1>
+          <nav style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12 }}>
+            <span style={{ color: '#909399' }}>首頁</span>
+            <span style={{ color: '#C0C4CC' }}>/</span>
+            <span style={{ color: '#303133' }}>{label}</span>
+          </nav>
+        </div>
+        {isShared && (
+          <div style={{ padding: '10px 14px', background: '#FFF8EC', border: '1px solid #FAECD8', borderRadius: 4, marginBottom: 16 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: '#7D5A00', marginBottom: 3 }}>共用資料提示</div>
+            <div style={{ fontSize: 12, color: '#7D5A00', lineHeight: 1.6 }}>
+              目前在<strong>「{contextName}」</strong>情境下操作。此資料由電商後台與形象站共用，修改會同時影響兩個情境的顯示。
+            </div>
+          </div>
+        )}
+        <R_MockTable />
+      </main>
+    </div>
+  );
+}
+
+function mkCtxHandler(setContext, active, setActive) {
+  return (ctx) => {
+    setContext(ctx);
+    const menu = ctx === 'ec' ? RB_EC_MENU : RB_CMS_MENU;
+    const ids = new Set([...menu.filter(i=>i.id).map(i=>i.id), ...menu.filter(i=>i.children).flatMap(i=>i.children.map(c=>c.id))]);
+    if (!ids.has(active)) setActive('dashboard');
+  };
+}
+
+function R_DesktopFrameB() {
+  const [active, setActive] = React.useState('dashboard');
+  const [context, setContext] = React.useState('ec');
+  return (
+    <div style={{ display: 'flex', height: '100%' }}>
+      <R_SidebarDesktopB active={active} onNav={setActive} context={context} setContext={ctx => mkCtxHandler(setContext, active, setActive)(ctx)} />
+      <R_ContentB active={active} context={context} onHamburger={null} />
+    </div>
+  );
+}
+
+function R_TabletFrameB() {
+  const [active, setActive] = React.useState('dashboard');
+  const [context, setContext] = React.useState('ec');
+  return (
+    <div style={{ display: 'flex', height: '100%' }}>
+      <R_SidebarTabletB active={active} onNav={setActive} context={context} setContext={ctx => mkCtxHandler(setContext, active, setActive)(ctx)} />
+      <R_ContentB active={active} context={context} onHamburger={null} />
+    </div>
+  );
+}
+
+function R_MobileFrameB() {
+  const [active, setActive] = React.useState('dashboard');
+  const [context, setContext] = React.useState('ec');
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div style={{ display: 'flex', height: '100%', position: 'relative', overflow: 'hidden' }}>
+      <R_ContentB active={active} context={context} onHamburger={() => setOpen(true)} />
+      <R_SidebarMobileB active={active} onNav={setActive} open={open} onClose={() => setOpen(false)} context={context} setContext={ctx => mkCtxHandler(setContext, active, setActive)(ctx)} />
+    </div>
+  );
+}
+
+// ─── RwdPanel: A vs B per breakpoint ─────────────────────────────
+
+function RwdPanel() {
+  const BREAKPOINTS = [
+    {
+      key: 'desktop', label: '桌面', bp: '≥ 1024px', width: 480, height: 560,
+      CompA: R_DesktopFrame, CompB: R_DesktopFrameB,
+      noteA: '選單固定展開，區段小標分組，無需切換情境。',
+      noteB: '選單頂部增加情境切換器，切換後選單項目全面替換。共用項目（產品、文章等）在兩個情境均顯示並標注「共用」。',
+    },
+    {
+      key: 'tablet', label: '平板', bp: '768–1024px', width: 380, height: 560,
+      CompA: R_TabletFrame, CompB: R_TabletFrameB,
+      noteA: '56px icon-only，section 之間以細線分隔。點擊有子項目的圖示後右側浮出子選單。',
+      noteB: '56px icon-only，頂部增加電商後台 / 形象站切換鈕，圖示組隨情境切換。共用項目的圖示角落有藍點指示（hover 可見 tooltip 含「共用」說明）。',
+    },
+    {
+      key: 'mobile', label: '手機', bp: '< 768px', width: 320, height: 560,
+      CompA: R_MobileFrame, CompB: R_MobileFrameB,
+      noteA: '抽屜滑入，完整選單一覽無遺，區段小標分組，無需切換情境。',
+      noteB: '抽屜滑入，頂部有情境切換器，切換後整組選單替換。共用項目帶「共用」標籤，但在兩個情境均出現，精簡效果有限。',
+    },
+  ];
+
+  return (
+    <div style={{ flex: 1, padding: '24px 32px 48px', display: 'flex', flexDirection: 'column', gap: 36 }}>
+      {/* Legend */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap' }}>
+        {[['方案 A — 分區整合式', '#4F8EF7'], ['方案 B — 情境切換式', '#E6A23C']].map(([lbl, clr]) => (
+          <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <div style={{ width: 9, height: 9, borderRadius: '50%', background: clr }} />
+            <span style={{ fontSize: 13, color: '#606266' }}>{lbl}</span>
+          </div>
+        ))}
+        <span style={{ fontSize: 12, color: C.textSub }}>點擊選單項目可切換內頁；B 方案可點選頂部切換器切換情境</span>
+      </div>
+
+      {/* Per-breakpoint A vs B */}
+      {BREAKPOINTS.map(({ key, label, bp, width, height, CompA, CompB, noteA, noteB }) => (
+        <div key={key}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+            <span style={{ fontSize: 15, fontWeight: 700, color: C.textMain }}>{label}</span>
+            <span style={{ fontSize: 12, color: C.textSub, background: '#F5F7FA', border: `1px solid ${C.border}`, padding: '2px 8px', borderRadius: 3 }}>{bp}</span>
+          </div>
+          <div style={{ display: 'flex', gap: 20, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+            {[
+              { plan: 'A', clr: '#4F8EF7', bg: '#EBF3FF', noteBg: '#F0F6FF', Comp: CompA, note: noteA },
+              { plan: 'B', clr: '#E6A23C', bg: '#FDF6EC', noteBg: '#FFFBF2', Comp: CompB, note: noteB },
+            ].map(({ plan, clr, noteBg, Comp, note }) => (
+              <div key={plan} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: '50%', background: clr }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: C.textMain }}>方案 {plan}</span>
+                </div>
+                <div style={{ width, height, border: `1px solid ${C.border}`, boxShadow: '0 3px 14px rgba(0,0,0,.08)', overflow: 'hidden', background: '#fff', position: 'relative', flexShrink: 0 }}>
+                  <Comp />
+                </div>
+                <div style={{ width, background: noteBg, border: `1px solid ${clr}33`, padding: '10px 12px', fontSize: 12, color: '#606266', lineHeight: 1.7 }}>
+                  {note}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── App ──────────────────────────────────────────────────────────────────────
+
+function App() {
+  const [tab, setTab] = React.useState('compare');
+  return (
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+
+      {/* Page Header */}
+      <div style={{ background: '#fff', borderBottom: `1px solid ${C.border}`, padding: '16px 32px 0', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12, marginBottom: 4 }}>
+          <div style={{ fontSize: 20, fontWeight: 700, color: C.textMain }}>後台左側選單架構方案比較</div>
+          <div style={{ fontSize: 13, color: C.textSub }}>設計決策文件 | Evomni 新電商系統 | 2026/06</div>
+        </div>
+        <div style={{ fontSize: 14, color: '#606266', lineHeight: 1.6, marginBottom: 14 }}>
+          本文件呈現兩種後台導覽架構方案的互動效果，供 Caesar、Randy 及開發團隊對照評估。請點選兩側選單的項目，實際感受各方案的操作邏輯。
+        </div>
+        <div style={{ display: 'flex' }}>
+          {[['compare', '方案比較'], ['rwd', 'RWD 規劃']].map(([key, label]) => (
+            <button key={key} onClick={() => setTab(key)}
+              style={{ padding: '8px 20px', background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, fontWeight: tab === key ? 600 : 400, color: tab === key ? C.accent : '#606266', borderBottom: tab === key ? `2px solid ${C.accent}` : '2px solid transparent', fontFamily: 'inherit', outline: 'none', transition: 'color .15s' }}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {tab === 'compare' && (
+      <div style={{ flex: 1, padding: '24px 32px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+        {/* Background context card */}
+        <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: '18px 24px' }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: C.textMain, marginBottom: 12 }}>背景說明</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 14 }}>
+            <div style={{ background: '#EBF3FF', borderRadius: 6, padding: '12px 14px' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#4F8EF7', marginBottom: 6 }}>Caesar 方案（方案 A）</div>
+              <div style={{ fontSize: 13, color: '#606266', lineHeight: 1.6 }}>
+                電商功能與形象站功能整合在同一個側邊選單，以區段小標（電商系統、網站設計）做視覺分組。原先的形象站功能中，也會因為開啟電商系統新增，如產品的價格相關欄位、庫存管理，顧客的分眾，還有數據中心的相關電商分析，業主可一覽全部功能，所有跨功能操作皆為直接點選，不需切換模式。
+              </div>
+            </div>
+            <div style={{ background: '#FDF6EC', borderRadius: 6, padding: '12px 14px' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#E6A23C', marginBottom: 6 }}>Randy 方案（方案 B）— 提案中</div>
+              <div style={{ fontSize: 13, color: '#606266', lineHeight: 1.6 }}>
+                在選單頂部加入「電商後台 / 形象站」切換器，讓使用者明確選擇目前所在的管理域，選單隨之只顯示對應情境的功能。出發點是讓單一功能角色（如純倉管、純內容編輯）有更聚焦的操作環境。
+              </div>
+            </div>
+          </div>
+          <div style={{ fontSize: 13, color: '#606266', lineHeight: 1.65, paddingTop: 12, borderTop: `1px solid ${C.border}` }}>
+            <strong>本文件的評估目的：</strong>
+            兩種方案在不同的使用情境下各有優劣，本文件透過互動 prototype 和九項真實使用情境分析，讓 Caesar、Randy 與開發團隊在有共同依據的前提下做出架構決策。
+            右側欄「方案 A 現階段可做的改善」提供無論最終採何方案都可立即執行的設計優化方向。
+          </div>
+        </div>
+
+        {/* Sidebar comparison row */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+
+          {/* Plan A */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#4F8EF7', flexShrink: 0 }} />
+              <div style={{ fontSize: 16, fontWeight: 700, color: C.textMain }}>方案 A — 分區整合式選單</div>
+              <div style={{ fontSize: 12, padding: '2px 8px', borderRadius: 3, background: '#EBF3FF', color: '#4F8EF7', fontWeight: 600 }}>Caesar 方案</div>
+            </div>
+            <div style={{ fontSize: 14, color: '#606266', marginBottom: 10, lineHeight: 1.6 }}>
+              所有功能在同一個選單呈現，電商相關功能以「區段小標」（電商系統）分組顯示於下半部。商家可一覽全部功能，並在形象站與電商功能之間自由切換。
+            </div>
+            <div style={{ border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden', height: 620 }}>
+              <PlanAPanel />
+            </div>
+            {/* Annotations */}
+            <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 0 }}>
+              <Bubble color="#4F8EF7">
+                <div><strong>設計邏輯：</strong>單一選單，以區段小標（電商系統、網站設計）做視覺分區。電商功能未開啟時，電商系統段落整組隱藏。</div>
+              </Bubble>
+              <Bubble color={C.success}>
+                <div><strong>優點：</strong>不需切換區域，商品、訂單、顧客、數據可跨功能快速跳轉；頁面路徑結構單純；適合同時兼顧形象站與電商的商家。</div>
+              </Bubble>
+              <Bubble color={C.warn}>
+                <div><strong>潛在問題：</strong>啟用全部功能後選單項目偏多，需要使用者識別區段；部分操作人員（如純形象站編輯人員）會看到他們不需要的電商功能。</div>
+              </Bubble>
+            </div>
+          </div>
+
+          {/* Plan B */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+              <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#E6A23C', flexShrink: 0 }} />
+              <div style={{ fontSize: 16, fontWeight: 700, color: C.textMain }}>方案 B — 情境切換式選單</div>
+              <div style={{ fontSize: 12, padding: '2px 8px', borderRadius: 3, background: '#FDF6EC', color: '#E6A23C', fontWeight: 600 }}>Randy 方案</div>
+            </div>
+            <div style={{ fontSize: 14, color: '#606266', marginBottom: 10, lineHeight: 1.6 }}>
+              選單頂部增加「目前管理」切換器，分為「電商後台」與「形象站」兩個情境。注意：產品的資料表由兩個網站共用，因此在兩個情境中都需要出現。
+            </div>
+            <div style={{ border: `1px solid ${C.border}`, borderRadius: 8, overflow: 'hidden', height: 620 }}>
+              <PlanBPanel />
+            </div>
+            {/* Annotations */}
+            <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 0 }}>
+              <Bubble color="#E6A23C">
+                <div><strong>設計邏輯：</strong>每次只顯示一個區域的功能，透過頂部切換器（二選一按鈕）在「電商後台」與「形象站」間切換，選單隨之全面替換。</div>
+              </Bubble>
+              <Bubble color={C.success}>
+                <div><strong>優點：</strong>各區域選單較精簡；對單一角色（純電商操作人員或純形象站編輯人員）更聚焦，不容易分心。</div>
+              </Bubble>
+              <Bubble color="#F56C6C">
+                <div><strong>潛在問題：</strong>產品共用資料表，因此在「電商後台」與「形象站」兩個情境中都必須出現，選單精簡的效果打了折扣；文章同樣共用，歸屬邏輯不一致；跨功能群操作（如：先管訂單，再改形象站選單）仍需切換；切換後使用者可能忘記自己在哪個區域；頁面導向與權限判斷需額外維護目前所在區域的狀態。</div>
+              </Bubble>
+            </div>
+          </div>
+        </div>
+
+        {/* Shared data callout */}
+        <div style={{ background: '#FFFBEB', border: `1px solid #F6C026`, borderRadius: 8, padding: '16px 20px', display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+          <div style={{ fontSize: 20, flexShrink: 0, marginTop: 1 }}>!</div>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: '#303133', marginBottom: 6 }}>架構前提：產品與文章是兩個網站共用的資料表</div>
+            <div style={{ fontSize: 14, color: '#606266', lineHeight: 1.65 }}>
+              <strong>產品</strong>與<strong>文章</strong>的資料表由形象站與電商共用，不屬於任何一方：
+              形象站用產品資料建立品牌產品展示頁，電商用相同資料管理商品銷售；
+              文章則同時服務形象站的內容行銷與電商的部落格。
+              因此這兩個功能無法被歸入「電商後台」或「形象站」任一情境，
+              方案 B 必然面臨「兩邊都放（重複）」或「歸錯邊（找不到）」的困境，
+              而方案 A 將它們置於區段小標之上的共用區，天然解決了這個問題。
+            </div>
+            <div style={{ fontSize: 14, color: '#606266', lineHeight: 1.65, marginTop: 10, paddingTop: 10, borderTop: '1px solid #FAECD8' }}>
+              <strong>進一步的欄位層級問題：</strong>即使同一筆商品資料在兩端共用，各欄位的歸屬也不同——
+              商品描述、SEO、圖片屬於形象站範疇；售價、庫存、規格屬於電商範疇。
+              方案 B 若依情境限制可編輯欄位，同一商品編輯頁在「形象站」與「電商後台」情境下會呈現不同的欄位組，
+              使用者必須往返兩個情境才能完整編輯一筆商品，設計與維護複雜度大幅提升。
+              方案 A 的欄位控制統一交由角色權限管理，不需要情境概念介入。
+            </div>
+          </div>
+        </div>
+
+        {/* Persona legend */}
+        <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: '18px 20px' }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: C.textMain, marginBottom: 12 }}>Evomni 中小企業主要使用者角色</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
+            {[
+              { tag: '老闆 / 店長', color: '#4F8EF7', bg: '#EBF3FF', freq: '每天多次', desc: '人數最多。訂單、商品、顧客、網站內容全部自己來，同一次登入中頻繁跨功能。是受選單架構影響最大的角色。' },
+              { tag: '倉管 / 客服', color: '#67C23A', bg: '#F0F9EB', freq: '每天，任務單一重複', desc: '主要處理訂單、退換貨、庫存查詢，偶爾查顧客資料。工作範圍集中，幾乎不用形象站功能。對精簡選單有實際需求。' },
+              { tag: '兼職行銷', color: '#E6A23C', bg: '#FDF6EC', freq: '不定期，每次跨兩端', desc: '週期性任務：設定優惠、更新首頁橫幅、發文章、看報表。每次工作常橫跨電商與形象站兩端。中小企業常由老闆兼任。' },
+              { tag: '純形象站編輯', color: '#909399', bg: '#F4F4F5', freq: '每天，任務單一重複', desc: '只管網站頁面、文章、媒體庫，不接觸訂單與電商設定。和倉管員工一樣，對精簡選單有需求；兩者都可透過角色權限管理解決。' },
+            ].map(p => (
+              <div key={p.tag} style={{ background: p.bg, borderRadius: 6, padding: '12px 14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: p.color, background: '#fff', borderRadius: 3, padding: '2px 8px', border: `1px solid ${p.color}40` }}>{p.tag}</div>
+                  <div style={{ fontSize: 11, color: p.color, opacity: 0.8 }}>{p.freq}</div>
+                </div>
+                <div style={{ fontSize: 13, color: '#606266', lineHeight: 1.6 }}>{p.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Scenario analysis */}
+        <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: '20px 24px' }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: C.textMain, marginBottom: 4 }}>使用者旅程情境比較</div>
+          <div style={{ fontSize: 13, color: C.textSub, marginBottom: 16 }}>以下九個情境涵蓋電商後台的高頻與低頻任務，含跨功能與單一功能兩種工作模式，以及不同角色的每日實際操作路徑。橘色標示的步驟為方案 B 多出的切換動作。</div>
+
+          <ScenarioCard
+            title="情境 1 — 老闆每日例行巡檢（最高頻，每天 1–3 次）"
+            winner="equal"
+            steps={[
+              { a: '儀表板（預設落點）', b: '儀表板（預設落點）' },
+              { a: '點選「訂單管理」', b: '點選「訂單管理」' },
+              { a: '點選「數據中心」', b: '點選「數據中心」' },
+              { a: '點選「顧客」', b: '點選「顧客」' },
+            ]}
+            verdict="以上四個功能在方案 B 的 EC 後台情境中均可直接存取，顧客屬共用項目無需切換。整段流程兩方案步驟完全相同。"
+          />
+
+          <ScenarioCard
+            title="情境 2 — 新品上架後同步更新網站導覽選單（每週 1–3 次）"
+            winner="A"
+            steps={[
+              { a: '點選「產品」，完成商品上架設定', b: '點選「產品」，完成商品上架設定' },
+              { a: '點選「品牌形象站」，進入選單管理新增導覽項目', b: '點擊頂部切換器，切換至「形象站」', extra: true },
+              { a: '—', b: '點選「品牌形象站」，進入選單管理新增導覽項目' },
+            ]}
+            verdict="兩方案都必須前往「品牌形象站 > 選單管理」，這步跑不掉。差別在於方案 B 需要先切換情境才能抵達，方案 A 從同一選單一步到達。這類上架後的收尾動作每週發生數次，切換成本持續累積。"
+          />
+
+          <ScenarioCard
+            title="情境 3 — 倉管員工每日純訂單作業（單一電商角色，每天重複）"
+            winner="B"
+            planA="進入後台後看到完整選單（約 15 項），每次導覽都要在視覺上略過媒體庫、品牌形象站、文章等與倉管工作完全無關的項目。長期使用後雖能習慣，但這是每天都存在的認知掃描成本，對新進倉管員工尤為明顯。"
+            planB="EC 後台情境下僅顯示 9 個項目，全部與電商作業直接相關。依認知心理學（Hick's Law），選單選項從 15 縮減至 9，掃描決策時間可量化減少。若帳號預設為 EC 情境，倉管員工登入後即可直接作業，無需任何切換。"
+            verdict="對角色單純、功能域清楚的使用者，方案 B 的聚焦選單每天都帶來實際的認知效益，不是邊際改善而是日復一日的累積。前提是帳號預設情境須正確設定，否則每次登入需切換，抵消此優勢。"
+          />
+
+          <ScenarioCard
+            title="情境 4 — 形象站編輯員工每日文章與媒體管理（單一形象站角色，每天重複）"
+            winner="B"
+            planA="進入後台看到完整選單，需略過訂單管理、行銷中心、電商設定等與形象站編輯完全無關的項目。形象站編輯的工作入口（文章、媒體庫、品牌形象站）散落在選單中段，每次都要定向掃描。"
+            planB="形象站情境下選單僅顯示 9 個項目，文章、媒體庫、品牌形象站均在前列，視覺路徑清晰。形象站編輯每日工作流程在此情境內可完整閉環，不需跨越電商後台。"
+            verdict="方案 B 對單一形象站角色的每日工作確實更聚焦。需注意：若系統預設情境為電商後台，此角色每次登入都需先切換，形成固定的多餘操作，應在帳號設定中以角色預設情境解決。"
+          />
+
+          <ScenarioCard
+            title="情境 5 — 查數據發現異常後追查並調整首頁展示（每週 1–2 次）"
+            winner="A"
+            steps={[
+              { a: '點選「數據中心」，找出流量或轉換率異常的商品', b: '在 EC 後台，點選「數據中心」，找出異常商品' },
+              { a: '點選「產品」，更新商品描述與圖片', b: '點選「產品」，更新商品描述與圖片（全欄位均可編輯）' },
+              { a: '點選「品牌形象站」，調整首頁展示位置', b: '點擊頂部切換器，切換至「形象站」', extra: true },
+              { a: '—', b: '點選「品牌形象站」，調整首頁展示位置' },
+            ]}
+            verdict="數據中心只存在於 EC 後台，品牌形象站只存在於形象站情境。這條「數據驅動 → 商品調整 → 網站展示」的決策鏈，在方案 B 中必然包含一次情境切換。此類從數據出發的跨域決策對行銷人員或老闆每週都會發生。"
+          />
+
+          <ScenarioCard
+            title="情境 6 — 純電商任務：快速建立折扣碼（季節性，每月 1–2 次）"
+            winner="equal"
+            planA="點選「行銷中心 > 折扣碼」，建立折扣碼，設定有效期與適用商品範圍，存檔完成。選單中同時可見其他功能，不影響此任務完成。"
+            planB="在 EC 後台直接點選「行銷中心 > 折扣碼」，操作路徑與方案 A 完全相同。選單僅顯示 9 個電商相關項目，視覺上更聚焦，但路徑長度無差異。"
+            verdict="純電商任務在方案 B 的 EC 後台即可完整閉環，無需切換情境。方案 B 的聚焦選單在此類任務中提供更清晰的視覺環境，但步驟數相同，定為持平。單一功能域的任務是方案 B 表現最佳的情境類型。"
+          />
+
+          <ScenarioCard
+            title="情境 7 — 媒體庫整理後更新商品封面（每週 1–2 次）"
+            winner="equal"
+            steps={[
+              { a: '點選「媒體庫」，上傳並整理新圖片素材', b: '點選「媒體庫」，上傳並整理新圖片素材' },
+              { a: '點選「產品」，進入商品編輯頁，指定新圖片，存檔', b: '點選「產品」，進入商品編輯頁，指定新圖片，存檔' },
+            ]}
+            verdict="媒體庫與產品均為兩情境共用的功能項目，在電商後台和形象站情境中都可直接點選，不需切換。兩方案的操作路徑完全相同，定為持平。"
+          />
+
+          <ScenarioCard
+            title="情境 8 — 新進角色分工員工第一天了解工作範圍（一次性，影響長遠）"
+            winner="B"
+            planA="新進倉管或形象站編輯登入後看到完整選單，需自行判斷哪些功能屬於自己的工作範圍。區段小標提供分組線索，但整個選單對新人呈現的是全公司後台的全貌，工作邊界不明確，需要時間和引導才能縮小到自己的工作範圍。"
+            planB="若帳號預設情境與員工角色一致（倉管預設電商後台、形象站編輯預設形象站），新員工登入後看到的就是自己工作範圍內的 9 個功能，視覺上即刻傳達「這是你需要用的東西」。工作範圍的邊界從第一天就清楚，減少探索和誤操作的可能性。"
+            verdict="對角色分工明確的新進員工，方案 B 以視覺邊界直接傳達工作範圍，可降低上手時的認知負擔與誤操作風險。方案 A 對混合角色的新員工（如兼任多項工作的老闆）則更直觀，因為他們需要了解全貌。"
+          />
+
+          <ScenarioCard
+            title="情境 9 — 商家在平板裝置上外出期間處理後台事務（不定期）"
+            winner="A"
+            planA="漢堡選單展開後呈現完整統一選單，操作邏輯與桌機完全相同。跨功能操作：點開漢堡選單 → 點選「訂單管理」確認訂單 → 再次點開漢堡選單 → 點選「品牌形象站」更新公告。每次導覽固定兩個動作（開選單 + 點項目），不論目標功能屬於哪個域。"
+            planB="情境切換器需在漢堡選單覆蓋層中操作，跨域任務的步驟被放大：點開漢堡選單 → 點選「訂單管理」→ 再次點開漢堡選單 → 找到切換器並切換至「形象站」→ 等待選單重新渲染 → 點選「品牌形象站」。一次情境切換在平板上需要重開漢堡選單並多執行一個覆蓋層內的操作，觸控面積小且切換器位置不固定，誤觸風險高於桌機游標操作。"
+            verdict="方案 B 的情境切換器在平板漢堡選單模式下面臨放置困境：放在覆蓋層內讓切換步驟增加；放在頁首則與標題列競爭有限空間。方案 A 的統一選單在所有螢幕尺寸下行為一致，不需為不同裝置另行設計切換器的觸控互動邏輯。"
+          />
+
+          {/* Summary table */}
+          <div style={{ marginTop: 4, padding: '14px 18px', background: '#F5F7FA', borderRadius: 6, border: `1px solid ${C.border}` }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: C.textSub, marginBottom: 10, letterSpacing: '.04em', textTransform: 'uppercase' }}>九情境綜合比較</div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+              <thead>
+                <tr style={{ background: '#EBEDF0' }}>
+                  <th style={{ padding: '6px 10px', textAlign: 'left', fontWeight: 600, color: C.textSub, fontSize: 12, borderBottom: `1px solid ${C.border}` }}>情境</th>
+                  <th style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 600, color: C.textSub, fontSize: 12, borderBottom: `1px solid ${C.border}`, width: 100 }}>使用頻率</th>
+                  <th style={{ padding: '6px 10px', textAlign: 'center', fontWeight: 600, color: C.textSub, fontSize: 12, borderBottom: `1px solid ${C.border}`, width: 110 }}>優勢方案</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { name: '老闆每日例行巡檢', freq: '每天多次', winner: 'equal' },
+                  { name: '新品上架後同步更新網站導覽', freq: '每週數次', winner: 'A' },
+                  { name: '倉管員工每日純訂單作業', freq: '每天（角色限定）', winner: 'B' },
+                  { name: '形象站編輯員工每日文章管理', freq: '每天（角色限定）', winner: 'B' },
+                  { name: '查數據後追查並調整首頁展示', freq: '每週 1–2 次', winner: 'A' },
+                  { name: '純電商任務：建立折扣碼', freq: '季節性', winner: 'equal' },
+                  { name: '媒體庫整理後更新商品封面', freq: '每週 1–2 次', winner: 'equal' },
+                  { name: '新進角色分工員工第一天', freq: '一次性', winner: 'B' },
+                  { name: '平板裝置上的跨域後台操作', freq: '不定期', winner: 'A' },
+                ].map((r, i) => {
+                  const wClr = r.winner === 'A' ? '#4F8EF7' : r.winner === 'B' ? '#E6A23C' : '#67C23A';
+                  const wLabel = r.winner === 'A' ? '方案 A 較優' : r.winner === 'B' ? '方案 B 較優' : '持平';
+                  return (
+                    <tr key={i} style={{ background: i % 2 === 0 ? '#fff' : '#FAFAFA' }}>
+                      <td style={{ padding: '7px 10px', color: C.textMain, borderBottom: `1px solid ${C.border}` }}>{r.name}</td>
+                      <td style={{ padding: '7px 10px', color: C.textSub, textAlign: 'center', borderBottom: `1px solid ${C.border}`, borderLeft: `1px solid ${C.border}`, fontSize: 12 }}>{r.freq}</td>
+                      <td style={{ padding: '7px 10px', textAlign: 'center', borderBottom: `1px solid ${C.border}`, borderLeft: `1px solid ${C.border}` }}>
+                        <span style={{ fontSize: 11, padding: '2px 10px', borderRadius: 10, background: wClr + '18', color: wClr, fontWeight: 600 }}>{wLabel}</span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Recommendation */}
+        <div style={{ background: '#fff', border: `1px solid ${C.border}`, borderRadius: 8, padding: '20px 24px' }}>
+          <div style={{ fontSize: 16, fontWeight: 700, color: C.textMain, marginBottom: 16 }}>決策框架</div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+            <div style={{ padding: '14px 16px', background: '#EBF3FF', borderRadius: 6, border: '1px solid #C6DBFF' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#4F8EF7', marginBottom: 8 }}>方案 A 更合適的條件</div>
+              {[
+                '規模小的管理團隊（1–3 人），同一個人管理電商與網站',
+                '工作流程頻繁跨越電商與形象站兩個域',
+                '開發資源有限，不希望引入情境狀態管理的工程複雜度',
+                '商家對後台的認知是一套整合系統，只是對外兩個呈現，電商與形象站',
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', gap: 7, marginBottom: 6, alignItems: 'flex-start' }}>
+                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#4F8EF7', flexShrink: 0, marginTop: 6 }} />
+                  <div style={{ fontSize: 13, color: '#303133', lineHeight: 1.5 }}>{item}</div>
+                </div>
+              ))}
+            </div>
+            <div style={{ padding: '14px 16px', background: '#FDF6EC', borderRadius: 6, border: '1px solid #FAECD8' }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: '#E6A23C', marginBottom: 8 }}>方案 B 更合適的條件</div>
+              {[
+                '規模較大的團隊（5 人以上），且員工有明確的角色分工',
+                '電商與形象站功能各自持續增長，選單長度已成問題',
+                '有系統性角色權限管理需求，情境切換作為第一層存取控制',
+                '商家自身以「電商後台」與「官網後台」作為兩個獨立的心智空間',
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', gap: 7, marginBottom: 6, alignItems: 'flex-start' }}>
+                  <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#E6A23C', flexShrink: 0, marginTop: 6 }} />
+                  <div style={{ fontSize: 13, color: '#303133', lineHeight: 1.5 }}>{item}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ padding: '12px 16px', background: '#F5F7FA', borderRadius: 6, border: `1px solid ${C.border}`, marginBottom: 16 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.textMain, marginBottom: 6 }}>市場參考（電商 + 架站一體化 SaaS 平台，共 10 個）</div>
+            <div style={{ fontSize: 13, color: '#606266', lineHeight: 1.65 }}>
+              研究涵蓋 Shopify、Squarespace、Wix、BigCommerce、Duda、SHOPLINE、91APP、WACA、EasyStore、Webflow 共 10 個功能組合與 Evomni 最相近的平台（同時具備電商後台與品牌形象站管理）。
+              10 個平台中 9 個採用方案 A 統一側邊選單，唯一採用情境切換的 Webflow，其設計目的是服務設計師、文字編輯、資料管理員等不同職能角色，而非在電商與網站管理功能域之間切換，情境本質與 Evomni 不同。
+              值得注意的是，各平台在面對選單項目過多的問題時，解法一致是漸進揭露（Shopify 的「View more」）或明確分組（Squarespace 的 Pages / Commerce 分組），沒有任何一個平台選擇引入情境切換作為解法。
+            </div>
+          </div>
+
+          <div style={{ padding: '12px 16px', background: '#F0F9EB', borderRadius: 6, border: '1px solid #C2E7B0' }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: '#67C23A', marginBottom: 6 }}>針對 Evomni 現階段的工程建議</div>
+            <div style={{ fontSize: 13, color: '#606266', lineHeight: 1.65, marginBottom: 10 }}>
+              以 Evomni 目前以中小型商家為主要目標客群、工程資源有限的現況，方案 A 在現階段的風險更低，且九項情境中整體表現更穩定。
+              若未來 Evomni 服務的商家規模成長、員工分工更明確，或電商與形象站功能各自大幅增加，方案 B 的架構前提將更加成立，屆時的遷移成本也會隨功能量增加而提高。
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: C.textMain, marginBottom: 6 }}>方案 A 現階段可做的改善（無需重構）</div>
+            {[
+              { title: '帳號角色預設情境（方案 B 若啟用）', desc: '若採行方案 B，帳號建立時應依角色設定預設情境，避免倉管或形象站編輯每次登入都需手動切換。' },
+              { title: '角色權限控制選單可見項目（中期）', desc: '帳號權限系統上線後，依角色隱藏不相關的選單項目，等效達成方案 B 的選單聚焦效果，不引入情境切換架構。' },
+            ].map((item, i) => (
+              <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start' }}>
+                <div style={{ width: 18, height: 18, borderRadius: '50%', background: C.successBg, color: C.success, fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>{i + 1}</div>
+                <div style={{ fontSize: 13, color: '#606266', lineHeight: 1.55 }}><strong>{item.title}</strong> — {item.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div style={{ textAlign: 'center', fontSize: 12, color: '#C0C4CC', paddingBottom: 16 }}>
+          Evomni 新電商系統 | 介面設計與應用工程整合設計文件 | 本文件為內部溝通用途
+        </div>
+      </div>
+      )}
+
+      {tab === 'rwd' && <RwdPanel />}
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
