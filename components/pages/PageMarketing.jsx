@@ -202,6 +202,11 @@ function DiscountTypePickerDialog({ open, onClose, onNavigate }) {
       desc: '達到消費門檻（滿額或滿件）自動加贈指定品項',
     },
     {
+      id: 'promotion-new',
+      label: '折扣活動',
+      desc: '訂單達金額或件數門檻自動折扣，支援多階梯設定（最多 5 組）',
+    },
+    {
       id: 'flash-sale-new',
       label: '限時折扣',
       desc: '指定商品期間限時特價，製造搶購氛圍',
@@ -255,6 +260,11 @@ function UnifiedDiscountListPage({ onNavigate, show }) {
   const pageSize = 20;
   const [typePickerOpen, setTypePickerOpen] = React.useState(false);
   const [disableTarget, setDisableTarget] = React.useState(null);
+  const [selectedIds, setSelectedIds] = React.useState(new Set());
+  const [expandedAll, setExpandedAll] = React.useState(false);
+  const [batchAction, setBatchAction] = React.useState(null);
+  const [batchCapMode, setBatchCapMode] = React.useState('shared');
+  const [sharedCapVal, setSharedCapVal] = React.useState('');
 
   const handleSort = f => setSort(s => ({ field: f, dir: s.field === f && s.dir === 'asc' ? 'desc' : 'asc' }));
 
@@ -263,6 +273,7 @@ function UnifiedDiscountListPage({ onNavigate, show }) {
     coupon:   ['coupon', 'auto'],
     freeship: ['freeship'],
     gift:     ['gift'],
+    discount: ['discount'],
     flash:    ['flash'],
     bundle:   ['bundle'],
   };
@@ -281,6 +292,15 @@ function UnifiedDiscountListPage({ onNavigate, show }) {
     if (a[sort.field] > b[sort.field]) return dir;
     return 0;
   });
+
+  const CAP = 500;
+  const pageItems = sorted.slice((page - 1) * pageSize, page * pageSize);
+  const pageIds = pageItems.map(d => d.id);
+  const allPageChecked = pageIds.length > 0 && pageIds.every(id => selectedIds.has(id));
+  const somePageChecked = !allPageChecked && pageIds.some(id => selectedIds.has(id));
+  const effectiveTotal = Math.min(sorted.length, CAP);
+
+  React.useEffect(() => { setSelectedIds(new Set()); setExpandedAll(false); }, [tab, search, statusFilter, page]);
 
   return (
     <div>
@@ -302,6 +322,7 @@ function UnifiedDiscountListPage({ onNavigate, show }) {
           { key: 'coupon',   label: '折扣碼',  count: UNIFIED_DISCOUNTS.filter(d => ['coupon','auto'].includes(d.category)).length },
           { key: 'freeship', label: '免運活動', count: UNIFIED_DISCOUNTS.filter(d => d.category === 'freeship').length },
           { key: 'gift',     label: '贈品活動', count: UNIFIED_DISCOUNTS.filter(d => d.category === 'gift').length },
+          { key: 'discount', label: '折扣活動', count: UNIFIED_DISCOUNTS.filter(d => d.category === 'discount').length },
           { key: 'flash',    label: <span>限時折扣<AdvBadge /></span> },
           { key: 'bundle',   label: <span>組合優惠<AdvBadge /></span> },
         ]}
@@ -323,6 +344,33 @@ function UnifiedDiscountListPage({ onNavigate, show }) {
         </div>
       </TabSearchBar>
 
+      {allPageChecked && !expandedAll && sorted.length > pageSize && (
+        <div style={{ background: '#EBF5FF', border: '1px solid #b3d8ff', borderRadius: 3, padding: '8px 16px', marginBottom: 8, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span>已選取本頁 <strong>{pageIds.length}</strong> 筆。</span>
+          <a href="#" onClick={e => { e.preventDefault(); setExpandedAll(true); setSelectedIds(new Set(sorted.slice(0, CAP).map(d => d.id))); }}
+            style={{ color: '#409EFF', textDecoration: 'none' }}>
+            選取全部符合條件的 {effectiveTotal} 筆{sorted.length > CAP ? `（已達 ${CAP} 筆上限）` : ''}
+          </a>
+        </div>
+      )}
+      {expandedAll && (
+        <div style={{ background: '#EBF5FF', border: '1px solid #b3d8ff', borderRadius: 3, padding: '8px 16px', marginBottom: 8, fontSize: 13, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span>已選取全部 <strong>{effectiveTotal}</strong> 筆。</span>
+          {sorted.length > CAP && <span style={{ color: '#E6A23C' }}>（筆數超過 {CAP} 筆上限，僅處理前 {CAP} 筆）</span>}
+          <a href="#" onClick={e => { e.preventDefault(); setExpandedAll(false); setSelectedIds(new Set()); }}
+            style={{ color: '#909399', textDecoration: 'none', marginLeft: 4 }}>取消全選</a>
+        </div>
+      )}
+      {selectedIds.size > 0 && (
+        <div style={{ background: '#fff', border: '1px solid #EBEEF5', borderRadius: 3, padding: '8px 16px', marginBottom: 8, display: 'flex', alignItems: 'center', gap: 12, fontSize: 13 }}>
+          <span style={{ color: '#606266' }}>已選取 <strong style={{ color: '#303133' }}>{selectedIds.size}</strong> 筆</span>
+          <div style={{ flex: 1 }} />
+          <EvoBtn variant="secondary" size="sm" onClick={() => setBatchAction('disable')}>批次停用</EvoBtn>
+          <EvoBtn variant="secondary" size="sm" onClick={() => setBatchAction('setcap')}>批次設定使用上限</EvoBtn>
+          <EvoBtn variant="secondary" size="sm" onClick={() => { setSelectedIds(new Set()); setExpandedAll(false); }}>× 清除選取</EvoBtn>
+        </div>
+      )}
+
       {sorted.length === 0 ? (
         <MktEmptyState title="目前沒有符合條件的優惠活動" sub="試試調整篩選條件，或新增一個優惠活動。" ctaLabel="＋ 新增優惠" onCta={() => setTypePickerOpen(true)} />
       ) : (
@@ -331,6 +379,21 @@ function UnifiedDiscountListPage({ onNavigate, show }) {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead>
                 <tr>
+                  <th style={{ ...tableThStyle, width: 40, textAlign: 'center', padding: '8px 0' }}>
+                    <input type="checkbox"
+                      checked={allPageChecked}
+                      ref={el => { if (el) el.indeterminate = somePageChecked; }}
+                      onChange={e => {
+                        if (e.target.checked) {
+                          setSelectedIds(s => { const n = new Set(s); pageIds.forEach(id => n.add(id)); return n; });
+                        } else {
+                          setSelectedIds(s => { const n = new Set(s); pageIds.forEach(id => n.delete(id)); return n; });
+                          setExpandedAll(false);
+                        }
+                      }}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </th>
                   <th style={tableThStyle}><SortableHeader label="名稱" field="name" sort={sort} onSort={handleSort} /></th>
                   <th style={tableThStyle}>折扣碼</th>
                   <th style={tableThStyle}>類型</th>
@@ -343,10 +406,24 @@ function UnifiedDiscountListPage({ onNavigate, show }) {
                 </tr>
               </thead>
               <tbody>
-                {sorted.slice((page - 1) * pageSize, page * pageSize).map((d, i) => {
+                {pageItems.map((d, i) => {
                   const st = UNIFIED_STATUS[d.status];
                   return (
                     <tr key={d.id} style={{ background: i % 2 === 0 ? '#fff' : '#FAFAFA' }}>
+                      <td style={{ ...tableTdStyle, width: 40, textAlign: 'center', padding: '8px 0' }}>
+                        <input type="checkbox"
+                          checked={selectedIds.has(d.id)}
+                          onChange={e => {
+                            setSelectedIds(s => {
+                              const n = new Set(s);
+                              if (e.target.checked) n.add(d.id);
+                              else { n.delete(d.id); setExpandedAll(false); }
+                              return n;
+                            });
+                          }}
+                          style={{ cursor: 'pointer' }}
+                        />
+                      </td>
                       <td style={tableTdStyle}>
                         <span style={{ fontWeight: 500, color: '#409EFF', cursor: 'pointer' }}
                           onClick={() => onNavigate('coupon-edit')}>{d.name}</span>
@@ -386,6 +463,47 @@ function UnifiedDiscountListPage({ onNavigate, show }) {
         confirmLabel="確定停用" onConfirm={() => { show('優惠活動已停用，狀態回到草稿', 'warning'); setDisableTarget(null); }}>
         <p style={{ marginBottom: 8 }}>確定停用「{disableTarget?.name}」？</p>
         <p style={{ fontSize: 13, color: '#909399' }}>停用後此優惠將立即失效，狀態將改為草稿，可重新編輯後再發布。</p>
+      </AdminModal>
+
+      <AdminModal open={batchAction === 'disable'} onClose={() => setBatchAction(null)} title="批次停用優惠活動"
+        confirmLabel="確定停用" onConfirm={() => {
+          show(`已批次停用 ${selectedIds.size} 筆優惠活動，狀態回到草稿`, 'warning');
+          setSelectedIds(new Set()); setExpandedAll(false); setBatchAction(null);
+        }}>
+        <p style={{ marginBottom: 8 }}>確定停用已選取的 <strong>{selectedIds.size}</strong> 筆優惠活動？</p>
+        <p style={{ fontSize: 13, color: '#909399' }}>停用後這些優惠將立即失效，狀態將改為草稿，可重新編輯後再發布。</p>
+      </AdminModal>
+
+      <AdminModal open={batchAction === 'setcap'} onClose={() => { setBatchAction(null); setSharedCapVal(''); setBatchCapMode('shared'); }} title="批次設定使用上限"
+        confirmLabel="確認套用" onConfirm={() => {
+          show(`已套用使用上限設定至 ${selectedIds.size} 筆優惠活動`, 'success');
+          setSelectedIds(new Set()); setExpandedAll(false); setBatchAction(null); setSharedCapVal(''); setBatchCapMode('shared');
+        }}>
+        <div style={{ marginBottom: 8 }}>
+          <div style={{ display: 'inline-flex', border: '1px solid #DCDFE6', borderRadius: 3, overflow: 'hidden', marginBottom: 16 }}>
+            <button onClick={() => setBatchCapMode('shared')} style={{ padding: '6px 20px', fontSize: 13, border: 'none', cursor: 'pointer', background: batchCapMode === 'shared' ? '#409EFF' : '#fff', color: batchCapMode === 'shared' ? '#fff' : '#606266', fontFamily: 'Noto Sans TC, sans-serif' }}>共用上限</button>
+            <button onClick={() => setBatchCapMode('individual')} style={{ padding: '6px 20px', fontSize: 13, border: 'none', borderLeft: '1px solid #DCDFE6', cursor: 'pointer', background: batchCapMode === 'individual' ? '#409EFF' : '#fff', color: batchCapMode === 'individual' ? '#fff' : '#606266', fontFamily: 'Noto Sans TC, sans-serif' }}>指定值</button>
+          </div>
+          {batchCapMode === 'shared' ? (
+            <div>
+              <p style={{ fontSize: 13, color: '#606266', marginBottom: 10 }}>將已選取的 <strong>{selectedIds.size}</strong> 筆優惠活動的使用上限統一設定為：</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <input type="number" min="1" value={sharedCapVal} onChange={e => setSharedCapVal(e.target.value)} placeholder="輸入次數"
+                  style={{ width: 120, height: 32, border: '1px solid #DCDFE6', borderRadius: 3, padding: '0 10px', fontSize: 13, color: '#303133', fontFamily: 'Noto Sans TC, sans-serif', outline: 'none' }} />
+                <span style={{ fontSize: 13, color: '#606266' }}>次</span>
+                <EvoBtn variant="secondary" size="sm" onClick={() => setSharedCapVal('')}>不限制</EvoBtn>
+              </div>
+              <p style={{ fontSize: 12, color: '#909399', marginTop: 6 }}>留空表示不限制使用次數。</p>
+            </div>
+          ) : (
+            <div>
+              <p style={{ fontSize: 13, color: '#606266', marginBottom: 10 }}>為每筆優惠活動分別設定使用上限：</p>
+              <div style={{ background: '#F5F7FA', border: '1px solid #EBEEF5', borderRadius: 3, padding: '10px 14px', fontSize: 13, color: '#909399', textAlign: 'center' }}>
+                已選取 {selectedIds.size} 筆，逐筆設定上限（正式版提供逐筆輸入欄位，Prototype 示意）
+              </div>
+            </div>
+          )}
+        </div>
       </AdminModal>
     </div>
   );
@@ -797,12 +915,35 @@ function PromotionListPage({ onNavigate, show }) {
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(20);
   const handleSort = f => setSort(s => ({ field: f, dir: s.field === f && s.dir === 'asc' ? 'desc' : 'asc' }));
+  // 批次選取狀態
+  const [selected, setSelected] = React.useState([]);
+  const [expandedToAll, setExpandedToAll] = React.useState(false);
+  const [batchModal, setBatchModal] = React.useState(false);
+  const [batchLimitVal, setBatchLimitVal] = React.useState('');
+  const [batchMode, setBatchMode] = React.useState('global');
+  const BATCH_LIMIT = 500;
   const TYPE_LABEL = { gift: '贈品活動', freeship: '免運活動', discount: '折扣活動', flash: '限時折扣', addon: '加購活動', bundle: '組合優惠' };
   const filtered = PROMOTIONS.filter(p => tab === 'all' || p.type === tab || (tab === 'flash' && p.type === 'discount'));
   const isLockedTab = !isAdvanced && (tab === 'addon' || tab === 'bundle' || tab === 'flash');
   const TAB_NEW_MAP = { gift: 'gift-new', flash: 'flash-sale-new', bundle: 'bundle-new' };
   const newPageId = TAB_NEW_MAP[tab] || 'promotion-new';
   const newBtnLabel = { gift: '＋ 新增贈品活動', flash: '＋ 新增限時折扣活動', bundle: '＋ 新增組合優惠活動' }[tab] || '＋ 新增優惠活動';
+  const pageItems = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const allPageSelected = pageItems.length > 0 && pageItems.every((p, i) => selected.includes((page - 1) * pageSize + i));
+  const totalSelected = expandedToAll ? Math.min(filtered.length, BATCH_LIMIT) : selected.length;
+  const toggleRow = i => {
+    const globalIdx = (page - 1) * pageSize + i;
+    if (totalSelected >= BATCH_LIMIT && !selected.includes(globalIdx)) { show(`最多可同時操作 ${BATCH_LIMIT} 筆，請分批執行`, 'warning'); return; }
+    setSelected(s => s.includes(globalIdx) ? s.filter(x => x !== globalIdx) : [...s, globalIdx]);
+    setExpandedToAll(false);
+  };
+  const toggleAllPage = () => {
+    const pageIdxs = pageItems.map((_, i) => (page - 1) * pageSize + i);
+    if (allPageSelected) { setSelected(s => s.filter(x => !pageIdxs.includes(x))); setExpandedToAll(false); }
+    else { setSelected(s => [...new Set([...s, ...pageIdxs])]); }
+  };
+  const clearSelection = () => { setSelected([]); setExpandedToAll(false); };
+  const doBatch = () => { show(`已對 ${totalSelected} 筆活動套用批次設定`, 'success'); setBatchModal(false); clearSelection(); };
 
   return (
     <div>
@@ -832,10 +973,38 @@ function PromotionListPage({ onNavigate, show }) {
         <MktEmptyState icon="" title="尚無優惠活動" sub="建立滿額贈品、免運費或折扣活動，提升顧客購物意願。" ctaLabel="＋ 新增優惠活動" onCta={() => onNavigate('promotion-new')} />
       ) : (
         <>
+          {/* 批次工具列（選取後出現）*/}
+          {selected.length > 0 && (
+            <div style={{ position: 'sticky', top: 0, zIndex: 100, background: '#ECF5FF', border: '1px solid #b3d8ff', padding: '10px 16px', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 13, color: '#409EFF', fontWeight: 600 }}>
+                已選取本頁 {selected.length} 筆。
+              </span>
+              {!expandedToAll && filtered.length > selected.length && selected.length < BATCH_LIMIT && (
+                <button onClick={() => setExpandedToAll(true)}
+                  style={{ background: 'none', border: 'none', color: '#409EFF', cursor: 'pointer', fontSize: 13, padding: 0, fontFamily: 'inherit', textDecoration: 'underline' }}>
+                  選取全部 {Math.min(filtered.length, BATCH_LIMIT)} 筆活動
+                </button>
+              )}
+              {expandedToAll && (
+                <span style={{ fontSize: 13, color: '#606266' }}>已擴大至全部 {Math.min(filtered.length, BATCH_LIMIT)} 筆（上限 {BATCH_LIMIT} 筆）</span>
+              )}
+              {totalSelected >= BATCH_LIMIT && (
+                <span style={{ fontSize: 12, color: '#E6A23C' }}>已達 {BATCH_LIMIT} 筆上限，請分批執行</span>
+              )}
+              <div style={{ flex: 1 }} />
+              <EvoBtn variant="primary" size="sm" onClick={() => setBatchModal(true)}>批次操作（{totalSelected} 筆）</EvoBtn>
+              <EvoBtn variant="ghost" size="sm" onClick={clearSelection}>取消選取</EvoBtn>
+            </div>
+          )}
+
           <TableWrapper>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead>
                 <tr>
+                  <th style={{ ...tableThStyle, width: 40, textAlign: 'center' }}>
+                    <input type="checkbox" checked={allPageSelected} onChange={toggleAllPage}
+                      style={{ accentColor: '#303133', cursor: 'pointer' }} />
+                  </th>
                   <th style={tableThStyle}><SortableHeader label="活動名稱" field="name" sort={sort} onSort={handleSort} /></th>
                   <th style={tableThStyle}>類型</th>
                   <th style={tableThStyle}>觸發條件</th>
@@ -847,12 +1016,18 @@ function PromotionListPage({ onNavigate, show }) {
                 </tr>
               </thead>
               <tbody>
-                {filtered.slice((page - 1) * pageSize, page * pageSize).map((p, i) => {
+                {pageItems.map((p, i) => {
                   const st = PROMO_STATUS[p.status];
+                  const globalIdx = (page - 1) * pageSize + i;
+                  const isSel = expandedToAll || selected.includes(globalIdx);
                   return (
                     <tr key={p.id}
-                      style={{ background: tableRowBg(i) }}
-                      {...tableRowHandlers(i, false)}>
+                      style={{ background: isSel ? '#EFF7FF' : tableRowBg(i) }}
+                      {...tableRowHandlers(i, isSel)}>
+                      <td style={{ ...tableTdStyle, textAlign: 'center' }}>
+                        <input type="checkbox" checked={isSel} onChange={() => toggleRow(i)}
+                          onClick={e => e.stopPropagation()} style={{ accentColor: '#303133', cursor: 'pointer' }} />
+                      </td>
                       <td style={{ ...tableTdStyle, fontWeight: 500, color: '#303133' }}>{p.name}</td>
                       <td style={tableTdStyle}><StatusTag type="primary">{TYPE_LABEL[p.type]}</StatusTag></td>
                       <td style={tableTdStyle}>{p.condition}</td>
@@ -873,6 +1048,45 @@ function PromotionListPage({ onNavigate, show }) {
             </table>
           </TableWrapper>
           <Pagination page={page} total={filtered.length} pageSize={pageSize} pageSizes={[20, 50, 100]} onChange={setPage} onPageSizeChange={ps => { setPageSize(ps); setPage(1); }} style={{ marginTop: 16 }} />
+
+          {/* 批次設定 Modal */}
+          {batchModal && (
+            <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <div style={{ background: '#fff', width: 440, maxWidth: '90vw', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}>
+                <div style={{ padding: '16px 20px', borderBottom: '1px solid #DCDFE6', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ fontSize: 16, fontWeight: 700, color: '#303133' }}>批次設定贈品上限（{totalSelected} 筆）</span>
+                  <button onClick={() => setBatchModal(false)} style={{ background: 'none', border: 'none', fontSize: 20, color: '#909399', cursor: 'pointer' }}>×</button>
+                </div>
+                <div style={{ padding: 20, display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {[
+                    { v: 'global', l: '改為使用共用上限', d: '回歸全域贈品設定的預設值' },
+                    { v: 'custom', l: '統一設定為指定值', d: '輸入 1–15 的整數，套用至所選活動' },
+                  ].map(o => (
+                    <label key={o.v} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px',
+                      border: `1px solid ${batchMode === o.v ? '#409EFF' : '#DCDFE6'}`,
+                      background: batchMode === o.v ? '#EFF7FF' : '#fff', cursor: 'pointer' }}>
+                      <input type="radio" checked={batchMode === o.v} onChange={() => setBatchMode(o.v)} style={{ marginTop: 3 }} />
+                      <div>
+                        <div style={{ fontSize: 14, fontWeight: 500 }}>{o.l}</div>
+                        <div style={{ fontSize: 12, color: '#909399', marginTop: 2 }}>{o.d}</div>
+                      </div>
+                    </label>
+                  ))}
+                  {batchMode === 'custom' && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingLeft: 14 }}>
+                      <span style={{ fontSize: 13, color: '#606266' }}>每筆活動上限：</span>
+                      <NumberInput value={batchLimitVal} onChange={setBatchLimitVal} width={80} placeholder="1–15" />
+                      <span style={{ fontSize: 13, color: '#606266' }}>件</span>
+                    </div>
+                  )}
+                </div>
+                <div style={{ padding: '12px 20px', borderTop: '1px solid #DCDFE6', display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                  <EvoBtn variant="secondary" onClick={() => setBatchModal(false)}>取消</EvoBtn>
+                  <EvoBtn variant="primary" onClick={doBatch}>確認套用</EvoBtn>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>
@@ -885,6 +1099,14 @@ function PromotionFormPage({ onNavigate, show }) {
   const [name, setName] = React.useState('');
   const [conditionType, setConditionType] = React.useState('amount');
   const [conditionValue, setConditionValue] = React.useState('');
+  // 折扣活動多階梯
+  const [discCondType, setDiscCondType] = React.useState('amount');
+  const [discType, setDiscType] = React.useState('percent');
+  const [tiers, setTiers] = React.useState([{ condValue: '', discValue: '' }]);
+  const addTier = () => { if (tiers.length < 5) setTiers(t => [...t, { condValue: '', discValue: '' }]); };
+  const removeTier = i => setTiers(t => t.filter((_, idx) => idx !== i));
+  const setTierField = (i, k, v) => setTiers(t => t.map((row, idx) => idx === i ? { ...row, [k]: v } : row));
+  const highestTier = tiers.filter(t => t.condValue && t.discValue).sort((a, b) => Number(b.condValue) - Number(a.condValue))[0];
 
   const TYPES = [
     { v: 'gift',     l: '贈品活動', d: '達到條件可兌換指定贈品' },
@@ -927,13 +1149,60 @@ function PromotionFormPage({ onNavigate, show }) {
           {type === 'gift' && <FormField label="贈品產品" required helper="選擇顧客達到條件後可獲得的贈品。"><EvoBtn variant="secondary">＋ 選擇贈品產品</EvoBtn></FormField>}
           {type === 'freeship' && <Banner type="success">達到條件後，系統將自動免除本次訂單的運費，無需顧客手動操作。</Banner>}
           {type === 'discount' && (
-            <FormField label="折扣設定" required>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                <ESelect value="percent" onChange={() => {}} width={140} options={[{ value: 'percent', label: '百分比折扣' }, { value: 'fixed', label: '固定金額折扣' }]} />
-                <NumberInput value="" onChange={() => {}} width={80} />
-                <span style={{ color: '#909399' }}>%</span>
-              </div>
-            </FormField>
+            <div>
+              {/* 折扣條件類型（全部階梯共用）*/}
+              <FormField label="折扣條件類型" required helper="同一活動所有階梯共用同一條件類型。">
+                <div style={{ display: 'flex', gap: 16 }}>
+                  {[{ v: 'amount', l: '滿額（NT$X）' }, { v: 'qty', l: '滿件（N 件）' }].map(o => (
+                    <label key={o.v} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                      <input type="radio" checked={discCondType === o.v} onChange={() => setDiscCondType(o.v)} />
+                      <span style={{ fontSize: 14 }}>{o.l}</span>
+                    </label>
+                  ))}
+                </div>
+              </FormField>
+              {/* 折扣類型（全部階梯共用）*/}
+              <FormField label="折扣類型" required helper="同一活動所有階梯共用同一折扣類型。">
+                <div style={{ display: 'flex', gap: 16 }}>
+                  {[{ v: 'percent', l: '百分比折扣（%）' }, { v: 'fixed', l: '固定金額折扣（NT$）' }].map(o => (
+                    <label key={o.v} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                      <input type="radio" checked={discType === o.v} onChange={() => setDiscType(o.v)} />
+                      <span style={{ fontSize: 14 }}>{o.l}</span>
+                    </label>
+                  ))}
+                </div>
+              </FormField>
+              {/* 多階梯設定 */}
+              <FormField label={`折扣階梯設定（${tiers.length}/5）`} required helper="條件數值需依序遞增，結帳時自動套用消費者符合的最高階梯。">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                  {tiers.map((tier, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: '#F5F7FA', border: '1px solid #EBEEF5' }}>
+                      <span style={{ fontSize: 12, color: '#909399', fontWeight: 600, minWidth: 44 }}>第 {i + 1} 階</span>
+                      <span style={{ fontSize: 13, color: '#606266' }}>{discCondType === 'amount' ? '滿 NT$' : '滿'}</span>
+                      <NumberInput value={tier.condValue} onChange={v => setTierField(i, 'condValue', v)} width={90} placeholder={discCondType === 'amount' ? '金額' : '件數'} />
+                      {discCondType === 'qty' && <span style={{ fontSize: 13, color: '#606266' }}>件</span>}
+                      <span style={{ fontSize: 13, color: '#606266' }}>{discType === 'percent' ? '折' : '折扣'}</span>
+                      <NumberInput value={tier.discValue} onChange={v => setTierField(i, 'discValue', v)} width={80} placeholder={discType === 'percent' ? '1–99' : 'NT$'} />
+                      <span style={{ fontSize: 13, color: '#606266' }}>{discType === 'percent' ? '%' : 'NT$'}</span>
+                      {tiers.length > 1 && (
+                        <button onClick={() => removeTier(i)} style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#F56C6C', cursor: 'pointer', fontSize: 18, lineHeight: 1, padding: '0 4px' }}>×</button>
+                      )}
+                    </div>
+                  ))}
+                  {tiers.length < 5 && (
+                    <button onClick={addTier} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 12px', background: 'none', border: '1px dashed #DCDFE6', cursor: 'pointer', fontSize: 13, color: '#409EFF', fontFamily: 'inherit' }}>
+                      ＋ 新增階梯（最多 5 組）
+                    </button>
+                  )}
+                </div>
+              </FormField>
+              {/* 最高可觸達階梯即時預覽 */}
+              {highestTier && (
+                <div style={{ padding: '10px 14px', background: '#ECF5FF', border: '1px solid #b3d8ff', fontSize: 13, color: '#606266', lineHeight: 1.7 }}>
+                  目前最高可觸達階梯：{discCondType === 'amount' ? `消費滿 NT$${highestTier.condValue}` : `購買滿 ${highestTier.condValue} 件`}，享{discType === 'percent' ? ` ${highestTier.discValue}% 折扣` : ` NT$${highestTier.discValue} 折扣`}
+                </div>
+              )}
+            </div>
           )}
           {type === 'addon' && <FormField label="加購產品與優惠價" required helper="設定顧客可以加購的產品及其優惠價格。"><EvoBtn variant="secondary">＋ 選擇加購產品</EvoBtn></FormField>}
           <FormField label="活動期間" required>
@@ -1095,7 +1364,8 @@ function GiftItemFormPage({ onNavigate, mode, show }) {
 // ─── SCREEN 4A: 免運活動 新增表單 ────────────────────────────────────────────
 function FreeshippingFormPage({ onNavigate, show }) {
   const [form, setForm] = React.useState({
-    name: '', conditionType: 'amount', conditionValue: '',
+    name: '', freeshipType: 'all', conditionType: 'amount', conditionValue: '',
+    calcBasis: 'after_discount',
     productScope: 'all', description: '', enabled: false,
     startDate: '', endDate: '',
   });
@@ -1144,29 +1414,81 @@ function FreeshippingFormPage({ onNavigate, show }) {
 
         {/* 右欄：免運條件設定 */}
         <SectionCard title="免運條件設定">
-          <FormField label="觸發條件類型" required>
+          {/* 免運類型 */}
+          <FormField label="免運類型" required>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {[
-                { v: 'amount', l: '訂單金額滿 NT$X 免運費（滿額免運）' },
-                { v: 'qty',    l: '訂單商品件數滿 N 件免運費（滿件免運）' },
+                { v: 'all',     l: '整單免運', d: '整筆訂單達到條件即免除所有運費' },
+                { v: 'partial', l: '部分商品免運', d: '指定範圍商品達到條件，僅免除該批商品運費' },
               ].map(o => (
                 <label key={o.v} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '10px 14px',
-                  border: `1px solid ${form.conditionType === o.v ? '#409EFF' : '#DCDFE6'}`,
-                  background: form.conditionType === o.v ? '#EFF7FF' : '#fff', cursor: 'pointer' }}>
-                  <input type="radio" checked={form.conditionType === o.v} onChange={() => { set('conditionType', o.v); set('conditionValue', ''); }} style={{ marginTop: 2 }} />
-                  <span style={{ fontSize: 14 }}>{o.l}</span>
+                  border: `1px solid ${form.freeshipType === o.v ? '#409EFF' : '#DCDFE6'}`,
+                  background: form.freeshipType === o.v ? '#EFF7FF' : '#fff', cursor: 'pointer' }}>
+                  <input type="radio" checked={form.freeshipType === o.v} onChange={() => set('freeshipType', o.v)} style={{ marginTop: 3 }} />
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 500 }}>{o.l}</div>
+                    <div style={{ fontSize: 12, color: '#909399', marginTop: 2 }}>{o.d}</div>
+                  </div>
                 </label>
               ))}
             </div>
           </FormField>
-          <FormField label={form.conditionType === 'amount' ? '門檻金額' : '門檻件數'} required>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {form.conditionType === 'amount' && <span style={{ color: '#909399' }}>NT$</span>}
-              <NumberInput value={form.conditionValue} onChange={v => set('conditionValue', v)} width={140}
-                placeholder={form.conditionType === 'amount' ? '例：500' : '例：3'} />
-              {form.conditionType === 'qty' && <span style={{ color: '#909399' }}>件</span>}
-            </div>
-          </FormField>
+
+          {/* 條件類型（整單免運才顯示）*/}
+          {form.freeshipType === 'all' && (
+            <FormField label="條件類型" required>
+              <div style={{ display: 'flex', gap: 16 }}>
+                {[
+                  { v: 'amount', l: '滿額門檻（NT$X）' },
+                  { v: 'qty',    l: '滿件門檻（N 件）' },
+                ].map(o => (
+                  <label key={o.v} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                    <input type="radio" checked={form.conditionType === o.v}
+                      onChange={() => { set('conditionType', o.v); set('conditionValue', ''); }} />
+                    <span style={{ fontSize: 14 }}>{o.l}</span>
+                  </label>
+                ))}
+              </div>
+            </FormField>
+          )}
+
+          {/* 條件數值（整單免運才顯示）*/}
+          {form.freeshipType === 'all' && (
+            <FormField label={form.conditionType === 'amount' ? '門檻金額' : '門檻件數'} required>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {form.conditionType === 'amount' && <span style={{ color: '#909399' }}>NT$</span>}
+                <NumberInput value={form.conditionValue} onChange={v => set('conditionValue', v)} width={140}
+                  placeholder={form.conditionType === 'amount' ? '例：500' : '例：3'} />
+                {form.conditionType === 'qty' && <span style={{ color: '#909399' }}>件</span>}
+              </div>
+            </FormField>
+          )}
+
+          {/* 計算基準（整單免運 + 滿額門檻才顯示）*/}
+          {form.freeshipType === 'all' && form.conditionType === 'amount' && (
+            <FormField label={
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                計算基準
+                <span style={{ position: 'relative', display: 'inline-block' }}
+                  title="決定以哪個金額判斷是否達到免運門檻。「折扣後金額」含優惠券折扣；「購物金點數折抵後金額」另再扣除點數折抵。">
+                  <span style={{ fontSize: 13, color: '#909399', cursor: 'help' }}>ⓘ</span>
+                </span>
+              </span>
+            }>
+              <div style={{ display: 'flex', gap: 16 }}>
+                {[
+                  { v: 'after_discount', l: '折扣後金額' },
+                  { v: 'after_points',   l: '購物金點數折抵後金額' },
+                ].map(o => (
+                  <label key={o.v} style={{ display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}>
+                    <input type="radio" checked={form.calcBasis === o.v} onChange={() => set('calcBasis', o.v)} />
+                    <span style={{ fontSize: 14 }}>{o.l}</span>
+                  </label>
+                ))}
+              </div>
+            </FormField>
+          )}
+
           <div style={{ padding: '12px 14px', background: '#F0F9EB', border: '1px solid #B3E19D', fontSize: 13, color: '#606266', lineHeight: 1.7 }}>
             達到條件後，系統將自動免除本次訂單的運費，無需顧客手動操作或輸入折扣碼。
           </div>

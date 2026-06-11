@@ -31,7 +31,15 @@ function Screen6GuestQuery({ onNavigate }) {
   };
 
   return (
-    <div style={{ minHeight:'100vh', background:'#F5F7FA', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24 }}>
+    <div style={{ minHeight:'100vh', background:'#F5F7FA', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', padding:24, paddingTop:68 }}>
+      {/* Prototype nav banner */}
+      <div style={{ position:'fixed', top:0, left:0, right:0, zIndex:1000, background:'#1a1b1d', borderBottom:'1px solid #303133', padding:'9px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', fontFamily:'Noto Sans TC,sans-serif' }}>
+        <span style={{ fontSize:12, color:'rgba(255,255,255,0.45)', letterSpacing:'0.05em', textTransform:'uppercase' }}>後台導覽 — 訪客訂單查詢（前台版本）</span>
+        <a href="html/訪客訂單查詢.html" target="_blank" rel="noopener" style={{ fontSize:12, color:'#67C23A', display:'flex', alignItems:'center', gap:6, textDecoration:'none', fontWeight:500 }}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{ flexShrink:0 }}><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6" stroke="#67C23A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><polyline points="15 3 21 3 21 9" stroke="#67C23A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><line x1="10" y1="14" x2="21" y2="3" stroke="#67C23A" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          查看前台 Prototype
+        </a>
+      </div>
       {/* Logo */}
       <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:32 }}>
         <div style={{ width:32, height:32, borderRadius:'50%', background:'linear-gradient(135deg,#5B21B6,#EC4899)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontSize:16, fontWeight:700 }}>e</div>

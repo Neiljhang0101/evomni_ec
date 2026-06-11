@@ -1,14 +1,26 @@
 // Evomni Prototype — Mock Data & Status Maps
 
 const ORDER_STATUS = {
-  pending_payment: { label: '待付款', color: 'warning' },
-  paid:            { label: '已付款', color: 'primary' },
-  processing:      { label: '處理中', color: 'primary' },
-  shipped:         { label: '已出貨', color: 'success' },
-  in_transit:      { label: '配送中', color: 'success' },
-  delivered:       { label: '已送達', color: 'success' },
-  completed:       { label: '已完成', color: 'info'    },
-  cancelled:       { label: '已取消', color: 'danger'  },
+  pending_payment: { label: '待付款', color: 'warning',
+    tooltip: { what: '顧客已下單但尚未完成付款，訂單處於等待確認狀態', impact: '庫存已預扣但尚未正式扣減；此狀態下無法出貨、無法開立發票', next: '顧客完成付款後自動進入「已付款」；超過設定時限未付款，訂單自動取消並釋出庫存' } },
+  paid:            { label: '已付款', color: 'primary',
+    tooltip: { what: '付款已確認，等待商家開始備貨處理', impact: '庫存正式扣減；可開立發票；消費者收到付款確認通知信', next: '請前往處理，點擊「更新狀態 → 處理中」開始備貨' } },
+  processing:      { label: '處理中', color: 'primary',
+    tooltip: { what: '商家已確認並開始備貨，貨品尚未交給物流', impact: '消費者收到「備貨中」通知信；訂單不可取消', next: '備貨完成後，點擊「更新狀態 → 已出貨」並填寫物流單號' } },
+  shipped:         { label: '已出貨', color: 'success',
+    tooltip: { what: '貨品已交付物流廠商，等待物流取件或掃描入庫', impact: '消費者收到出貨通知及物流追蹤連結；訂單不可取消', next: '等待物流系統回傳配送狀態，自動更新為「配送中」' } },
+  in_transit:      { label: '配送中', color: 'success',
+    tooltip: { what: '貨品正在物流運送途中，尚未抵達收件地址', impact: '消費者可用追蹤號查詢配送位置；商家無需操作', next: '物流確認送達後自動更新為「已送達」' } },
+  delivered:       { label: '已送達', color: 'success',
+    tooltip: { what: '物流回報貨品已抵達收件地址', impact: '消費者收到送達通知；7 天後若未確認，系統自動完成訂單', next: '等待消費者確認，或 7 天後系統自動完成；可主動聯繫消費者確認收貨' } },
+  completed:       { label: '已完成', color: 'info',
+    tooltip: { what: '消費者已確認收貨，訂單正式結束', impact: '點數回饋已發放；訂單不可再修改', next: '—（終態）' } },
+  cancelled:       { label: '已取消', color: 'danger',
+    tooltip: { what: '訂單已取消，庫存已自動回補', impact: '已付款訂單將依原付款方式退款（時程依金流廠商規定）；點數回饋不發放', next: '—（終態）' } },
+  refunded:        { label: '已退款', color: 'info',
+    tooltip: { what: '訂單已完成全額退款，交易關閉', impact: '退款已依原付款方式退回；消費點數已扣回（若曾發放）', next: '—（終態）如有疑問請聯繫客服' } },
+  closed:          { label: '已關閉', color: 'info',
+    tooltip: { what: '訂單已由商家關閉', impact: '此訂單已終止，如有退款需求請聯繫客服確認', next: '—（終態）如有疑問請聯繫客服' } },
 };
 
 const INVOICE_STATUS = {
@@ -43,6 +55,8 @@ const NEXT_STATUS = {
   delivered:       ['completed'],
   completed:       [],
   cancelled:       [],
+  refunded:        [],
+  closed:          [],
 };
 
 const NEXT_STATUS_LABEL = {
@@ -184,6 +198,74 @@ const ORDERS_INIT = [
       { label: '已送達', time: '2026-04-26 11:00', operator: null },
       { label: '產品出貨', time: '2026-04-24 22:00', operator: '李管理員' },
       { label: '訂單建立', time: '2026-04-24 09:00', operator: null },
+    ],
+  },
+  // 已退款 case
+  {
+    id: 'ORD-20260423-000009', date: '2026-04-23 13:10',
+    recipient: '許雅雯', phone: '0911-222-333', email: 'hsu@example.com',
+    address: '台北市松山區南京東路 200 號', city: '台北市', delivery: '宅配（黑貓）',
+    items: [{ name: '探索智慧手錶 Smart Watch Pro', spec: '玫瑰金 / S', price: 4800, qty: 1 }],
+    subtotal: 4800, shipping: 100, discount: 0, discountCode: null, points: 0,
+    total: 4900, paid: 4900,
+    status: 'refunded', payment: '信用卡', paymentStatus: '已退款',
+    invoice: 'voided', trackingNo: null, note: '', rmaIds: ['RMA-20260420-000001'],
+    timeline: [
+      { label: '全額退款完成，信用卡退款已發起', time: '2026-04-28 10:00', operator: '系統自動' },
+      { label: '退貨驗收完成，庫存已回補', time: '2026-04-27 15:00', operator: '王管理員' },
+      { label: '收到消費者寄回產品', time: '2026-04-26 09:30', operator: null },
+      { label: '核准退貨申請', time: '2026-04-24 11:00', operator: '王管理員' },
+      { label: '已送達', time: '2026-04-24 09:00', operator: null },
+      { label: '產品出貨', time: '2026-04-23 22:00', operator: '李管理員' },
+      { label: '訂單建立', time: '2026-04-23 13:10', operator: null },
+    ],
+  },
+  // 已關閉 case
+  {
+    id: 'ORD-20260422-000004', date: '2026-04-22 16:45',
+    recipient: '鄭凱文', phone: '0922-444-555', email: 'cheng@example.com',
+    address: '高雄市前鎮區中山二路 88 號', city: '高雄市', delivery: '超商取貨（7-11）',
+    items: [{ name: '藍牙耳機 Pro', spec: '白色', price: 2680, qty: 1 }],
+    subtotal: 2680, shipping: 60, discount: 0, discountCode: null, points: 0,
+    total: 2740, paid: 0,
+    status: 'closed', payment: 'ATM 轉帳', paymentStatus: '未付款',
+    invoice: 'not_issued', trackingNo: null, note: '消費者疑似重複下單，商家手動關閉', rmaIds: [],
+    timeline: [
+      { label: '訂單由商家手動關閉', time: '2026-04-23 09:00', operator: '王管理員' },
+      { label: '訂單建立', time: '2026-04-22 16:45', operator: null },
+    ],
+  },
+  // 混溫層拆單 — 子訂單 A（常溫商品）
+  {
+    id: 'ORD-20260421-000015-A', date: '2026-04-21 11:30',
+    recipient: '劉佳穎', phone: '0933-666-777', email: 'liu@example.com',
+    address: '台中市南屯區文心路 150 號', city: '台中市', delivery: '宅配（黑貓）',
+    items: [{ name: '有機燕麥片', spec: '500g', price: 280, qty: 2 }],
+    subtotal: 560, shipping: 100, discount: 0, discountCode: null, points: 0,
+    total: 660, paid: 660,
+    status: 'shipped', payment: '信用卡', paymentStatus: '已付款',
+    invoice: 'issued', invoiceNo: 'IJ-56789012', trackingNo: 'TC44556677', note: '', rmaIds: [],
+    isMultiTemp: true, multiTempSiblings: ['ORD-20260421-000015-B'],
+    timeline: [
+      { label: '產品出貨（常溫批次）', time: '2026-04-21 20:00', operator: '李管理員', trackingNo: 'TC44556677' },
+      { label: '開始處理', time: '2026-04-21 14:00', operator: '李管理員' },
+      { label: '訂單建立（拆單 A）', time: '2026-04-21 11:31', operator: '系統自動' },
+    ],
+  },
+  // 混溫層拆單 — 子訂單 B（冷凍商品）
+  {
+    id: 'ORD-20260421-000015-B', date: '2026-04-21 11:30',
+    recipient: '劉佳穎', phone: '0933-666-777', email: 'liu@example.com',
+    address: '台中市南屯區文心路 150 號', city: '台中市', delivery: '宅配（黑貓）',
+    items: [{ name: '香菜貢丸湯', spec: '冷凍 × 5', price: 500, qty: 1 }],
+    subtotal: 500, shipping: 200, discount: 0, discountCode: null, points: 0,
+    total: 700, paid: 700,
+    status: 'processing', payment: '信用卡', paymentStatus: '已付款',
+    invoice: 'issued', invoiceNo: 'IJ-56789013', trackingNo: null, note: '', rmaIds: [],
+    isMultiTemp: true, multiTempSiblings: ['ORD-20260421-000015-A'],
+    timeline: [
+      { label: '開始處理（冷凍批次）', time: '2026-04-21 14:30', operator: '李管理員' },
+      { label: '訂單建立（拆單 B）', time: '2026-04-21 11:31', operator: '系統自動' },
     ],
   },
 ];

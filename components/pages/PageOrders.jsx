@@ -21,6 +21,8 @@ function TweaksPanel({ tweaks, setTweak, onClose }) {
     {value:'delivered',     label:'已送達'},
     {value:'completed',     label:'已完成'},
     {value:'cancelled',     label:'已取消'},
+    {value:'refunded',      label:'已退款'},
+    {value:'closed',        label:'已關閉'},
   ];
   const rmaStatusOpts = [
     {value:'',                   label:'（跟隨列表點選）'},

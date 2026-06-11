@@ -257,8 +257,40 @@ function RadioGroup({options,value:init,onChange,card=false}) {
   </div>;
 }
 
+// 訂單狀態 Tag + ⓘ hover tooltip（PRD Part3 §6.2.A R8）
+function StatusTagTooltip({ status }) {
+  const s = (typeof ORDER_STATUS !== 'undefined' && ORDER_STATUS[status]) || {};
+  const [vis, setVis] = React.useState(false);
+  return (
+    <div style={{ display:'inline-flex', alignItems:'center', gap:4, position:'relative' }}>
+      <EvoTag color={s.color}>{s.label || status}</EvoTag>
+      {s.tooltip && (
+        <span
+          onMouseEnter={() => setVis(true)}
+          onMouseLeave={() => setVis(false)}
+          style={{ fontSize:14, color:'#909399', cursor:'help', lineHeight:1, userSelect:'none', flexShrink:0 }}>
+          ⓘ
+        </span>
+      )}
+      {vis && s.tooltip && (
+        <div style={{
+          position:'absolute', left:0, top:'calc(100% + 6px)', zIndex:999,
+          background:'#303133', color:'#fff', padding:'10px 12px', width:280,
+          fontSize:12, lineHeight:1.65, boxShadow:'0 4px 16px rgba(0,0,0,0.2)',
+          pointerEvents:'none',
+        }}>
+          <div style={{ marginBottom:5 }}><span style={{ color:'#E6A23C', fontWeight:600 }}>狀態說明：</span>{s.tooltip.what}</div>
+          <div style={{ marginBottom:5 }}><span style={{ color:'#E6A23C', fontWeight:600 }}>影響範圍：</span>{s.tooltip.impact}</div>
+          <div><span style={{ color:'#E6A23C', fontWeight:600 }}>後續步驟：</span>{s.tooltip.next}</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 Object.assign(window, {
   EvoBtn,EvoTag,useToast,AdminModal,EvoTimeline,InfoCard,AmountDetail,
   AlertBanner,PageHeader,AdminLayout,
   SkeletonBlock,BackLink,Divider,EvoInput,EvoSelect,EvoTextarea,RadioGroup,
+  StatusTagTooltip,
 });

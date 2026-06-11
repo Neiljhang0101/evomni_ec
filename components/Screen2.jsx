@@ -92,12 +92,29 @@ function Screen2OrderDetail({ orders, rmas, onNavigate, onUpdateOrder, tweakStat
           action={{ label:'開立發票', onClick:() => { show('發票開立成功，發票號碼：ZZ-99887766','success'); } }} />
       )}
 
+      {/* 混溫層拆單提示 */}
+      {order.isMultiTemp && order.multiTempSiblings && (
+        <div style={{ background:'#FDF6EC', border:'1px solid #FAECD8', padding:'10px 16px', marginBottom:12, fontSize:13, color:'#E6A23C', display:'flex', alignItems:'center', gap:8, flexWrap:'wrap' }}>
+          <span style={{ fontSize:16, flexShrink:0 }}>⚠</span>
+          <span style={{ flexShrink:0 }}>此為拆單訂單（混溫層分批出貨），關聯子訂單：</span>
+          <span style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+            {order.multiTempSiblings.map(sibId => (
+              <a key={sibId} href="#"
+                onClick={e => { e.preventDefault(); onNavigate('order-detail', { orderId: sibId }); }}
+                style={{ color:'#409EFF', textDecoration:'none', fontWeight:600, fontSize:13 }}>
+                {sibId}
+              </a>
+            ))}
+          </span>
+        </div>
+      )}
+
       {/* Page Header with action buttons */}
       <div style={{ display:'flex', alignItems:'flex-start', justifyContent:'space-between', marginBottom:20, flexWrap:'wrap', gap:12 }}>
         <div style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
           <button onClick={() => onNavigate('order-list')} style={{ background:'none', border:'none', cursor:'pointer', color:'#303133', fontSize:18, padding:'4px 6px', display:'flex', alignItems:'center', lineHeight:1 }}>←</button>
           <h1 style={{ fontSize:20, fontWeight:700, color:'#303133', margin:0 }}>訂單 #{order.id}</h1>
-          <EvoTag color={oStatus.color}>{oStatus.label}</EvoTag>
+          <StatusTagTooltip status={order.status} />
         </div>
         <div style={{ display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
           {/* 更新訂單狀態 */}

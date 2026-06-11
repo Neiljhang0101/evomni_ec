@@ -39,6 +39,8 @@ function Screen1OrderList({ orders, onNavigate, onUpdateOrder, onAdminNav }) {
     { key: 'in_transit',      label: '配送中' },
     { key: 'completed',       label: '已完成' },
     { key: 'cancelled',       label: '已取消' },
+    { key: 'refunded',        label: '已退款' },
+    { key: 'closed',          label: '已關閉' },
     { key: 'rma',             label: '含退換貨的訂單', dot: true },
   ];
 
@@ -152,7 +154,9 @@ function Screen1OrderList({ orders, onNavigate, onUpdateOrder, onAdminNav }) {
                   <EvoSelect label="訂單狀態" value={filterStatus} onChange={setFilterStatus} options={[
                     {label:'全部',value:''},{label:'待付款',value:'pending_payment'},{label:'已付款',value:'paid'},
                     {label:'處理中',value:'processing'},{label:'已出貨',value:'shipped'},
-                    {label:'配送中',value:'in_transit'},{label:'已完成',value:'completed'},{label:'已取消',value:'cancelled'},
+                    {label:'配送中',value:'in_transit'},{label:'已送達',value:'delivered'},
+                    {label:'已完成',value:'completed'},{label:'已取消',value:'cancelled'},
+                    {label:'已退款',value:'refunded'},{label:'已關閉',value:'closed'},
                   ]} />
                 </div>
                 <div style={{ marginBottom:12 }}>
@@ -255,8 +259,13 @@ function Screen1OrderList({ orders, onNavigate, onUpdateOrder, onAdminNav }) {
                         <input type="checkbox" checked={isSel} onChange={e => { e.stopPropagation(); toggleRow(i); }} onClick={e => e.stopPropagation()} style={{ accentColor:'#303133', cursor:'pointer' }} />
                       </td>
                       <td style={{ ...tableTdStyle, fontSize: EvoDS.font.listMin }}>
-                        <a href="#" onClick={e => { e.preventDefault(); onNavigate('order-detail', { orderId: order.id }); }}
-                          style={{ color:'#409EFF', fontSize:14, textDecoration:'none' }}>{order.id}</a>
+                        <div style={{ display:'flex', flexDirection:'column', gap:4, alignItems:'flex-start' }}>
+                          <a href="#" onClick={e => { e.preventDefault(); onNavigate('order-detail', { orderId: order.id }); }}
+                            style={{ color:'#409EFF', fontSize:14, textDecoration:'none' }}>{order.id}</a>
+                          {order.isMultiTemp && (
+                            <span style={{ display:'inline-flex', alignItems:'center', padding:'1px 7px', borderRadius:9999, fontSize:11, fontWeight:500, background:'#FDF6EC', color:'#E6A23C', border:'1px solid #FAECD8', whiteSpace:'nowrap' }}>分批出貨</span>
+                          )}
+                        </div>
                       </td>
                       <td style={{ ...tableTdStyle, fontSize: EvoDS.font.listMin, color:'#909399' }}>{order.date}</td>
                       <td style={{ ...tableTdStyle, fontSize: EvoDS.font.listMin }}>{order.recipient}</td>
@@ -264,7 +273,7 @@ function Screen1OrderList({ orders, onNavigate, onUpdateOrder, onAdminNav }) {
                         <div style={{ overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', fontSize:14 }}>{itemSummary}</div>
                       </td>
                       <td style={{ ...tableTdStyle, fontSize: EvoDS.font.listMin, fontWeight:500 }}>NT$ {order.total.toLocaleString()}</td>
-                      <td style={{ ...tableTdStyle, fontSize: EvoDS.font.listMin }}><EvoTag color={oStatus.color}>{oStatus.label}</EvoTag></td>
+                      <td style={{ ...tableTdStyle, fontSize: EvoDS.font.listMin }}><StatusTagTooltip status={order.status} /></td>
                       <td style={{ ...tableTdStyle, fontSize: EvoDS.font.listMin }}>{order.payment}</td>
                       <td style={{ ...tableTdStyle, fontSize: EvoDS.font.listMin }}>
                         <EvoTag color={invStatus.color} icon={invStatus.icon}>{invStatus.label}</EvoTag>
