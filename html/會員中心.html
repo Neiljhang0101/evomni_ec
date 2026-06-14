@@ -282,9 +282,9 @@ const REFERRAL = {
   ],
 };
 const DEVICES = [
-  { id: 1, name: 'Chrome · macOS',   ip: '1.2.3.4',    last: '2026/06/04 14:32', current: true },
-  { id: 2, name: 'Safari · iPhone',  ip: '5.6.7.8',    last: '2026/06/03 09:12', current: false },
-  { id: 3, name: 'Chrome · Windows', ip: '9.10.11.12', last: '2026/05/28 18:00', current: false },
+  { id: 1, name: 'Chrome · macOS',   ip: '1.2.3.4',    last: '2026/06/04 14:32', current: true,  remember: true,  expire: '2026/07/04' },
+  { id: 2, name: 'Safari · iPhone',  ip: '5.6.7.8',    last: '2026/06/03 09:12', current: false, remember: true,  expire: '2026/07/03' },
+  { id: 3, name: 'Chrome · Windows', ip: '9.10.11.12', last: '2026/05/28 18:00', current: false, remember: false, expire: '2026/06/04' },
 ];
 
 /* ── Shared ──────────────────────────────────────────────────────────── */
@@ -1063,15 +1063,24 @@ const SecurityPage = () => {
       ))}
 
       <STtl>登入裝置管理</STtl>
-      <p style={{ font: '400 14px/1.6 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 16 }}>若發現不認識的裝置，請立即登出以保護帳號安全。</p>
+      <p style={{ font: '400 14px/1.6 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 8 }}>若發現不認識的裝置，請立即登出以保護帳號安全。</p>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 14px', background: 'var(--fill-300)', border: '1px solid var(--line-300)', marginBottom: 16 }}>
+        <Icon name="info" size={16} style={{ color: 'var(--fg-subtle)', flexShrink: 0, marginTop: 1 }} />
+        <span style={{ font: '400 13px/1.6 var(--font-sans)', color: 'var(--fg-muted)' }}>
+          登入時未勾選「記住我」的工作階段維持 <strong style={{ color: 'var(--fg)' }}>7 天</strong>；勾選「記住我」則維持 <strong style={{ color: 'var(--fg)' }}>30 天</strong>。到期後自動登出，不會自動延長。
+        </span>
+      </div>
       {devices.map(d => (
         <div key={d.id} className="sec-row">
           <Icon name="devices" size={19} style={{ color: 'var(--fg-muted)', flexShrink: 0 }} />
           <div style={{ flex: 1 }}>
-            <div style={{ font: '500 14px/1 var(--font-sans)', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+            <div style={{ font: '500 14px/1 var(--font-sans)', display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3, flexWrap: 'wrap' }}>
               {d.name} {d.current && <span className="current-badge">目前使用中</span>}
+              <span style={{ display: 'inline-flex', alignItems: 'center', height: 20, padding: '0 8px', borderRadius: 9999, font: '400 12px/1 var(--font-sans)', background: 'var(--fill-300)', border: '1px solid var(--line-300)', color: 'var(--fg-muted)' }}>
+                {d.remember ? '記住我（30 天）' : '一般（7 天）'}
+              </span>
             </div>
-            <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>IP：{d.ip}　最後活動：{d.last}</div>
+            <div style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>IP：{d.ip}　最後活動：{d.last}　工作階段到期：{d.expire}</div>
           </div>
           {!d.current && <Btn variant="danger" onClick={() => EvomniAlert.show({ type: 'warning', title: '確定登出此裝置？', desc: '該裝置下次存取時將被要求重新登入。', onConfirm: () => { setDevices(devices.filter(x => x.id !== d.id)); SiteAlert.success('已登出指定裝置', ''); } })}>登出此裝置</Btn>}
         </div>

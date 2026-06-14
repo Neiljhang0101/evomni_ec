@@ -124,9 +124,45 @@ const PriceRow = ({ label, value, color, bold }) => (
   </div>
 );
 
+// ─── Order status (10 種，Part3 §6.2.A) ───────────────────────────────────────
+const ORDER_STATUSES = [
+  { key: 'pending',    label: '待付款', color: '#E6A23C', what: '已下單但尚未完成付款，訂單等待確認。' },
+  { key: 'paid',       label: '已付款', color: '#409EFF', what: '付款已確認，商家即將開始備貨。' },
+  { key: 'processing', label: '處理中', color: '#409EFF', what: '商家已確認並開始備貨，貨品尚未交給物流。' },
+  { key: 'shipped',    label: '已出貨', color: '#67C23A', what: '貨品已交付物流廠商，等待取件或入庫。' },
+  { key: 'delivering', label: '配送中', color: '#67C23A', what: '貨品正在物流運送途中，尚未抵達收件地址。' },
+  { key: 'delivered',  label: '已送達', color: '#67C23A', what: '物流回報貨品已抵達收件地址，請確認收貨。' },
+  { key: 'completed',  label: '已完成', color: '#909399', what: '已確認收貨，訂單正式結束，點數回饋已發放。' },
+  { key: 'cancelled',  label: '已取消', color: '#F56C6C', what: '訂單已取消，庫存已回補；已付款者將依原付款方式退款。' },
+  { key: 'refunded',   label: '已退款', color: '#909399', what: '訂單已完成全額退款，交易關閉；退款已依原付款方式退回。' },
+  { key: 'closed',     label: '已關閉', color: '#909399', what: '訂單已由商家關閉並終止，如有退款需求請聯繫客服。' },
+];
+
+const OrderStatusTag = ({ statusKey }) => {
+  const s = ORDER_STATUSES.find(x => x.key === statusKey) || ORDER_STATUSES[1];
+  const [hover, setHover] = useState(false);
+  return (
+    <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: 5, height: 24, padding: '0 10px', borderRadius: 9999, fontSize: 13, fontWeight: 500, background: `${s.color}14`, border: `1px solid ${s.color}40`, color: s.color }}>
+      {s.label}
+      <span
+        onMouseEnter={() => setHover(true)} onMouseLeave={() => setHover(false)}
+        style={{ display: 'inline-flex', alignItems: 'center', cursor: 'help' }}
+      >
+        <span className="material-icons-outlined" style={{ fontSize: 14, color: s.color, opacity: .8 }}>info</span>
+        {hover && (
+          <span style={{ position: 'absolute', bottom: 'calc(100% + 8px)', left: '50%', transform: 'translateX(-50%)', width: 220, background: 'var(--ink-700, #303133)', color: '#fff', font: '400 13px/1.6 var(--font-sans)', padding: '8px 10px', borderRadius: 4, zIndex: 50, whiteSpace: 'normal', textAlign: 'left', boxShadow: '0 4px 12px rgba(0,0,0,.18)' }}>
+            {s.what}
+          </span>
+        )}
+      </span>
+    </span>
+  );
+};
+
 // ─── App ──────────────────────────────────────────────────────────────────────
 const App = () => {
   const [pageState, setPageState] = useState('member');
+  const [statusKey, setStatusKey] = useState('paid');
   const isGuest = pageState === 'guest';
   const email = isGuest ? ORDER.guestEmail : ORDER.memberEmail;
 
@@ -142,6 +178,23 @@ const App = () => {
         onChange={setPageState}
       />
 
+      {/* Demo: 訂單狀態 10 種預覽（含已退款/已關閉），切換以查看 Tag 展示邏輯 */}
+      <div style={{ background: 'var(--fill-400, #f0ede8)', borderBottom: '1px solid var(--line-200)', padding: '10px var(--gutter)' }}>
+        <div style={{ maxWidth: 680, margin: '0 auto', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <span style={{ font: '500 12px/1 var(--font-sans)', letterSpacing: '.08em', textTransform: 'uppercase', color: 'var(--fg-subtle)' }}>訂單狀態預覽</span>
+          {ORDER_STATUSES.map(s => {
+            const on = statusKey === s.key;
+            return (
+              <button key={s.key} onClick={() => setStatusKey(s.key)}
+                style={{ height: 26, padding: '0 10px', borderRadius: 9999, cursor: 'pointer', font: '400 13px/1 var(--font-sans)',
+                  background: on ? `${s.color}14` : 'transparent', border: `1px solid ${on ? s.color : 'var(--line-300)'}`, color: on ? s.color : 'var(--fg-muted)' }}>
+                {s.label}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       <div style={{ maxWidth: 680, margin: '0 auto', padding: '48px var(--gutter) 96px' }}>
         <StepsIndicator />
 
@@ -156,8 +209,11 @@ const App = () => {
             <h1 style={{ font: '600 28px/1.2 var(--font-sans)', letterSpacing: '-.01em', color: 'var(--fg)', marginBottom: 12 }}>
               訂單已成立！
             </h1>
-            <div style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 16 }}>
-              訂單編號：<strong style={{ fontWeight: 600, color: 'var(--fg)', letterSpacing: '.04em' }}>{ORDER.number}</strong>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
+              <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>
+                訂單編號：<strong style={{ fontWeight: 600, color: 'var(--fg)', letterSpacing: '.04em' }}>{ORDER.number}</strong>
+              </span>
+              <OrderStatusTag statusKey={statusKey} />
             </div>
             {/* Email confirmation */}
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 18px', background: 'var(--fill-300)', border: '1px solid var(--line-300)' }}>

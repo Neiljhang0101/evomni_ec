@@ -2,7 +2,7 @@
 
 const HUB_VENDORS = {
   '第三方金流': [
-    { id: 'ecpay',    name: '綠界科技（ECPay）',    type: '全自動',  status: '連線異常', color: '#005EAA', initial: 'EC',  screen: 'vendor-auto',   lastErr: 'API 金鑰已失效（AUTH_FAILED）。請重新輸入金鑰，或聯繫綠界科技客服取得新金鑰。', lastErrTime: '2026/05/10 14:32' },
+    { id: 'ecpay',    name: '綠界科技（ECPay）',    type: '全自動',  status: '串接異常', color: '#005EAA', initial: 'EC',  screen: 'vendor-auto',   lastErr: 'Webhook 連續失敗達門檻（最近一次：API 金鑰已失效 AUTH_FAILED），可能影響訂單付款通知，請檢查串接設定。', lastErrTime: '2026/05/10 14:32' },
     { id: 'newebpay', name: '藍新科技（NewebPay）',  type: '全自動',  status: '未設定',   color: '#0070C0', initial: 'NP',  screen: 'vendor-auto' },
     { id: 'linepay',  name: 'LINE Pay',               type: '全自動',  status: '已啟用',   color: '#00B900', initial: 'LP',  screen: 'vendor-auto' },
     { id: 'aftee',    name: 'AFTEE 先享後付',         type: '全自動',  status: '未設定',   color: '#FF6B35', initial: 'AF',  screen: 'vendor-auto' },
@@ -19,7 +19,7 @@ const HUB_VENDORS = {
     { id: 'visa',       name: 'VISA',               type: '設定即用', status: '未設定', color: '#1A1F71', initial: 'VISA',screen: 'vendor-bank' },
   ],
   '第三方物流': [
-    { id: 'eclogistics', name: '綠界物流（ECPay）', type: '全自動',  status: '設定中',  color: '#005EAA', initial: '綠物', screen: 'vendor-auto' },
+    { id: 'eclogistics', name: '綠界物流（ECPay）', type: '全自動',  status: '連線測試失敗',  color: '#005EAA', initial: '綠物', screen: 'vendor-auto', lastErr: '上次連線測試未通過：商店代號或金鑰錯誤（401）。Webhook 狀態正常，建議重新測試或檢查金鑰設定。', lastErrTime: '2026/05/11 09:48' },
     { id: 'neweblog',    name: '藍新物流',          type: '全自動',  status: '未設定',  color: '#0070C0', initial: '藍物', screen: 'vendor-auto' },
     { id: 'shengzhe',    name: '低溫超取_聖喆國際', type: '人工處理', status: '已啟用',  color: '#2D6A4F', initial: '聖喆', screen: 'vendor-manual' },
     { id: 'boxful',      name: '倉儲物流_BOXFUL',   type: '半人工',  status: '未設定',  color: '#E6A23C', initial: 'BOX', screen: 'vendor-semi' },
@@ -31,9 +31,11 @@ const HUB_VENDORS = {
   ],
 };
 
+const ERROR_STATUSES = ['連線測試失敗', '串接異常', '連線異常'];
+
 function VendorCard({ vendor, onOpen }) {
   const [hover, setHover] = React.useState(false);
-  const isError = vendor.status === '連線異常';
+  const isError = ERROR_STATUSES.includes(vendor.status);
   return (
     <div
       onMouseEnter={() => setHover(true)}
@@ -65,7 +67,7 @@ function VendorCard({ vendor, onOpen }) {
             {vendor.lastErrTime && <span style={{ fontSize: 11, color: '#C0C4CC' }}>發生時間：{vendor.lastErrTime}</span>}
             <button onClick={e => { e.stopPropagation(); onOpen(vendor); }}
               style={{ height: 24, padding: '0 10px', background: '#fff', border: '1px solid #F56C6C', color: '#F56C6C', fontSize: 12, cursor: 'pointer', fontFamily: 'Noto Sans TC,sans-serif' }}>
-              前往修復
+              {vendor.status === '連線測試失敗' ? '前往重新測試' : '前往修復'}
             </button>
           </div>
         </div>
@@ -74,8 +76,42 @@ function VendorCard({ vendor, onOpen }) {
   );
 }
 
+const STATUS_LEGEND = [
+  { label: '未設定',   color: '#909399', desc: '尚未填入任何串接憑證。' },
+  { label: '設定中',   color: '#E6A23C', desc: '憑證已填入，但尚未啟用串接。' },
+  { label: '已啟用',   color: '#67C23A', desc: '串接已啟用，可在結帳與出貨流程中使用。' },
+  { label: '已停用',   color: '#909399', desc: '曾設定並啟用過，目前已手動停用。' },
+  { label: '連線測試失敗', color: '#F56C6C', desc: '連線測試失敗，且 Webhook 狀態正常。上次連線測試未通過，建議重新測試或檢查金鑰設定。' },
+  { label: '串接異常', color: '#F56C6C', desc: 'Webhook 連續失敗達門檻（預設 3 次），可能影響訂單通知；或連線測試與 Webhook 兩者皆失敗。請檢查串接設定。' },
+];
+
+function StatusLegend() {
+  return (
+    <div style={{ background: '#F5F7FA', border: '1px solid #EBEEF5', borderRadius: 3, padding: '14px 18px', marginBottom: 16 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: '#303133', marginBottom: 4 }}>狀態判定說明</div>
+      <p style={{ fontSize: 12, color: '#909399', lineHeight: 1.7, marginBottom: 10 }}>
+        狀態 Badge 依「連線測試」與「Webhook 回呼」兩個來源判定，任一失敗即顯示紅色 Badge，文案依失敗原因區分：僅
+        <strong style={{ color: '#F56C6C' }}>連線測試失敗</strong>（Webhook 正常）顯示「連線測試失敗」；
+        <strong style={{ color: '#F56C6C' }}>Webhook 連續失敗</strong>（達門檻 3 次）或兩者皆失敗則顯示「串接異常」。兩項來源皆恢復正常才會撤銷 Badge。
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px 24px' }}>
+        {STATUS_LEGEND.map(s => (
+          <div key={s.label} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.color, flexShrink: 0, marginTop: 6 }} />
+            <div style={{ minWidth: 0 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: s.color }}>{s.label}</span>
+              <span style={{ fontSize: 12, color: '#606266', lineHeight: 1.6 }}>　{s.desc}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function VendorCategoryPanel({ category, onOpenVendor }) {
   const [search, setSearch] = React.useState('');
+  const [showLegend, setShowLegend] = React.useState(false);
   const vendors = HUB_VENDORS[category] || [];
   const filtered = search ? vendors.filter(v => v.name.includes(search)) : vendors;
   const enabledCount = vendors.filter(v => v.status === '已啟用').length;
@@ -90,8 +126,14 @@ function VendorCategoryPanel({ category, onOpenVendor }) {
             {enabledCount > 0 ? `已啟用 ${enabledCount} 個廠商` : '管理並設定此類別的廠商串接。'}
           </p>
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <button
+          onClick={() => setShowLegend(s => !s)}
+          style={{ height: 34, padding: '0 12px', background: showLegend ? '#ECF5FF' : '#fff', border: `1px solid ${showLegend ? '#409EFF' : '#DCDFE6'}`, color: showLegend ? '#409EFF' : '#606266', fontSize: 13, cursor: 'pointer', fontFamily: 'Noto Sans TC,sans-serif', whiteSpace: 'nowrap' }}>
+          狀態說明
+        </button>
         {/* Search */}
-        <div style={{ position: 'relative', flexShrink: 0 }}>
+        <div style={{ position: 'relative' }}>
           <input
             value={search} onChange={e => setSearch(e.target.value)}
             placeholder="搜尋廠商名稱"
@@ -106,7 +148,10 @@ function VendorCategoryPanel({ category, onOpenVendor }) {
             </span>
           )}
         </div>
+        </div>
       </div>
+
+      {showLegend && <StatusLegend />}
 
       {/* Card grid */}
       {filtered.length === 0 ? (
@@ -126,4 +171,4 @@ function VendorCategoryPanel({ category, onOpenVendor }) {
   );
 }
 
-Object.assign(window, { VendorCategoryPanel, HUB_VENDORS });
+Object.assign(window, { VendorCategoryPanel, HUB_VENDORS, ERROR_STATUSES });

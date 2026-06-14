@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>會員登入 — Evomni Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<link rel="stylesheet" href="../frontend-design-system/colors_and_type.css">
+<link rel="stylesheet" href="../evomnialert/evomnialert.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../evomnialert/evomnialert.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { min-height: 100%; }
+  body { font-family: var(--font-sans); font-size: 16px; background: var(--fill-300); color: var(--fg); -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--line-300); }
+  a { color: inherit; text-decoration: none; }
+  button { cursor: pointer; font-family: var(--font-sans); }
+  input { font-family: var(--font-sans); outline: none; }
+  .proto-bar { background: var(--ink-900, #1a1a1a); display: flex; align-items: center; gap: 4px; padding: 0 20px; overflow-x: auto; flex-wrap: wrap; }
+  .proto-label { font: 500 14px/1 var(--font-sans); letter-spacing: .08em; color: rgba(255,255,255,.45); text-transform: uppercase; padding: 12px 12px 12px 0; white-space: nowrap; }
+  .proto-btn { padding: 10px 12px; border: none; background: none; border-bottom: 2px solid transparent; font: 500 14px/1 var(--font-sans); color: rgba(255,255,255,.55); white-space: nowrap; transition: color .15s; }
+  .proto-btn.active { border-bottom-color: #fff; color: #fff; }
+  .proto-sub { background: #2a2a2a; display: flex; align-items: center; gap: 6px; padding: 8px 20px; overflow-x: auto; flex-wrap: wrap; }
+  .proto-chip { padding: 5px 11px; border: 1px solid rgba(255,255,255,.18); background: none; border-radius: 9999px; font: 400 13px/1 var(--font-sans); color: rgba(255,255,255,.6); white-space: nowrap; }
+  .proto-chip.active { background: #fff; color: #1a1a1a; border-color: #fff; }
+  .af-input { width: 100%; height: 48px; padding: 0 14px; border: 1px solid var(--line-300); background: var(--bg); font: 400 16px/1 var(--font-sans); color: var(--fg); transition: border-color .15s; }
+  .af-input:focus { border-color: var(--fg); }
+  .af-input.err { border-color: var(--danger); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+// ── Demo nav config ──────────────────────────────────────────────────────────
+const PAGES = [
+  { key: 'login',    label: '登入' },
+  { key: 'forgot',   label: '忘記密碼' },
+  { key: 'reset',    label: '重設密碼' },
+  { key: 'verify',   label: '帳號驗證' },
+  { key: 'resend',   label: '重發驗證信' },
+  { key: 'oauth',    label: 'OAuth 授權中' },
+  { key: 'complete', label: 'Email 補全' },
+  { key: 'merge',    label: '帳號合併' },
+];
+const PLATFORM = { line: 'LINE', google: 'Google', facebook: 'Facebook' };
+const PLATFORM_COLOR = { line: '#06C755', google: '#4285F4', facebook: '#1877F2' };
+const STATE_OPTIONS = {
+  login: [
+    { k: 'none',               l: '正常' },
+    { k: 'cred',               l: '帳號/密碼錯誤' },
+    { k: 'unverified_email',   l: '未驗證（Email 模式）' },
+    { k: 'unverified_manual',  l: '未驗證（人工審核）' },
+    { k: 'ratelimit',          l: 'IP 速率限制' },
+    { k: 'captcha',            l: 'CAPTCHA 觸發' },
+    { k: 'locked',             l: '帳號暫鎖 15 分' },
+    { k: 'autosuspend',        l: '系統自動停用' },
+    { k: 'manualsuspend',      l: '管理員停用' },
+  ],
+  forgot: [ { k: 'form', l: '輸入表單' }, { k: 'sent', l: '發送成功' } ],
+  reset:  [ { k: 'form', l: '重設表單' }, { k: 'success', l: '重設成功' }, { k: 'success_disabled', l: '重設成功（帳號仍停用）' }, { k: 'expired', l: '連結失效' } ],
+  verify: [ { k: 'success', l: '啟用成功' }, { k: 'invalid', l: '連結失效' } ],
+  resend: [ { k: 'form', l: '輸入表單' }, { k: 'sent', l: '已發送' } ],
+  oauth:    [ { k: 'line', l: '連接 LINE' }, { k: 'google', l: '連接 Google' }, { k: 'facebook', l: '連接 Facebook' } ],
+  complete: [ { k: 'form', l: '輸入 Email' }, { k: 'sent', l: '驗證信等待' }, { k: 'expired', l: '驗證連結逾時' } ],
+  merge:    [ { k: 'form', l: '確認綁定' }, { k: 'pwerror', l: '密碼錯誤（還有 N 次）' }, { k: 'locked', l: '5 次鎖定 30 分' } ],
+};
+
+// ── Shared ───────────────────────────────────────────────────────────────────
+const Icon = ({ name, size = 18, style }) => (
+  <span className="material-icons-outlined" style={{ fontSize: size, lineHeight: 1, ...style }}>{name}</span>
+);
+
+const Logo = () => (
+  <div style={{ textAlign: 'center', marginBottom: 24 }}>
+    <div style={{ font: '600 22px/1 var(--font-sans)', letterSpacing: '.22em', color: 'var(--fg)' }}>EVOMNI</div>
+    <div style={{ font: '400 13px/1 var(--font-sans)', letterSpacing: '.18em', color: 'var(--fg-subtle)', marginTop: 6, textTransform: 'uppercase' }}>Store</div>
+  </div>
+);
+
+const Card = ({ children }) => (
+  <div style={{ width: '100%', maxWidth: 440, margin: '0 auto', background: 'var(--bg)', border: '1px solid var(--line-300)', padding: '40px 36px' }}>
+    {children}
+  </div>
+);
+
+const Eyebrow = ({ children }) => (
+  <div style={{ font: '500 14px/1 var(--font-sans)', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--fg-subtle)', marginBottom: 10 }}>{children}</div>
+);
+
+const Title = ({ children }) => (
+  <h1 style={{ font: '600 24px/1.3 var(--font-sans)', letterSpacing: '-.01em', color: 'var(--fg)', marginBottom: 8 }}>{children}</h1>
+);
+
+const Field = ({ label, type = 'text', value, onChange, placeholder, helper, error, toggle }) => {
+  const [show, setShow] = useState(false);
+  const t = toggle ? (show ? 'text' : 'password') : type;
+  return (
+    <div style={{ marginBottom: 18 }}>
+      {label && <label style={{ display: 'block', font: '500 14px/1 var(--font-sans)', color: 'var(--fg)', marginBottom: 8 }}>{label}</label>}
+      <div style={{ position: 'relative' }}>
+        <input className={`af-input${error ? ' err' : ''}`} type={t} value={value} placeholder={placeholder}
+          onChange={(e) => onChange(e.target.value)} style={toggle ? { paddingRight: 44 } : null} />
+        {toggle && (
+          <button type="button" onClick={() => setShow(s => !s)}
+            style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--fg-subtle)', display: 'flex', alignItems: 'center', padding: 6 }}>
+            <Icon name={show ? 'visibility_off' : 'visibility'} size={18} />
+          </button>
+        )}
+      </div>
+      {error && <p style={{ font: '400 14px/1.4 var(--font-sans)', color: 'var(--danger)', marginTop: 6 }}>{error}</p>}
+      {!error && helper && <p style={{ font: '400 14px/1.4 var(--font-sans)', color: 'var(--fg-subtle)', marginTop: 6 }}>{helper}</p>}
+    </div>
+  );
+};
+
+const PrimaryBtn = ({ children, onClick, loading, disabled }) => (
+  <button onClick={onClick} disabled={loading || disabled}
+    style={{ width: '100%', height: 52, border: 'none', background: (loading || disabled) ? 'var(--ink-300, #c4c4c4)' : 'var(--brand)', color: '#fff',
+      font: '500 16px/1 var(--font-sans)', letterSpacing: '.04em', cursor: (loading || disabled) ? 'not-allowed' : 'pointer',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, transition: 'background .2s' }}>
+    {loading && <Icon name="autorenew" size={18} style={{ animation: 'spin 1s linear infinite' }} />}
+    {children}
+  </button>
+);
+
+// Inline alert (page content, not a popup) — used for login error states
+const Alert = ({ tone = 'danger', children }) => {
+  const map = {
+    danger:  { bg: 'var(--danger-soft, #FEF2F2)',  bar: 'var(--danger, #EF4444)',  fg: '#b91c1c', icon: 'error_outline' },
+    warning: { bg: 'var(--warning-soft, #FFF7ED)', bar: 'var(--warning, #E6A23C)', fg: '#b45309', icon: 'info' },
+  }[tone];
+  return (
+    <div style={{ background: map.bg, borderLeft: `3px solid ${map.bar}`, padding: '12px 14px', marginBottom: 18, display: 'flex', gap: 10, alignItems: 'flex-start' }}>
+      <Icon name={map.icon} size={18} style={{ color: map.bar, flexShrink: 0, marginTop: 1 }} />
+      <div style={{ font: '400 14px/1.6 var(--font-sans)', color: map.fg }}>{children}</div>
+    </div>
+  );
+};
+
+const BackToLogin = ({ go }) => (
+  <div style={{ textAlign: 'center', marginTop: 22 }}>
+    <a href="#" onClick={(e) => { e.preventDefault(); go('login'); }} style={{ font: '500 15px/1 var(--font-sans)', color: 'var(--fg-muted)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+      <Icon name="arrow_back" size={16} /> 返回登入
+    </a>
+  </div>
+);
+
+const SuccessHero = ({ icon = 'check_circle', title, desc }) => (
+  <div style={{ textAlign: 'center', padding: '8px 0 4px' }}>
+    <Icon name={icon} size={64} style={{ color: 'var(--success)' }} />
+    <h1 style={{ font: '600 22px/1.3 var(--font-sans)', color: 'var(--fg)', margin: '16px 0 10px' }}>{title}</h1>
+    {desc && <p style={{ font: '400 15px/1.7 var(--font-sans)', color: 'var(--fg-muted)' }}>{desc}</p>}
+  </div>
+);
+
+function useCountdown() {
+  const [sec, setSec] = useState(0);
+  const ref = useRef(null);
+  const start = (n = 60) => {
+    setSec(n);
+    clearInterval(ref.current);
+    ref.current = setInterval(() => setSec(s => { if (s <= 1) { clearInterval(ref.current); return 0; } return s - 1; }), 1000);
+  };
+  useEffect(() => () => clearInterval(ref.current), []);
+  return [sec, start];
+}
+
+const ResendButton = ({ sec, onResend, idleLabel = '重新發送' }) => (
+  <button onClick={onResend} disabled={sec > 0}
+    style={{ background: 'none', border: 'none', font: '500 15px/1 var(--font-sans)', color: sec > 0 ? 'var(--fg-subtle)' : 'var(--brand)', cursor: sec > 0 ? 'not-allowed' : 'pointer' }}>
+    {sec > 0 ? `重新發送（冷卻中，剩 ${sec} 秒）` : idleLabel}
+  </button>
+);
+
+function strengthOf(pw) {
+  if (!pw) return null;
+  const hasLetter = /[a-zA-Z]/.test(pw), hasDigit = /\d/.test(pw), hasSpecial = /[^a-zA-Z0-9]/.test(pw);
+  if (pw.length < 8) return { label: '弱', color: '#EF4444', pct: 25 };
+  if (pw.length >= 12 && hasLetter && hasDigit && hasSpecial) return { label: '非常強', color: '#059669', pct: 100 };
+  if (hasLetter && hasDigit) return { label: '強', color: '#10B981', pct: 75 };
+  return { label: '普通', color: '#F59E0B', pct: 50 };
+}
+
+// ── Page: 登入 ───────────────────────────────────────────────────────────────
+const LoginPage = ({ state, go }) => {
+  const [email, setEmail] = useState('');
+  const [pw, setPw] = useState('');
+  const [remember, setRemember] = useState(false);
+  const [captchaOk, setCaptchaOk] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const showCaptcha = state === 'captcha';
+  const btnDisabled = state === 'ratelimit' || state === 'locked' || (showCaptcha && !captchaOk);
+
+  const ALERTS = {
+    cred:              <Alert tone="danger">帳號或密碼錯誤，請確認後重試。</Alert>,
+    unverified_email:  <Alert tone="warning">此帳號尚未啟用。請至信箱收取驗證信，或 <a href="#" onClick={(e)=>{e.preventDefault();go('resend');}} style={{ color: 'var(--brand)', fontWeight: 500 }}>重發驗證信</a></Alert>,
+    unverified_manual: <Alert tone="warning">此帳號尚未啟用。請等待網站管理員審核，審核完成後您將收到通知信。</Alert>,
+    ratelimit:         <Alert tone="danger">操作頻率過高，請 10 分鐘後再試。</Alert>,
+    locked:            <Alert tone="danger">帳號因登入嘗試次數過多，已暫時鎖定。您可 <a href="#" onClick={(e)=>{e.preventDefault();go('forgot');}} style={{ color: 'var(--brand)', fontWeight: 500 }}>重設密碼</a> 立即解鎖，或於 14:32 後重試。</Alert>,
+    autosuspend:       <Alert tone="danger">此帳號因異常登入行為已被系統停用，請聯繫網站管理員協助恢復。</Alert>,
+    manualsuspend:     <Alert tone="danger">此帳號已被停用，如有疑問請聯繫客服。</Alert>,
+  };
+
+  const submit = () => {
+    if (btnDisabled) return;
+    setLoading(true);
+    setTimeout(() => { setLoading(false); SiteAlert.success('登入成功', '即將返回原頁面'); }, 1000);
+  };
+
+  const social = (platform, label, bg, color, border) => (
+    <button onClick={() => go('oauth', platform)}
+      style={{ flex: 1, height: 46, background: bg, color, border: border || 'none', font: '500 15px/1 var(--font-sans)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+      {label}
+    </button>
+  );
+
+  return (
+    <Card>
+      <Title>會員登入</Title>
+      <p style={{ font: '400 15px/1.6 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 24 }}>使用電子信箱與密碼登入您的帳號。</p>
+
+      <Field label="電子信箱" type="email" value={email} onChange={setEmail} placeholder="abc@example.com" />
+      <div style={{ marginBottom: 6 }}>
+        <Field label="密碼" toggle value={pw} onChange={setPw} placeholder="請輸入密碼" />
+      </div>
+      <div style={{ textAlign: 'right', marginBottom: 16 }}>
+        <a href="#" onClick={(e) => { e.preventDefault(); go('forgot'); }} style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-muted)', textDecorationLine: 'underline', textUnderlineOffset: 3 }}>忘記密碼？</a>
+      </div>
+
+      <label style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 18, cursor: 'pointer', font: '400 15px/1 var(--font-sans)', color: 'var(--fg-muted)' }}>
+        <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} style={{ width: 16, height: 16, accentColor: 'var(--fg)' }} />
+        記住我（7 天，勾選後 30 天）
+      </label>
+
+      {ALERTS[state] || null}
+
+      {showCaptcha && (
+        <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', border: '1px solid var(--line-300)', marginBottom: 18, cursor: 'pointer', background: 'var(--fill-300)' }}>
+          <input type="checkbox" checked={captchaOk} onChange={(e) => setCaptchaOk(e.target.checked)} style={{ width: 18, height: 18, accentColor: 'var(--brand)' }} />
+          <span style={{ font: '400 15px/1 var(--font-sans)', color: 'var(--fg)' }}>我不是機器人</span>
+          <span style={{ marginLeft: 'auto', font: '400 12px/1.3 var(--font-sans)', color: 'var(--fg-subtle)', textAlign: 'right' }}>reCAPTCHA</span>
+        </label>
+      )}
+
+      <PrimaryBtn onClick={submit} loading={loading} disabled={btnDisabled}>登入</PrimaryBtn>
+
+      <p style={{ textAlign: 'center', font: '400 15px/1 var(--font-sans)', color: 'var(--fg-muted)', margin: '20px 0' }}>
+        還沒有帳號？ <a href="#" style={{ color: 'var(--fg)', fontWeight: 500, textDecorationLine: 'underline', textUnderlineOffset: 3 }}>立即註冊</a>
+      </p>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '8px 0 18px' }}>
+        <div style={{ flex: 1, height: 1, background: 'var(--line-300)' }} />
+        <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)' }}>或</span>
+        <div style={{ flex: 1, height: 1, background: 'var(--line-300)' }} />
+      </div>
+
+      <div style={{ display: 'flex', gap: 10 }}>
+        {social('line', '以 LINE 繼續', '#06C755', '#fff')}
+        {social('google', '以 Google 繼續', '#fff', 'var(--fg)', '1px solid var(--line-300)')}
+      </div>
+    </Card>
+  );
+};
+
+// ── Page: 忘記密碼 ───────────────────────────────────────────────────────────
+const ForgotPage = ({ state, go }) => {
+  const [email, setEmail] = useState(state === 'sent' ? 'abc@example.com' : '');
+  const [sent, setSent] = useState(state === 'sent');
+  const [sec, start] = useCountdown();
+  useEffect(() => { setSent(state === 'sent'); if (state === 'sent') start(60); }, [state]);
+
+  if (sent) {
+    return (
+      <Card>
+        <SuccessHero title="發送成功" desc={<>如果 <strong style={{ color: 'var(--fg)' }}>{email || 'abc@example.com'}</strong> 已在系統中註冊，您將收到一封密碼重設信件。請記得檢查垃圾信件夾。</>} />
+        <div style={{ textAlign: 'center', marginTop: 24 }}>
+          <div style={{ font: '400 14px/1.6 var(--font-sans)', color: 'var(--fg-subtle)', marginBottom: 4 }}>沒收到信件？</div>
+          <ResendButton sec={sec} onResend={() => { start(60); SiteAlert.success('已重新發送', '請再次檢查您的信箱'); }} />
+        </div>
+        <BackToLogin go={go} />
+      </Card>
+    );
+  }
+  return (
+    <Card>
+      <Title>忘記密碼了嗎？</Title>
+      <p style={{ font: '400 15px/1.7 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 24 }}>別擔心，輸入您的註冊信箱，我們將寄送密碼重設連結。</p>
+      <Field label="電子信箱" type="email" value={email} onChange={setEmail} placeholder="abc@example.com" />
+      <PrimaryBtn onClick={() => { setSent(true); start(60); }}>發送重設密碼信</PrimaryBtn>
+      <BackToLogin go={go} />
+    </Card>
+  );
+};
+
+// ── Page: 重設密碼 ───────────────────────────────────────────────────────────
+const ResetPage = ({ state, go }) => {
+  const [pw, setPw] = useState('');
+  const [pw2, setPw2] = useState('');
+  const st = strengthOf(pw);
+  const okLen = pw.length >= 8;
+  const okMix = /[a-zA-Z]/.test(pw) && /\d/.test(pw);
+  const mismatch = pw2.length > 0 && pw !== pw2;
+
+  useEffect(() => {
+    if (state === 'success_disabled') {
+      // 決議 22-1：帳號仍停用時的橘色警示（不自動消失，需手動關閉）
+      EvomniAlert.show({ type: 'warning', title: '密碼已更新，但帳號仍停用', desc: '您的帳號目前仍處於停用狀態，請聯繫商家協助解除。' });
+    }
+  }, [state]);
+
+  if (state === 'expired') {
+    return (
+      <Card>
+        <div style={{ textAlign: 'center' }}>
+          <Icon name="error_outline" size={64} style={{ color: 'var(--warning)' }} />
+          <h1 style={{ font: '600 22px/1.3 var(--font-sans)', color: 'var(--fg)', margin: '16px 0 10px' }}>此密碼重設連結已失效</h1>
+          <p style={{ font: '400 15px/1.7 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 24 }}>重設連結的有效期為 24 小時，您的連結已逾期或已使用過。</p>
+        </div>
+        <PrimaryBtn onClick={() => go('forgot')}>重新申請重設密碼</PrimaryBtn>
+      </Card>
+    );
+  }
+  if (state === 'success' || state === 'success_disabled') {
+    return (
+      <Card>
+        <SuccessHero title="密碼已成功重設！" desc="請使用新密碼登入您的帳號。" />
+        <div style={{ marginTop: 24 }}><PrimaryBtn onClick={() => go('login')}>前往登入</PrimaryBtn></div>
+      </Card>
+    );
+  }
+  return (
+    <Card>
+      <Title>設定新密碼</Title>
+      <p style={{ font: '400 15px/1.6 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 24 }}>請設定一組安全的新密碼。</p>
+
+      <Field label="新密碼" toggle value={pw} onChange={setPw} placeholder="請輸入新密碼" />
+      <div style={{ marginTop: -8, marginBottom: 14 }}>
+        <div style={{ display: 'flex', gap: 16, marginBottom: 10 }}>
+          <span style={{ font: '400 14px/1.4 var(--font-sans)', color: okLen ? 'var(--success)' : 'var(--fg-subtle)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <Icon name={okLen ? 'check_circle' : 'radio_button_unchecked'} size={15} /> 至少 8 個字元
+          </span>
+          <span style={{ font: '400 14px/1.4 var(--font-sans)', color: okMix ? 'var(--success)' : 'var(--fg-subtle)', display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+            <Icon name={okMix ? 'check_circle' : 'radio_button_unchecked'} size={15} /> 包含英文字母與數字
+          </span>
+        </div>
+        {st && (
+          <div>
+            <div style={{ height: 6, background: 'var(--line-200)', overflow: 'hidden' }}>
+              <div style={{ width: `${st.pct}%`, height: '100%', background: st.color, transition: 'width .2s, background .2s' }} />
+            </div>
+            <div style={{ font: '400 13px/1 var(--font-sans)', color: st.color, marginTop: 6 }}>密碼強度：{st.label}</div>
+          </div>
+        )}
+      </div>
+
+      <Field label="確認新密碼" toggle value={pw2} onChange={setPw2} placeholder="請再次輸入新密碼"
+        error={mismatch ? '兩次密碼輸入不一致，請重新確認' : null} />
+
+      <PrimaryBtn onClick={() => go('login')} disabled={!okLen || !okMix || pw !== pw2}>更新密碼</PrimaryBtn>
+    </Card>
+  );
+};
+
+// ── Page: 帳號驗證 ───────────────────────────────────────────────────────────
+const VerifyPage = ({ state, go }) => {
+  if (state === 'invalid') {
+    return (
+      <Card>
+        <div style={{ textAlign: 'center' }}>
+          <Icon name="error_outline" size={64} style={{ color: 'var(--warning)' }} />
+          <h1 style={{ font: '600 22px/1.3 var(--font-sans)', color: 'var(--fg)', margin: '16px 0 10px' }}>此驗證連結已失效</h1>
+          <p style={{ font: '400 15px/1.7 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 24 }}>此連結已被使用過，或已超過有效期限（24 小時）。</p>
+        </div>
+        <PrimaryBtn onClick={() => go('resend')}>重發驗證信</PrimaryBtn>
+      </Card>
+    );
+  }
+  return (
+    <Card>
+      <SuccessHero title="帳號啟用成功！" desc="歡迎加入，您現在可以登入了。" />
+      <div style={{ marginTop: 24 }}><PrimaryBtn onClick={() => go('login')}>前往登入</PrimaryBtn></div>
+    </Card>
+  );
+};
+
+// ── Page: 重發驗證信 ─────────────────────────────────────────────────────────
+const ResendPage = ({ state, go }) => {
+  const [email, setEmail] = useState('abc@example.com');
+  const [sent, setSent] = useState(state === 'sent');
+  const [sec, start] = useCountdown();
+  useEffect(() => { setSent(state === 'sent'); if (state === 'sent') start(60); }, [state]);
+
+  if (sent) {
+    return (
+      <Card>
+        <SuccessHero title="已發送！" desc="如果此信箱已註冊且尚未啟用，您將收到一封新的驗證信件。請記得檢查垃圾信件夾。" />
+        <div style={{ height: 1, background: 'var(--line-200)', margin: '24px 0' }} />
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ font: '400 14px/1.6 var(--font-sans)', color: 'var(--fg-subtle)', marginBottom: 4 }}>沒收到信件？</div>
+          <ResendButton sec={sec} onResend={() => { start(60); SiteAlert.success('已重新發送', '請再次檢查您的信箱'); }} />
+        </div>
+        <BackToLogin go={go} />
+      </Card>
+    );
+  }
+  return (
+    <Card>
+      <Title>重新發送帳號驗證信</Title>
+      <p style={{ font: '400 15px/1.6 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 24 }}>輸入您註冊的電子信箱，我們將重新寄送驗證信。</p>
+      <Field label="電子信箱" type="email" value={email} onChange={setEmail} placeholder="abc@example.com" helper="從登入頁進入時會自動帶入，可修改" />
+      <PrimaryBtn onClick={() => { setSent(true); start(60); }}>送出</PrimaryBtn>
+      <BackToLogin go={go} />
+    </Card>
+  );
+};
+
+// platform badge
+const PlatformBadge = ({ p }) => (
+  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, height: 26, padding: '0 12px', borderRadius: 9999, background: `${PLATFORM_COLOR[p]}14`, border: `1px solid ${PLATFORM_COLOR[p]}40`, color: PLATFORM_COLOR[p], font: '500 14px/1 var(--font-sans)' }}>
+    <span style={{ width: 8, height: 8, borderRadius: '50%', background: PLATFORM_COLOR[p] }} />{PLATFORM[p]}
+  </span>
+);
+
+// ── Page: OAuth 授權中 Loading（#25）─────────────────────────────────────────
+const OAuthLoadingPage = ({ state, go }) => {
+  const p = state in PLATFORM ? state : 'line';
+  return (
+    <Card>
+      <div style={{ textAlign: 'center', padding: '16px 0 8px' }}>
+        <div style={{ display: 'inline-flex', marginBottom: 24 }}>
+          <Icon name="autorenew" size={56} style={{ color: PLATFORM_COLOR[p], animation: 'spin 1s linear infinite' }} />
+        </div>
+        <h1 style={{ font: '600 22px/1.3 var(--font-sans)', color: 'var(--fg)', marginBottom: 10 }}>正在連接 {PLATFORM[p]}…</h1>
+        <p style={{ font: '400 15px/1.7 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 8 }}>請在開啟的視窗中完成 {PLATFORM[p]} 授權，完成後將自動返回。</p>
+        <p style={{ font: '400 14px/1.6 var(--font-sans)', color: 'var(--fg-subtle)' }}>若視窗未自動開啟，請確認瀏覽器未封鎖彈出視窗。</p>
+      </div>
+      <div style={{ height: 1, background: 'var(--line-200)', margin: '24px 0 16px' }} />
+      <div style={{ textAlign: 'center', font: '400 13px/1.8 var(--font-sans)', color: 'var(--fg-subtle)' }}>
+        授權後的後續流程示意：
+        <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginTop: 8 }}>
+          <a href="#" onClick={(e) => { e.preventDefault(); go('complete', 'form'); }} style={{ color: 'var(--brand)' }}>需補 Email →</a>
+          <a href="#" onClick={(e) => { e.preventDefault(); go('merge', 'form'); }} style={{ color: 'var(--brand)' }}>Email 已有帳號 →</a>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+// ── Page: Email 補全頁（#26）─────────────────────────────────────────────────
+const CompletePage = ({ state, go }) => {
+  const p = 'line'; // LINE / Facebook 可能未提供 Email
+  const displayName = '王小明';
+  const [email, setEmail] = useState(state === 'form' ? '' : 'abc@example.com');
+  const [phase, setPhase] = useState(state); // form | sent | expired
+  const [err, setErr] = useState(null);
+  const [sec, start] = useCountdown();
+  useEffect(() => { setPhase(state); if (state === 'sent') start(60); }, [state]);
+
+  const send = () => {
+    if (!/.+@.+\..+/.test(email)) { setErr('請輸入有效的電子信箱格式'); return; }
+    setErr(null); setPhase('sent'); start(60);
+  };
+
+  const header = (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+      <PlatformBadge p={p} />
+      <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)' }}>已連接（唯讀）</span>
+    </div>
+  );
+
+  if (phase === 'expired') {
+    return (
+      <Card>
+        {header}
+        <div style={{ textAlign: 'center' }}>
+          <Icon name="schedule" size={56} style={{ color: 'var(--warning)' }} />
+          <h1 style={{ font: '600 21px/1.3 var(--font-sans)', color: 'var(--fg)', margin: '14px 0 10px' }}>驗證連結已過期</h1>
+          <p style={{ font: '400 15px/1.7 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 24 }}>驗證連結的有效期為 30 分鐘，請重新發起登入。</p>
+        </div>
+        <PrimaryBtn onClick={() => go('oauth', p)}>重新登入</PrimaryBtn>
+      </Card>
+    );
+  }
+  if (phase === 'sent') {
+    return (
+      <Card>
+        {header}
+        <SuccessHero icon="mark_email_read" title="驗證信已發送" desc={<>驗證信已發送至 <strong style={{ color: 'var(--fg)' }}>{email}</strong>，請點擊信中連結完成帳號建立。連結有效期 30 分鐘。</>} />
+        <div style={{ textAlign: 'center', marginTop: 24 }}>
+          <div style={{ font: '400 14px/1.6 var(--font-sans)', color: 'var(--fg-subtle)', marginBottom: 4 }}>沒收到信件？</div>
+          <ResendButton sec={sec} onResend={() => { start(60); SiteAlert.success('已重新發送', '請再次檢查您的信箱'); }} />
+        </div>
+        <BackToLogin go={go} />
+      </Card>
+    );
+  }
+  return (
+    <Card>
+      {header}
+      <h1 style={{ font: '600 22px/1.3 var(--font-sans)', color: 'var(--fg)', marginBottom: 6 }}>您好，{displayName}！</h1>
+      <p style={{ font: '400 15px/1.6 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 22 }}>為了完成帳號建立，請提供您的 Email 地址。</p>
+      <Field label="電子信箱" type="email" value={email} onChange={(v) => { setEmail(v); setErr(null); }} placeholder="請輸入您的 Email 地址" error={err} />
+      <PrimaryBtn onClick={send}>發送驗證信</PrimaryBtn>
+      <p style={{ textAlign: 'center', font: '400 14px/1.6 var(--font-sans)', color: 'var(--fg-subtle)', marginTop: 18 }}>您的 Email 僅用於訂單通知，不會外洩。</p>
+    </Card>
+  );
+};
+
+// ── Page: 帳號合併確認頁（#27）───────────────────────────────────────────────
+const MergePage = ({ state, go }) => {
+  const p = 'google'; // Email 已存在的綁定情境
+  const maskedEmail = 'wa***@gmail.com';
+  const [pw, setPw] = useState('');
+  const locked = state === 'locked';
+  const pwError = state === 'pwerror';
+
+  const confirm = () => {
+    if (locked) return;
+    SiteAlert.success(`${PLATFORM[p]} 帳號已成功綁定！`, '日後可用 Google 或 Email／密碼登入');
+  };
+
+  return (
+    <Card>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14 }}>
+        <Icon name="link" size={24} style={{ color: 'var(--fg)' }} />
+        <h1 style={{ font: '600 22px/1.3 var(--font-sans)', color: 'var(--fg)' }}>找到現有帳號</h1>
+      </div>
+      <p style={{ font: '400 15px/1.7 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 8 }}>
+        您的 {PLATFORM[p]} 帳號的 Email（<strong style={{ color: 'var(--fg)' }}>{maskedEmail}</strong>）在我們系統中已有一個帳號。
+      </p>
+      <p style={{ font: '400 15px/1.7 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 22 }}>
+        您想要將此 {PLATFORM[p]} 帳號連接到現有帳號嗎？連結後，您可以用 {PLATFORM[p]} 或 Email／密碼兩種方式登入。
+      </p>
+
+      <Field label="請輸入現有帳號的密碼" toggle value={pw} onChange={setPw} placeholder="請輸入您帳號的密碼" />
+
+      {pwError && <Alert tone="danger">密碼不正確，您還有 2 次嘗試機會。</Alert>}
+      {locked && <Alert tone="danger">帳號已暫時鎖定 30 分鐘，請稍後再試或使用密碼重設功能。</Alert>}
+
+      <div style={{ display: 'flex', gap: 10, marginTop: 4 }}>
+        <div style={{ flex: 1 }}><PrimaryBtn onClick={confirm} disabled={locked}>確認綁定</PrimaryBtn></div>
+        <button onClick={() => go('login')} style={{ flex: 1, height: 52, background: 'var(--bg)', color: 'var(--fg-muted)', border: '1px solid var(--line-300)', font: '500 16px/1 var(--font-sans)' }}>取消，不綁定</button>
+      </div>
+
+      <p style={{ textAlign: 'center', font: '400 14px/1.6 var(--font-sans)', color: 'var(--fg-subtle)', marginTop: 18 }}>
+        不記得密碼？ <a href="#" onClick={(e) => { e.preventDefault(); SiteAlert.success('密碼重設信已發送', '請查收 Email 後回來繼續操作'); }} style={{ color: 'var(--brand)', fontWeight: 500 }}>發送密碼重設信</a>
+      </p>
+    </Card>
+  );
+};
+
+// ── App ──────────────────────────────────────────────────────────────────────
+function App() {
+  const [page, setPage] = useState('login');
+  const [state, setState] = useState('none');
+
+  const go = (p, st) => { setPage(p); setState(st || STATE_OPTIONS[p][0].k); };
+  const PageComp = { login: LoginPage, forgot: ForgotPage, reset: ResetPage, verify: VerifyPage, resend: ResendPage, oauth: OAuthLoadingPage, complete: CompletePage, merge: MergePage }[page];
+
+  return (
+    <div>
+      {/* Demo nav */}
+      <div className="proto-bar">
+        <span className="proto-label">前台會員認證 — 頁面</span>
+        {PAGES.map(p => (
+          <button key={p.key} className={`proto-btn${page === p.key ? ' active' : ''}`} onClick={() => go(p.key)}>{p.label}</button>
+        ))}
+      </div>
+      <div className="proto-sub">
+        <span style={{ font: '400 13px/1 var(--font-sans)', color: 'rgba(255,255,255,.4)', paddingRight: 4 }}>狀態</span>
+        {STATE_OPTIONS[page].map(s => (
+          <button key={s.k} className={`proto-chip${state === s.k ? ' active' : ''}`} onClick={() => setState(s.k)}>{s.l}</button>
+        ))}
+      </div>
+
+      {/* Auth screen */}
+      <div style={{ minHeight: 'calc(100vh - 96px)', display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '56px 24px 80px' }}>
+        <div style={{ width: '100%', maxWidth: 440 }}>
+          <Logo />
+          <PageComp state={state} go={go} key={page + state} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

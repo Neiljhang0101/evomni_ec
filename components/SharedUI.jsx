@@ -192,7 +192,7 @@ function FixedBar({ lastSaved, onCancel, onSave, saving }) {
 }
 
 function StatusBadge({ status }) {
-  const map = { '未設定': '#909399', '設定中': '#E6A23C', '已啟用': '#67C23A', '已停用': '#909399', '連線異常': '#F56C6C', '正常': '#67C23A' };
+  const map = { '未設定': '#909399', '設定中': '#E6A23C', '已啟用': '#67C23A', '已停用': '#909399', '連線測試失敗': '#F56C6C', '串接異常': '#F56C6C', '連線異常': '#F56C6C', '異常': '#F56C6C', '正常': '#67C23A' };
   const color = map[status] || '#909399';
   return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: color, display: 'inline-block' }} />{status}</span>;
 }

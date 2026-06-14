@@ -513,6 +513,11 @@ function PageTracking({ onNavigate, show }) {
         <div style={{ maxWidth: 760 }}>
 
           <div style={{ marginBottom: 20 }}>
+            <nav style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: '#909399', marginBottom: 8 }}>
+              <span>行銷中心</span>
+              <span style={{ color: '#C0C4CC' }}>/</span>
+              <span style={{ color: '#303133' }}>行銷追蹤碼管理</span>
+            </nav>
             <h1 style={{ fontSize: 20, fontWeight: 700, color: '#303133', marginBottom: 6 }}>行銷追蹤碼管理</h1>
             <p style={{ fontSize: 14, color: '#606266', lineHeight: 1.7 }}>
               在此設定 GA4、Meta Pixel、GTM 等行銷追蹤工具。填入 ID 後系統將自動安裝追蹤碼，無需手動埋設程式碼。

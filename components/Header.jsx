@@ -13,6 +13,7 @@ if (window.__evomni_isPro === undefined) window.__evomni_isPro = false;
 const _htmlRoot = 'html/';
 
 const FRONTEND_PAGES = [
+  { label: '前台導覽 · 全部頁面', url: _htmlRoot + '前台導覽.html', route: '所有前台畫面總覽', overview: true },
   { label: '商品列表', url: _htmlRoot + '商品列表.html', route: '/products' },
   { label: '商品詳情', url: _htmlRoot + '商品詳情.html', route: '/products/:slug' },
   { label: '購物車', url: _htmlRoot + '購物車.html', route: '/cart' },
@@ -20,6 +21,8 @@ const FRONTEND_PAGES = [
   { label: '訂單確認頁', url: _htmlRoot + '訂單確認頁.html', route: '/order/confirmed' },
   { label: '會員中心', url: _htmlRoot + '會員中心.html', route: '/account' },
   { label: '訪客訂單查詢', url: _htmlRoot + '訪客訂單查詢.html', route: '/order-query' },
+  { label: '會員登入 / 認證流程', url: _htmlRoot + '會員登入.html', route: '/login · /forgot · /reset · /verify · /resend' },
+  { label: '一頁式商店', url: _htmlRoot + '一頁式商店.html', route: '/lp/:slug（銷售頁 · 規格加購 · 結帳）' },
 ];
 
 function Header({ breadcrumbs = [], onNavigate, onToggleSidebar }) {
@@ -143,16 +146,16 @@ function Header({ breadcrumbs = [], onNavigate, onToggleSidebar }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={() => setShowFrontendMenu(false)}
-                  onMouseEnter={e => { e.currentTarget.style.background = '#F5F7FA'; }}
-                  onMouseLeave={e => { e.currentTarget.style.background = '#fff'; }}
+                  onMouseEnter={e => { e.currentTarget.style.background = page.overview ? '#E8F1FF' : '#F5F7FA'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = page.overview ? '#F5F9FF' : '#fff'; }}
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '9px 14px', textDecoration: 'none',
-                    borderBottom: '1px solid #F0F0F0', background: '#fff',
+                    borderBottom: '1px solid #F0F0F0', background: page.overview ? '#F5F9FF' : '#fff',
                   }}
                 >
                   <div>
-                    <div style={{ fontSize: 13, fontWeight: 500, color: '#303133' }}>{page.label}</div>
+                    <div style={{ fontSize: 13, fontWeight: page.overview ? 600 : 500, color: page.overview ? '#409EFF' : '#303133' }}>{page.label}</div>
                     <div style={{ fontSize: 11, color: '#909399', marginTop: 2 }}>{page.route}</div>
                   </div>
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#C0C4CC" strokeWidth="1.5" strokeLinecap="round">

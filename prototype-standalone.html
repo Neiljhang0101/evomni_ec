@@ -313,12 +313,15 @@ Object.assign(window, {
 <!-- components/Sidebar.jsx -->
 <script type="text/babel">
 // Evomni Admin — Sidebar component
-// 240px collapsible left nav, white theme
+// Section-based dynamic sidebar: BASE + ECOMMERCE (conditional) + WEBSITE + SETTINGS
 
-const SidebarData = [
+// ─── Menu section data ────────────────────────────────────────────────────────
+
+const BASE_ITEMS = [
   {
     id: 'dashboard',
     label: '儀表板',
+
     icon: (
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <rect x="1" y="1" width="6" height="6" rx="1" fill="currentColor" opacity="0.9"/>
@@ -326,11 +329,11 @@ const SidebarData = [
         <rect x="1" y="9" width="6" height="6" rx="1" fill="currentColor" opacity="0.9"/>
         <rect x="9" y="9" width="6" height="6" rx="1" fill="currentColor" opacity="0.9"/>
       </svg>
-    )
+    ),
   },
   {
     id: 'products',
-    label: '商品中心',
+    label: '產品',
     icon: (
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <rect x="1" y="1" width="6.5" height="6.5" rx="1" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/>
@@ -340,27 +343,23 @@ const SidebarData = [
       </svg>
     ),
     children: [
-      { id: 'product-list', label: '商品管理' },
-      { id: 'category-management', label: '商品分類' },
+      { id: 'product-list',         label: '商品管理' },
+      { id: 'category-management',  label: '商品分類' },
       { id: 'inventory-management', label: '庫存管理' },
-    ]
+    ],
   },
   {
-    id: 'orders',
-    label: '訂單管理',
+    id: 'articles',
+    label: '文章',
+    wip: true,
     icon: (
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <rect x="2" y="1" width="12" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/>
-        <line x1="5" y1="5" x2="11" y2="5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-        <line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
-        <line x1="5" y1="11" x2="8.5" y2="11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+        <path d="M3 1h7l3 3v10a1 1 0 01-1 1H3a1 1 0 01-1-1V2a1 1 0 011-1z" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/>
+        <path d="M10 1v3h3" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/>
+        <line x1="5" y1="8"  x2="11" y2="8"  stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.9"/>
+        <line x1="5" y1="11" x2="9"  y2="11" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" opacity="0.9"/>
       </svg>
     ),
-    children: [
-      { id: 'order-list', label: '全部訂單' },
-      { id: 'order-returns', label: '退換貨申請' },
-      { id: 'order-invoice', label: '電子發票管理' },
-    ]
   },
   {
     id: 'members',
@@ -373,10 +372,84 @@ const SidebarData = [
     ),
     children: [
       { id: 'customer-management', label: '顧客管理' },
-      { id: 'member-segment', label: '分眾篩選（依條件挑選特定會員群）' },
-      { id: 'member-blacklist', label: '黑名單' },
-      { id: 'member-settings', label: '設定' },
-    ]
+      { id: 'member-segment',      label: '分眾篩選' },
+      { id: 'member-blacklist',    label: '黑名單' },
+      { id: 'member-settings',     label: '設定' },
+    ],
+  },
+  {
+    id: 'analytics',
+    label: '數據中心',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="2"   y="8" width="3" height="6" rx="0.5" fill="currentColor" opacity="0.9"/>
+        <rect x="6.5" y="5" width="3" height="9" rx="0.5" fill="currentColor" opacity="0.9"/>
+        <rect x="11"  y="2" width="3" height="12" rx="0.5" fill="currentColor" opacity="0.9"/>
+      </svg>
+    ),
+    children: [
+      { id: 'analytics-sales',     label: '銷售概覽' },
+      { id: 'analytics-products',  label: '商品分析' },
+      { id: 'analytics-members',   label: '會員分析' },
+      { id: 'analytics-marketing', label: '行銷成效' },
+    ],
+  },
+  {
+    id: 'media-library',
+    label: '媒體庫',
+    wip: true,
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="3" width="14" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/>
+        <circle cx="5.5" cy="7.5" r="1.5" stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.9"/>
+        <path d="M1 11l4-3 3.5 2.5 2-1.5L15 12" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'forms',
+    label: '表單訊息',
+    wip: true,
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="1" y="2" width="14" height="10" rx="1.5" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/>
+        <polyline points="1,3 8,8 15,3" stroke="currentColor" strokeWidth="1.3" strokeLinejoin="round" fill="none" opacity="0.9"/>
+        <line x1="3" y1="14" x2="8" y2="14" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" opacity="0.5"/>
+      </svg>
+    ),
+  },
+  {
+    id: 'notifications',
+    label: '通知',
+    wip: true,
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M8 1.5A4.5 4.5 0 003.5 6v3.5L2 11.5h12L12.5 9.5V6A4.5 4.5 0 008 1.5z" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinejoin="round" opacity="0.9"/>
+        <path d="M6.5 13.5a1.5 1.5 0 003 0" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.9"/>
+      </svg>
+    ),
+  },
+];
+
+const ECOMMERCE_ITEMS = [
+  {
+    id: 'orders',
+    label: '訂單管理',
+    sectionDivider: true,
+    sectionLabel: '電商系統',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <rect x="2" y="1" width="12" height="14" rx="1.5" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/>
+        <line x1="5" y1="5" x2="11" y2="5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+        <line x1="5" y1="8" x2="11" y2="8" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+        <line x1="5" y1="11" x2="8.5" y2="11" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+      </svg>
+    ),
+    children: [
+      { id: 'order-list',    label: '全部訂單' },
+      { id: 'order-returns', label: '退換貨申請' },
+      { id: 'order-invoice', label: '電子發票管理' },
+    ],
   },
   {
     id: 'marketing',
@@ -393,66 +466,30 @@ const SidebarData = [
       { id: 'push-logs',            label: '推播記錄' },
       { id: 'marketing-landing',    label: '一頁式商店' },
       { id: 'marketing-ad-tools',   label: '廣告投放工具' },
-    ]
+      { id: 'gs-tracking',          label: '行銷追蹤碼' },
+    ],
   },
   {
-    id: 'analytics',
-    label: '數據中心',
+    id: 'ecommerce-settings',
+    label: '電商設定',
     icon: (
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <rect x="2" y="8" width="3" height="6" rx="0.5" fill="currentColor" opacity="0.9"/>
-        <rect x="6.5" y="5" width="3" height="9" rx="0.5" fill="currentColor" opacity="0.9"/>
-        <rect x="11" y="2" width="3" height="12" rx="0.5" fill="currentColor" opacity="0.9"/>
+        <path d="M1 5h14l-2 7H3L1 5z" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinejoin="round" opacity="0.9"/>
+        <path d="M5 5L6 2h4l1 3" stroke="currentColor" strokeWidth="1.3" fill="none" strokeLinejoin="round" opacity="0.9"/>
+        <line x1="6.5" y1="8.5" x2="6.5" y2="11.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" opacity="0.9"/>
+        <line x1="9.5" y1="8.5" x2="9.5" y2="11.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" opacity="0.9"/>
       </svg>
     ),
     children: [
-      { id: 'analytics-sales', label: '銷售概覽' },
-      { id: 'analytics-products', label: '商品分析' },
-      { id: 'analytics-members', label: '會員分析' },
-      { id: 'analytics-marketing', label: '行銷成效' },
-    ]
-  },
-  {
-    id: 'website-design',
-    label: '網站設計',
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <rect x="1" y="2" width="14" height="10" rx="1" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/>
-        <line x1="1" y1="5" x2="15" y2="5" stroke="currentColor" strokeWidth="1.4" opacity="0.9"/>
-        <line x1="4" y1="14" x2="12" y2="14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.9"/>
-        <line x1="8" y1="12" x2="8" y2="14" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.9"/>
-      </svg>
-    ),
-    children: [
-      { id: 'website-menu',   label: '選單管理' },
-      { id: 'system-pages',   label: '系統分頁' },
-    ]
-  },
-  {
-    id: 'global-settings',
-    label: '全域設定',
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/>
-        <path d="M8 1v1.5M8 13.5V15M15 8h-1.5M2.5 8H1M12.7 3.3l-1.06 1.06M4.36 11.64l-1.06 1.06M12.7 12.7l-1.06-1.06M4.36 4.36L3.3 3.3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.9"/>
-      </svg>
-    ),
-    children: [
-      { id: 'gs-system',          label: '系統設定' },
-      { id: 'gs-permissions',     label: '權限設定' },
-      { id: 'gs-accounts',        label: '帳號設定' },
-      { id: 'gs-version',         label: '系統版本' },
-      { id: 'gs-ai-plan',         label: 'AI 方案' },
-      { id: 'gs-plan-status',     label: '方案狀態' },
       { id: 'gs-ecommerce-store', label: '電商基本設定' },
       {
         id: 'gs-payment-logistics',
         label: '金物流串接',
         children: [
-          { id: 'payment-hub',    label: '金流設定' },
+          { id: 'payment-hub',     label: '金流設定' },
           { id: 'gs-temp-freight', label: '物流與運費' },
-          { id: 'webhook-mgmt',   label: 'Webhook 管理（訂單事件通知）' },
-        ]
+          { id: 'webhook-mgmt',    label: 'Webhook 管理' },
+        ],
       },
       {
         id: 'gs-advanced',
@@ -463,52 +500,118 @@ const SidebarData = [
           { id: 'gs-cart-timeout',        label: '購物車逾時設定' },
           { id: 'gs-stock-alert',         label: '庫存警示門檻' },
           { id: 'gs-member-verification', label: '會員驗證設定' },
-        ]
+        ],
       },
-      { id: 'gs-tracking',    label: '行銷追蹤碼' },
-      { id: 'gs-newsletter',  label: '電子報' },
-      { id: 'gs-msl',         label: '美安串接' },
-    ]
+      { id: 'gs-newsletter', label: '電子報' },
+      { id: 'gs-notification-templates', label: '通知信範本' },
+      { id: 'gs-msl',        label: '美安串接' },
+    ],
   },
 ];
 
+const WEBSITE_ITEMS = [
+  {
+    id: 'website-cms',
+    label: '品牌形象站',
+    sectionDivider: true,
+    sectionLabel: '網站設計',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/>
+        <path d="M8 1c-2 3-2 9 0 14M8 1c2 3 2 9 0 14" stroke="currentColor" strokeWidth="1.2" fill="none" opacity="0.9"/>
+        <line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" strokeWidth="1.2" opacity="0.9"/>
+        <path d="M2 5h12M2 11h12" stroke="currentColor" strokeWidth="1" opacity="0.6"/>
+      </svg>
+    ),
+    children: [
+      { id: 'website-menu', label: '選單管理' },
+      { id: 'system-pages', label: '系統分頁' },
+    ],
+  },
+  {
+    id: 'website-ec',
+    label: '電商網站',
+    ecOnly: true,
+    wip: true,
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M1 2.5h2.5L5.5 10h7l2-5.5H4.5" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" opacity="0.9"/>
+        <circle cx="6.5"  cy="13" r="1.3" fill="currentColor" opacity="0.9"/>
+        <circle cx="11.5" cy="13" r="1.3" fill="currentColor" opacity="0.9"/>
+      </svg>
+    ),
+  },
+];
+
+const SETTINGS_ITEMS = [
+  {
+    id: 'global-settings',
+    label: '全域設定',
+    sectionDivider: true,
+    sectionLabel: '設定',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <circle cx="8" cy="8" r="2.5" stroke="currentColor" strokeWidth="1.4" fill="none" opacity="0.9"/>
+        <path d="M8 1v1.5M8 13.5V15M15 8h-1.5M2.5 8H1M12.7 3.3l-1.06 1.06M4.36 11.64l-1.06 1.06M12.7 12.7l-1.06-1.06M4.36 4.36L3.3 3.3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" opacity="0.9"/>
+      </svg>
+    ),
+    children: [
+      { id: 'gs-system',      label: '系統設定',  wip: true },
+      { id: 'gs-permissions', label: '權限設定',  wip: true },
+      { id: 'gs-accounts',    label: '帳號設定',  wip: true },
+      { id: 'gs-version',     label: '系統版本' },
+      { id: 'gs-ai-plan',     label: 'AI 方案',   wip: true },
+      { id: 'gs-plan-status', label: '方案狀態' },
+    ],
+  },
+];
+
+// ─── Navigation mapping ───────────────────────────────────────────────────────
+
 const NAV_GROUP_MAP = {
-  'product-list': 'products', 'category-management': 'products', 'inventory-management': 'products',
-  'order-list': 'orders', 'order-returns': 'orders', 'order-invoice': 'orders',
-  'order-detail': 'orders', 'rma-list': 'orders', 'rma-detail': 'orders',
-  'create-order': 'orders', 'order-settings': 'orders',
-  'guest-query': 'orders', 'guest-result': 'orders', 'guest-rma': 'orders',
+  // Products
+  'product-dashboard': 'products', 'product-list': 'products', 'product-add': 'products', 'product-edit': 'products',
+  'category-management': 'products', 'inventory-management': 'products',
+  // Members
   'customer-management': 'members', 'customer-list': 'members', 'customer-detail': 'members', 'customer-settings-hub': 'members',
   'member-segment': 'members', 'member-blacklist': 'members', 'member-settings': 'members',
-  'member-tags': 'members', 'member-tier': 'members', 'member-points': 'members', 'member-notifications': 'members',
-  'marketing-promotions': 'marketing', 'marketing-journey': 'marketing', 'marketing-landing': 'marketing',
-  'gift-items': 'marketing', 'gift-item-new': 'marketing', 'gift-item-edit': 'marketing',
-  'lp-create-step1': 'marketing', 'lp-create-step2': 'marketing', 'lp-create-step3': 'marketing', 'lp-create-step4': 'marketing',
-  'push-logs': 'marketing',
-  'marketing-ad-tools': 'marketing',
+  'member-tier': 'members', 'member-points': 'members', 'member-tags': 'members', 'member-notifications': 'members',
+  // Analytics
   'analytics-sales': 'analytics', 'analytics-products': 'analytics', 'analytics-members': 'analytics', 'analytics-marketing': 'analytics',
+  // Orders
+  'order-list': 'orders', 'order-detail': 'orders', 'order-returns': 'orders', 'rma-list': 'orders', 'rma-detail': 'orders',
+  'guest-query': 'orders', 'guest-result': 'orders', 'guest-rma': 'orders', 'create-order': 'orders',
+  'order-invoice': 'orders', 'order-settings': 'orders',
+  // Marketing
+  'marketing-promotions': 'marketing', 'coupon-list': 'marketing', 'coupon-new': 'marketing', 'coupon-edit': 'marketing',
+  'promotion-list': 'marketing', 'promotion-new': 'marketing', 'freeship-new': 'marketing',
+  'gift-items': 'marketing', 'gift-item-new': 'marketing', 'gift-item-edit': 'marketing', 'gift-new': 'marketing',
+  'flash-sale-new': 'marketing', 'bundle-new': 'marketing',
+  'marketing-journey': 'marketing', 'journey-overview': 'marketing', 'journey-cart': 'marketing',
+  'journey-sleep': 'marketing', 'journey-loss': 'marketing', 'journey-post': 'marketing', 'journey-expiry': 'marketing',
+  'push-logs': 'marketing', 'marketing-landing': 'marketing', 'marketing-landing-v2': 'marketing', 'lp-detail-v2': 'marketing',
+  'lp-create-step1': 'marketing', 'lp-create-step2': 'marketing', 'lp-create-step3': 'marketing', 'lp-create-step4': 'marketing',
+  'marketing-ad-tools': 'marketing',
+  // Ecommerce settings
+  'gs-ecommerce-store': 'ecommerce-settings',
+  'gs-payment-logistics': 'ecommerce-settings', 'payment-hub': 'ecommerce-settings', 'invoice-settings': 'ecommerce-settings', 'webhook-mgmt': 'ecommerce-settings',
+  'vendor-auto': 'ecommerce-settings', 'vendor-bank': 'ecommerce-settings', 'vendor-manual': 'ecommerce-settings', 'vendor-semi': 'ecommerce-settings', 'recurring': 'ecommerce-settings',
+  'gs-temp-freight': 'ecommerce-settings', 'gs-weight-freight': 'ecommerce-settings',
+  'gs-advanced': 'ecommerce-settings', 'gs-third-party-login': 'ecommerce-settings', 'line-oa': 'ecommerce-settings',
+  'gs-cart-timeout': 'ecommerce-settings', 'gs-stock-alert': 'ecommerce-settings', 'gs-member-verification': 'ecommerce-settings',
+  'gs-tracking': 'marketing', 'gs-newsletter': 'ecommerce-settings', 'gs-newsletter-flydove': 'ecommerce-settings', 'gs-notification-templates': 'ecommerce-settings',
+  'gs-msl': 'ecommerce-settings', 'gs-msl-detail': 'ecommerce-settings',
+  // Website CMS
+  'website-menu': 'website-cms', 'system-pages': 'website-cms',
+  // Global settings (CMS)
   'gs-system': 'global-settings', 'gs-permissions': 'global-settings', 'gs-accounts': 'global-settings',
   'gs-version': 'global-settings', 'gs-ai-plan': 'global-settings', 'gs-plan-status': 'global-settings',
-  'gs-ecommerce-store': 'global-settings', 'gs-payment-logistics': 'global-settings', 'gs-advanced': 'global-settings',
-  'gs-tracking': 'global-settings', 'gs-newsletter': 'global-settings', 'gs-msl': 'global-settings',
-  // 網站設計
-  'website-menu': 'website-design', 'system-pages': 'website-design',
-  // 金物流串接 L3 + sub-pages
-  'payment-hub': 'global-settings', 'invoice-settings': 'global-settings', 'webhook-mgmt': 'global-settings',
-  'vendor-auto': 'global-settings', 'vendor-bank': 'global-settings', 'vendor-manual': 'global-settings',
-  'vendor-semi': 'global-settings', 'recurring': 'global-settings',
-  'gs-temp-freight': 'global-settings', 'gs-weight-freight': 'global-settings',
-  // 電商進階設定 L3
-  'line-oa': 'global-settings', 'gs-third-party-login': 'global-settings',
-  'gs-cart-timeout': 'global-settings', 'gs-stock-alert': 'global-settings', 'gs-member-verification': 'global-settings',
-  // 電子報 sub-pages
-  'gs-newsletter-flydove': 'global-settings',
 };
 
-// Auto-build L3 → L2 parent map from SidebarData
+// Auto-build L3 → L2 parent map from all sections
 const L3_PARENT_MAP = (() => {
   const map = {};
-  SidebarData.forEach(l1 => {
+  [...BASE_ITEMS, ...ECOMMERCE_ITEMS, ...WEBSITE_ITEMS, ...SETTINGS_ITEMS].forEach(l1 => {
     (l1.children || []).forEach(l2 => {
       (l2.children || []).forEach(l3 => {
         map[l3.id] = l2.id;
@@ -518,31 +621,32 @@ const L3_PARENT_MAP = (() => {
   return map;
 })();
 
+// ─── Active child resolution ──────────────────────────────────────────────────
+
 function getActiveSidebarChild(page) {
   if (['order-detail','create-order','guest-query','guest-result','guest-rma','order-settings'].includes(page)) return 'order-list';
   if (['rma-list','rma-detail'].includes(page)) return 'order-returns';
   if (['product-dashboard','product-add','product-edit'].includes(page)) return 'product-list';
-  if (['coupon-list','coupon-new','coupon-edit','promotion-list','promotion-new','gift-new','flash-sale-new','bundle-new'].includes(page)) return 'marketing-promotions';
+  if (['coupon-list','coupon-new','coupon-edit','promotion-list','promotion-new','freeship-new','gift-new','flash-sale-new','bundle-new'].includes(page)) return 'marketing-promotions';
   if (['journey-overview','journey-cart','journey-sleep','journey-loss','journey-post','journey-expiry'].includes(page)) return 'marketing-journey';
-  // 金物流串接 L3: 金流設定 sub-pages → highlight payment-hub
+  if (['lp-create-step1','lp-create-step2','lp-create-step3','lp-create-step4','marketing-landing-v2','lp-detail-v2'].includes(page)) return 'marketing-landing';
+  if (['gift-item-new','gift-item-edit'].includes(page)) return 'gift-items';
   if (['vendor-auto','vendor-bank','vendor-manual','vendor-semi','recurring','invoice-settings'].includes(page)) return 'payment-hub';
-  // 金物流串接 L3: 物流與運費 sub-pages → highlight gs-temp-freight
   if (['gs-weight-freight'].includes(page)) return 'gs-temp-freight';
-  // payment-hub, webhook-mgmt, gs-temp-freight are L3 items — return as-is (fall through to default)
   if (['customer-list','customer-detail'].includes(page)) return 'customer-management';
-  if (['customer-settings-hub','member-tags','member-tier','member-points','member-notifications'].includes(page)) return 'member-settings';
-  if (['lp-create-step1','lp-create-step2','lp-create-step3','lp-create-step4'].includes(page)) return 'marketing-landing';
+  if (['customer-settings-hub','member-tier','member-points','member-tags','member-notifications'].includes(page)) return 'member-settings';
   if (['gs-newsletter-flydove'].includes(page)) return 'gs-newsletter';
-  // gs-advanced L3 items: return as-is (fall through)
   if (['gs-msl-detail'].includes(page)) return 'gs-msl';
   return page;
 }
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 function LockIcon() {
   return (
     <svg width="11" height="11" viewBox="0 0 11 11" fill="none" style={{ flexShrink: 0 }}>
       <rect x="2" y="5" width="7" height="5" rx="1" stroke="#C0C4CC" strokeWidth="1.2" fill="none"/>
-      <path d="M3.5 5V3.5a2 2 0 0 1 4 0V5" stroke="#C0C4CC" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
+      <path d="M3.5 5V3.5a2 2 0 014 0V5" stroke="#C0C4CC" strokeWidth="1.2" strokeLinecap="round" fill="none"/>
     </svg>
   );
 }
@@ -556,22 +660,30 @@ function ChevronIcon({ open, size = 12 }) {
   );
 }
 
-function Sidebar({ currentPage, onNavigate, collapsed }) {
+// ─── Sidebar component ────────────────────────────────────────────────────────
+
+function Sidebar({ currentPage, onNavigate, collapsed, showEcommerce = true }) {
+  const menuData = React.useMemo(() => [
+    ...BASE_ITEMS,
+    ...(showEcommerce ? ECOMMERCE_ITEMS : []),
+    ...WEBSITE_ITEMS.filter(item => !item.ecOnly || showEcommerce),
+    ...SETTINGS_ITEMS,
+  ], [showEcommerce]);
+
   const activeGroup = NAV_GROUP_MAP[currentPage] || currentPage;
   const activeSidebarChild = getActiveSidebarChild(currentPage);
 
   const [expanded, setExpanded] = React.useState(() => {
     const initial = {};
-    // L1 groups
-    SidebarData.forEach(item => {
+    menuData.forEach(item => {
       if (item.children) initial[item.id] = item.id === activeGroup;
     });
-    // L2 parents with L3 children — auto-expand if current page is inside
     const l2Parent = L3_PARENT_MAP[activeSidebarChild];
     if (l2Parent) initial[l2Parent] = true;
     return initial;
   });
 
+  // Re-expand relevant group when page changes
   React.useEffect(() => {
     const group = NAV_GROUP_MAP[currentPage] || currentPage;
     const child = getActiveSidebarChild(currentPage);
@@ -582,6 +694,15 @@ function Sidebar({ currentPage, onNavigate, collapsed }) {
       return next;
     });
   }, [currentPage]);
+
+  // Reset expanded state when ecommerce visibility changes
+  React.useEffect(() => {
+    const initial = {};
+    menuData.forEach(item => {
+      if (item.children) initial[item.id] = item.id === activeGroup;
+    });
+    setExpanded(initial);
+  }, [showEcommerce]);
 
   const toggleGroup = (id) => setExpanded(prev => ({ ...prev, [id]: !prev[id] }));
 
@@ -594,14 +715,11 @@ function Sidebar({ currentPage, onNavigate, collapsed }) {
 
   const isParentActive = (id) => (NAV_GROUP_MAP[currentPage] || currentPage) === id;
 
-  // Calculate dynamic maxHeight for L1 container, accounting for open L2 sub-groups
   const calcL1MaxHeight = (children) => {
     let h = 0;
     children.forEach(child => {
-      h += 44; // L2 row height
-      if (child.children && expanded[child.id]) {
-        h += child.children.length * 40; // L3 row height
-      }
+      h += 44;
+      if (child.children && expanded[child.id]) h += child.children.length * 40;
     });
     return h + 'px';
   };
@@ -615,26 +733,35 @@ function Sidebar({ currentPage, onNavigate, collapsed }) {
     }}>
       {/* Logo */}
       <div style={{ height: 48, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: collapsed ? 0 : '0 16px', borderBottom: `1px solid ${BORDER}`, flexShrink: 0, overflow: 'hidden' }}>
-        <span style={{fontWeight:700,fontSize:16,color:"#303133"}}>Evomni</span>
+        <img src="/assets/logo.jpg" alt="Evomni" style={{ height: 28, maxWidth: collapsed ? 36 : 160, objectFit: collapsed ? 'cover' : 'contain', objectPosition: 'left center' }} />
       </div>
 
       {/* Nav */}
       <div style={{ flex: 1, overflowY: 'auto', padding: '8px 0' }}>
-        {SidebarData.map((item) => {
+        {menuData.map((item) => {
           const parentActive = isParentActive(item.id) || currentPage === item.id;
           const isOpen = !collapsed && expanded[item.id];
           return (
             <div key={item.id}>
+              {/* Section label */}
+              {!collapsed && item.sectionLabel && (
+                <div style={{ padding: '24px 16px 2px', fontSize: 12, color: '#B0B6BF', letterSpacing: '0.04em', fontWeight: 500, userSelect: 'none' }}>
+                  {item.sectionLabel}
+                </div>
+              )}
+
               {/* L1 row */}
               <div
                 onClick={() => {
                   if (collapsed) {
                     onNavigate(item.children ? item.children[0].id : item.id);
+                  } else if (item.wip) {
+                    onNavigate(item.id);
                   } else {
                     item.children ? toggleGroup(item.id) : onNavigate(item.id);
                   }
                 }}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', padding: collapsed ? 0 : '0 16px', height: 52, cursor: 'pointer', background: parentActive ? BG_HOVER : 'transparent', color: parentActive ? TEXT_PRIMARY : TEXT_SECONDARY, fontSize: 13.5, fontWeight: parentActive ? 500 : 400, userSelect: 'none', transition: 'background 0.15s, color 0.15s' }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: collapsed ? 'center' : 'space-between', padding: collapsed ? 0 : '0 16px', height: 48, cursor: 'pointer', background: parentActive ? BG_HOVER : 'transparent', color: parentActive ? TEXT_PRIMARY : TEXT_SECONDARY, fontSize: 13.5, fontWeight: parentActive ? 500 : 400, userSelect: 'none', transition: 'background 0.15s, color 0.15s' }}
                 onMouseEnter={e => { e.currentTarget.style.background = BG_HOVER; e.currentTarget.style.color = TEXT_PRIMARY; }}
                 onMouseLeave={e => { e.currentTarget.style.background = parentActive ? BG_HOVER : 'transparent'; e.currentTarget.style.color = parentActive ? TEXT_PRIMARY : TEXT_SECONDARY; }}
               >
@@ -645,70 +772,75 @@ function Sidebar({ currentPage, onNavigate, collapsed }) {
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                       <span style={{ color: parentActive ? ACCENT : TEXT_SECONDARY, display: 'flex', alignItems: 'center' }}>{item.icon}</span>
                       <span style={{ whiteSpace: 'nowrap' }}>{item.label}</span>
+                      {item.wip && (
+                        <span style={{ fontSize: 10, padding: '1px 5px', background: '#FDF6EC', color: '#E6A23C', border: '1px solid #FAECD8', borderRadius: 2, lineHeight: '14px' }}>建置中</span>
+                      )}
                     </div>
                     {item.children && <span style={{ color: TEXT_SECONDARY }}><ChevronIcon open={isOpen} /></span>}
                   </>
                 )}
               </div>
 
-              {/* L2 + L3 container */}
+              {/* L2 + L3 */}
               {!collapsed && item.children && (
                 <div style={{ overflow: 'hidden', maxHeight: isOpen ? calcL1MaxHeight(item.children) : '0', transition: 'max-height 0.22s cubic-bezier(.4,0,.2,1)' }}>
                   {item.children.map((child) => {
                     if (child.children) {
-                      // L2 with L3 children
+                      // L2 with L3
                       const childIsOpen = expanded[child.id];
                       const anyL3Active = child.children.some(gc => activeSidebarChild === gc.id);
                       return (
                         <div key={child.id}>
-                          {/* L2 header row */}
                           <div
                             onClick={() => toggleGroup(child.id)}
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 0 42px', height: 44, cursor: 'pointer', background: anyL3Active ? ACCENT_BG : 'transparent', color: anyL3Active ? ACCENT : TEXT_SECONDARY, fontSize: 13, fontWeight: anyL3Active ? 500 : 400, borderLeft: `2px solid ${anyL3Active ? ACCENT : 'transparent'}`, transition: 'background 0.15s, color 0.15s', userSelect: 'none' }}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 0 42px', height: 44, cursor: 'pointer', background: anyL3Active ? ACCENT_BG : 'transparent', color: anyL3Active ? ACCENT : TEXT_SECONDARY, fontSize: 13, fontWeight: anyL3Active ? 500 : 400, borderLeft: `2px solid ${anyL3Active ? ACCENT : 'transparent'}`, transition: 'background 0.15s', userSelect: 'none' }}
                             onMouseEnter={e => { if (!anyL3Active) { e.currentTarget.style.background = BG_HOVER; e.currentTarget.style.color = TEXT_PRIMARY; }}}
                             onMouseLeave={e => { if (!anyL3Active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = TEXT_SECONDARY; }}}
                           >
                             <span style={{ whiteSpace: 'nowrap' }}>{child.label}</span>
-                            <span style={{ color: TEXT_SECONDARY, opacity: 0.7 }}><ChevronIcon open={childIsOpen} size={11} /></span>
+                            <ChevronIcon open={childIsOpen} size={11} />
                           </div>
-                          {/* L3 rows */}
-                          <div style={{ overflow: 'hidden', maxHeight: childIsOpen ? child.children.length * 40 + 'px' : '0', transition: 'max-height 0.22s cubic-bezier(.4,0,.2,1)' }}>
-                            {child.children.map((grandchild) => {
-                              const gcActive = activeSidebarChild === grandchild.id;
+                          <div style={{ overflow: 'hidden', maxHeight: childIsOpen ? child.children.length * 40 + 'px' : '0', transition: 'max-height 0.2s' }}>
+                            {child.children.map(gc => {
+                              const gcActive = activeSidebarChild === gc.id;
                               return (
-                                <div
-                                  key={grandchild.id}
-                                  onClick={() => onNavigate(grandchild.id)}
-                                  style={{ display: 'flex', alignItems: 'center', padding: '0 16px 0 58px', height: 40, cursor: 'pointer', background: gcActive ? ACCENT_BG : 'transparent', color: gcActive ? ACCENT : TEXT_SECONDARY, fontSize: 12.5, fontWeight: gcActive ? 500 : 400, borderLeft: `2px solid ${gcActive ? ACCENT : 'transparent'}`, transition: 'background 0.15s, color 0.15s', userSelect: 'none' }}
+                                <div key={gc.id} onClick={() => onNavigate(gc.id)}
+                                  style={{ display: 'flex', alignItems: 'center', padding: '0 16px 0 58px', height: 40, cursor: 'pointer', background: gcActive ? ACCENT_BG : 'transparent', color: gcActive ? ACCENT : TEXT_SECONDARY, fontSize: 12.5, fontWeight: gcActive ? 500 : 400, borderLeft: `2px solid ${gcActive ? ACCENT : 'transparent'}`, transition: 'background 0.15s', userSelect: 'none' }}
                                   onMouseEnter={e => { if (!gcActive) { e.currentTarget.style.background = BG_HOVER; e.currentTarget.style.color = TEXT_PRIMARY; }}}
                                   onMouseLeave={e => { if (!gcActive) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = TEXT_SECONDARY; }}}
                                 >
-                                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{grandchild.label}</span>
+                                  <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{gc.label}</span>
                                 </div>
                               );
                             })}
                           </div>
                         </div>
                       );
-                    } else {
-                      // Normal L2 item
-                      const active = activeSidebarChild === child.id;
-                      return (
+                    }
+                    // Normal L2
+                    const active = activeSidebarChild === child.id;
+                    return (
+                      <React.Fragment key={child.id}>
+                        {child.dividerBefore && (
+                          <div style={{ height: 1, background: BORDER, margin: '4px 16px 4px 42px' }} />
+                        )}
                         <div
-                          key={child.id}
                           onClick={() => !child.locked && onNavigate(child.id)}
-                          title={child.locked ? '此功能為進階電商包專屬，請洽詢升級' : undefined}
-                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 0 42px', height: 44, cursor: child.locked ? 'default' : 'pointer', background: active ? ACCENT_BG : 'transparent', color: active ? ACCENT : child.locked ? '#C0C4CC' : TEXT_SECONDARY, fontSize: 13, fontWeight: active ? 500 : 400, borderLeft: `2px solid ${active ? ACCENT : 'transparent'}`, transition: 'background 0.15s, color 0.15s', userSelect: 'none' }}
+                          title={child.locked ? '進階電商包專屬功能' : undefined}
+                          style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px 0 42px', height: 44, cursor: child.locked ? 'default' : 'pointer', background: active ? ACCENT_BG : 'transparent', color: active ? ACCENT : child.locked ? '#C0C4CC' : TEXT_SECONDARY, fontSize: 13, fontWeight: active ? 500 : 400, borderLeft: `2px solid ${active ? ACCENT : 'transparent'}`, transition: 'background 0.15s', userSelect: 'none' }}
                           onMouseEnter={e => { if (!child.locked && !active) { e.currentTarget.style.background = BG_HOVER; e.currentTarget.style.color = TEXT_PRIMARY; }}}
                           onMouseLeave={e => { if (!child.locked && !active) { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = TEXT_SECONDARY; }}}
                         >
-                          <span style={{ display: 'flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {child.label}
+                          <span style={{ display: 'flex', alignItems: 'center', gap: 6, overflow: 'hidden' }}>
+                            <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{child.label}</span>
+                            {child.wip && !child.locked && (
+                              <span style={{ fontSize: 10, padding: '1px 5px', background: '#FDF6EC', color: '#E6A23C', border: '1px solid #FAECD8', borderRadius: 2, flexShrink: 0, lineHeight: '14px' }}>建置中</span>
+                            )}
                           </span>
                           {child.locked && <LockIcon />}
                         </div>
-                      );
-                    }
+                      </React.Fragment>
+                    );
                   })}
                 </div>
               )}
@@ -721,7 +853,6 @@ function Sidebar({ currentPage, onNavigate, collapsed }) {
 }
 
 Object.assign(window, { Sidebar, NAV_GROUP_MAP });
-
 </script>
 
 <!-- components/Header.jsx -->
@@ -737,11 +868,36 @@ Object.assign(window, { Sidebar, NAV_GROUP_MAP });
 // 切換時廣播 CustomEvent('evomni:planchange', { detail: { isPro } })
 if (window.__evomni_isPro === undefined) window.__evomni_isPro = false;
 
+// 前台頁面路徑 — 相對於 index.html 所在目錄
+const _htmlRoot = 'html/';
+
+const FRONTEND_PAGES = [
+  { label: '前台導覽 · 全部頁面', url: _htmlRoot + '前台導覽.html', route: '所有前台畫面總覽', overview: true },
+  { label: '商品列表', url: _htmlRoot + '商品列表.html', route: '/products' },
+  { label: '商品詳情', url: _htmlRoot + '商品詳情.html', route: '/products/:slug' },
+  { label: '購物車', url: _htmlRoot + '購物車.html', route: '/cart' },
+  { label: '結帳頁', url: _htmlRoot + '結帳頁.html', route: '/checkout' },
+  { label: '訂單確認頁', url: _htmlRoot + '訂單確認頁.html', route: '/order/confirmed' },
+  { label: '會員中心', url: _htmlRoot + '會員中心.html', route: '/account' },
+  { label: '訪客訂單查詢', url: _htmlRoot + '訪客訂單查詢.html', route: '/order-query' },
+  { label: '會員登入 / 認證流程', url: _htmlRoot + '會員登入.html', route: '/login · /forgot · /reset · /verify · /resend' },
+  { label: '一頁式商店', url: _htmlRoot + '一頁式商店.html', route: '/lp/:slug（銷售頁 · 規格加購 · 結帳）' },
+];
+
 function Header({ breadcrumbs = [], onNavigate, onToggleSidebar }) {
   const getLabel = (crumb) => typeof crumb === 'string' ? crumb : crumb.label;
   const getPage  = (crumb) => typeof crumb === 'object' ? crumb.page : null;
 
   const [isPro, setIsPro] = React.useState(window.__evomni_isPro);
+  const [showFrontendMenu, setShowFrontendMenu] = React.useState(false);
+  const menuRef = React.useRef(null);
+
+  React.useEffect(() => {
+    if (!showFrontendMenu) return;
+    const close = (e) => { if (menuRef.current && !menuRef.current.contains(e.target)) setShowFrontendMenu(false); };
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [showFrontendMenu]);
 
   React.useEffect(() => {
     const handler = e => setIsPro(e.detail.isPro);
@@ -814,7 +970,61 @@ function Header({ breadcrumbs = [], onNavigate, onToggleSidebar }) {
 
       {/* Right actions */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <a href="#" style={{ fontSize: 13, color: '#409EFF', textDecoration: 'none' }}>查看前台 ↗</a>
+        {/* 查看前台 dropdown */}
+        <div ref={menuRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowFrontendMenu(s => !s)}
+            style={{
+              background: showFrontendMenu ? '#ECF5FF' : 'none',
+              border: '1px solid #409EFF', cursor: 'pointer',
+              padding: '4px 10px', fontSize: 12, color: '#409EFF',
+              display: 'flex', alignItems: 'center', gap: 4,
+              fontFamily: 'inherit', whiteSpace: 'nowrap', borderRadius: 0,
+              transition: 'background .15s',
+            }}
+          >
+            查看前台
+            <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="#409EFF" strokeWidth="1.5" strokeLinecap="round">
+              <path d="M2 8L8 2M8 2H4M8 2V6"/>
+            </svg>
+          </button>
+          {showFrontendMenu && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% + 4px)', right: 0,
+              background: '#fff', border: '1px solid #DCDFE6',
+              boxShadow: '0 4px 16px rgba(0,0,0,.1)',
+              zIndex: 1000, minWidth: 192,
+            }}>
+              <div style={{ padding: '7px 14px 6px', fontSize: 11, color: '#909399', borderBottom: '1px solid #F0F0F0', letterSpacing: '.06em', textTransform: 'uppercase' }}>
+                前台 Prototype
+              </div>
+              {FRONTEND_PAGES.map(page => (
+                <a
+                  key={page.url}
+                  href={page.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setShowFrontendMenu(false)}
+                  onMouseEnter={e => { e.currentTarget.style.background = page.overview ? '#E8F1FF' : '#F5F7FA'; }}
+                  onMouseLeave={e => { e.currentTarget.style.background = page.overview ? '#F5F9FF' : '#fff'; }}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '9px 14px', textDecoration: 'none',
+                    borderBottom: '1px solid #F0F0F0', background: page.overview ? '#F5F9FF' : '#fff',
+                  }}
+                >
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: page.overview ? 600 : 500, color: page.overview ? '#409EFF' : '#303133' }}>{page.label}</div>
+                    <div style={{ fontSize: 11, color: '#909399', marginTop: 2 }}>{page.route}</div>
+                  </div>
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="#C0C4CC" strokeWidth="1.5" strokeLinecap="round">
+                    <path d="M2 10L10 2M10 2H5M10 2V7"/>
+                  </svg>
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{
             width: 28, height: 28, borderRadius: '50%',
@@ -830,7 +1040,6 @@ function Header({ breadcrumbs = [], onNavigate, onToggleSidebar }) {
 }
 
 Object.assign(window, { Header });
-
 </script>
 
 <!-- components/StatusTag.jsx -->
@@ -1294,7 +1503,7 @@ function FixedBar({ lastSaved, onCancel, onSave, saving }) {
 }
 
 function StatusBadge({ status }) {
-  const map = { '未設定': '#909399', '設定中': '#E6A23C', '已啟用': '#67C23A', '已停用': '#909399', '連線異常': '#F56C6C', '正常': '#67C23A' };
+  const map = { '未設定': '#909399', '設定中': '#E6A23C', '已啟用': '#67C23A', '已停用': '#909399', '連線測試失敗': '#F56C6C', '串接異常': '#F56C6C', '連線異常': '#F56C6C', '異常': '#F56C6C', '正常': '#67C23A' };
   const color = map[status] || '#909399';
   return <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12, color }}><span style={{ width: 6, height: 6, borderRadius: '50%', background: color, display: 'inline-block' }} />{status}</span>;
 }
@@ -1438,7 +1647,6 @@ Object.assign(window, {
   tableThStyle, tableTdStyle, TableWrapper, ListCard,
   tableRowBg, tableRowHoverBg, tableRowSelectedBg, tableRowHandlers,
 });
-
 </script>
 
 <!-- components/Shared.jsx -->
@@ -6258,7 +6466,7 @@ Object.assign(window, { Screen6GuestQuery, Screen7GuestResult, Screen8CreateOrde
 
 const HUB_VENDORS = {
   '第三方金流': [
-    { id: 'ecpay',    name: '綠界科技（ECPay）',    type: '全自動',  status: '連線異常', color: '#005EAA', initial: 'EC',  screen: 'vendor-auto',   lastErr: 'API 金鑰已失效（AUTH_FAILED）。請重新輸入金鑰，或聯繫綠界科技客服取得新金鑰。', lastErrTime: '2026/05/10 14:32' },
+    { id: 'ecpay',    name: '綠界科技（ECPay）',    type: '全自動',  status: '串接異常', color: '#005EAA', initial: 'EC',  screen: 'vendor-auto',   lastErr: 'Webhook 連續失敗達門檻（最近一次：API 金鑰已失效 AUTH_FAILED），可能影響訂單付款通知，請檢查串接設定。', lastErrTime: '2026/05/10 14:32' },
     { id: 'newebpay', name: '藍新科技（NewebPay）',  type: '全自動',  status: '未設定',   color: '#0070C0', initial: 'NP',  screen: 'vendor-auto' },
     { id: 'linepay',  name: 'LINE Pay',               type: '全自動',  status: '已啟用',   color: '#00B900', initial: 'LP',  screen: 'vendor-auto' },
     { id: 'aftee',    name: 'AFTEE 先享後付',         type: '全自動',  status: '未設定',   color: '#FF6B35', initial: 'AF',  screen: 'vendor-auto' },
@@ -6275,7 +6483,7 @@ const HUB_VENDORS = {
     { id: 'visa',       name: 'VISA',               type: '設定即用', status: '未設定', color: '#1A1F71', initial: 'VISA',screen: 'vendor-bank' },
   ],
   '第三方物流': [
-    { id: 'eclogistics', name: '綠界物流（ECPay）', type: '全自動',  status: '設定中',  color: '#005EAA', initial: '綠物', screen: 'vendor-auto' },
+    { id: 'eclogistics', name: '綠界物流（ECPay）', type: '全自動',  status: '連線測試失敗',  color: '#005EAA', initial: '綠物', screen: 'vendor-auto', lastErr: '上次連線測試未通過：商店代號或金鑰錯誤（401）。Webhook 狀態正常，建議重新測試或檢查金鑰設定。', lastErrTime: '2026/05/11 09:48' },
     { id: 'neweblog',    name: '藍新物流',          type: '全自動',  status: '未設定',  color: '#0070C0', initial: '藍物', screen: 'vendor-auto' },
     { id: 'shengzhe',    name: '低溫超取_聖喆國際', type: '人工處理', status: '已啟用',  color: '#2D6A4F', initial: '聖喆', screen: 'vendor-manual' },
     { id: 'boxful',      name: '倉儲物流_BOXFUL',   type: '半人工',  status: '未設定',  color: '#E6A23C', initial: 'BOX', screen: 'vendor-semi' },
@@ -6287,9 +6495,11 @@ const HUB_VENDORS = {
   ],
 };
 
+const ERROR_STATUSES = ['連線測試失敗', '串接異常', '連線異常'];
+
 function VendorCard({ vendor, onOpen }) {
   const [hover, setHover] = React.useState(false);
-  const isError = vendor.status === '連線異常';
+  const isError = ERROR_STATUSES.includes(vendor.status);
   return (
     <div
       onMouseEnter={() => setHover(true)}
@@ -6321,7 +6531,7 @@ function VendorCard({ vendor, onOpen }) {
             {vendor.lastErrTime && <span style={{ fontSize: 11, color: '#C0C4CC' }}>發生時間：{vendor.lastErrTime}</span>}
             <button onClick={e => { e.stopPropagation(); onOpen(vendor); }}
               style={{ height: 24, padding: '0 10px', background: '#fff', border: '1px solid #F56C6C', color: '#F56C6C', fontSize: 12, cursor: 'pointer', fontFamily: 'Noto Sans TC,sans-serif' }}>
-              前往修復
+              {vendor.status === '連線測試失敗' ? '前往重新測試' : '前往修復'}
             </button>
           </div>
         </div>
@@ -6330,8 +6540,42 @@ function VendorCard({ vendor, onOpen }) {
   );
 }
 
+const STATUS_LEGEND = [
+  { label: '未設定',   color: '#909399', desc: '尚未填入任何串接憑證。' },
+  { label: '設定中',   color: '#E6A23C', desc: '憑證已填入，但尚未啟用串接。' },
+  { label: '已啟用',   color: '#67C23A', desc: '串接已啟用，可在結帳與出貨流程中使用。' },
+  { label: '已停用',   color: '#909399', desc: '曾設定並啟用過，目前已手動停用。' },
+  { label: '連線測試失敗', color: '#F56C6C', desc: '連線測試失敗，且 Webhook 狀態正常。上次連線測試未通過，建議重新測試或檢查金鑰設定。' },
+  { label: '串接異常', color: '#F56C6C', desc: 'Webhook 連續失敗達門檻（預設 3 次），可能影響訂單通知；或連線測試與 Webhook 兩者皆失敗。請檢查串接設定。' },
+];
+
+function StatusLegend() {
+  return (
+    <div style={{ background: '#F5F7FA', border: '1px solid #EBEEF5', borderRadius: 3, padding: '14px 18px', marginBottom: 16 }}>
+      <div style={{ fontSize: 13, fontWeight: 600, color: '#303133', marginBottom: 4 }}>狀態判定說明</div>
+      <p style={{ fontSize: 12, color: '#909399', lineHeight: 1.7, marginBottom: 10 }}>
+        狀態 Badge 依「連線測試」與「Webhook 回呼」兩個來源判定，任一失敗即顯示紅色 Badge，文案依失敗原因區分：僅
+        <strong style={{ color: '#F56C6C' }}>連線測試失敗</strong>（Webhook 正常）顯示「連線測試失敗」；
+        <strong style={{ color: '#F56C6C' }}>Webhook 連續失敗</strong>（達門檻 3 次）或兩者皆失敗則顯示「串接異常」。兩項來源皆恢復正常才會撤銷 Badge。
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px 24px' }}>
+        {STATUS_LEGEND.map(s => (
+          <div key={s.label} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: s.color, flexShrink: 0, marginTop: 6 }} />
+            <div style={{ minWidth: 0 }}>
+              <span style={{ fontSize: 12, fontWeight: 600, color: s.color }}>{s.label}</span>
+              <span style={{ fontSize: 12, color: '#606266', lineHeight: 1.6 }}>　{s.desc}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function VendorCategoryPanel({ category, onOpenVendor }) {
   const [search, setSearch] = React.useState('');
+  const [showLegend, setShowLegend] = React.useState(false);
   const vendors = HUB_VENDORS[category] || [];
   const filtered = search ? vendors.filter(v => v.name.includes(search)) : vendors;
   const enabledCount = vendors.filter(v => v.status === '已啟用').length;
@@ -6346,8 +6590,14 @@ function VendorCategoryPanel({ category, onOpenVendor }) {
             {enabledCount > 0 ? `已啟用 ${enabledCount} 個廠商` : '管理並設定此類別的廠商串接。'}
           </p>
         </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexShrink: 0 }}>
+        <button
+          onClick={() => setShowLegend(s => !s)}
+          style={{ height: 34, padding: '0 12px', background: showLegend ? '#ECF5FF' : '#fff', border: `1px solid ${showLegend ? '#409EFF' : '#DCDFE6'}`, color: showLegend ? '#409EFF' : '#606266', fontSize: 13, cursor: 'pointer', fontFamily: 'Noto Sans TC,sans-serif', whiteSpace: 'nowrap' }}>
+          狀態說明
+        </button>
         {/* Search */}
-        <div style={{ position: 'relative', flexShrink: 0 }}>
+        <div style={{ position: 'relative' }}>
           <input
             value={search} onChange={e => setSearch(e.target.value)}
             placeholder="搜尋廠商名稱"
@@ -6362,7 +6612,10 @@ function VendorCategoryPanel({ category, onOpenVendor }) {
             </span>
           )}
         </div>
+        </div>
       </div>
+
+      {showLegend && <StatusLegend />}
 
       {/* Card grid */}
       {filtered.length === 0 ? (
@@ -6382,8 +6635,7 @@ function VendorCategoryPanel({ category, onOpenVendor }) {
   );
 }
 
-Object.assign(window, { VendorCategoryPanel, HUB_VENDORS });
-
+Object.assign(window, { VendorCategoryPanel, HUB_VENDORS, ERROR_STATUSES });
 </script>
 
 <!-- components/VendorAutoScreen.jsx -->
@@ -6392,7 +6644,8 @@ Object.assign(window, { VendorCategoryPanel, HUB_VENDORS });
 
 function VendorAutoScreen({ vendor, onBack }) {
   const { toasts, show } = useToast();
-  const [enabled, setEnabled] = React.useState(vendor.status === '已啟用' || vendor.status === '連線異常');
+  // 串接異常＝Webhook 連續失敗（串接仍維持啟用）；連線測試失敗＝連線測試未通過、Webhook 正常（多為設定中未啟用）
+  const [enabled, setEnabled] = React.useState(vendor.status === '已啟用' || vendor.status === '串接異常');
   const [form, setForm] = React.useState({ merchantId: '', hashKey: '', hashIV: '', env: 'sandbox', atm_days: 3 });
   const [payments, setPayments] = React.useState(['credit']);
   const [testResult, setTestResult] = React.useState(null);
@@ -6428,7 +6681,7 @@ function VendorAutoScreen({ vendor, onBack }) {
     setTimeout(() => {
       setTesting(false);
       // Simulate result based on vendor
-      if (vendor.status === '連線異常') {
+      if (vendor.status === '連線測試失敗' || vendor.status === '串接異常') {
         setTestResult({ success: false, message: '連線失敗：商店代號或金鑰錯誤（401），請確認填入正確的憑證。' });
       } else {
         setTestResult({ success: true, message: '連線成功！廠商 API 回應正常，憑證驗證通過。' });
@@ -6484,7 +6737,7 @@ function VendorAutoScreen({ vendor, onBack }) {
               <h1 style={{ fontSize: 20, fontWeight: 700, marginBottom: 6 }}>{vendor.name}</h1>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <VendorTypeTag type={vendor.type} />
-                <StatusBadge status={enabled ? '已啟用' : (vendor.status === '連線異常' ? '連線異常' : '已停用')} />
+                <StatusBadge status={vendor.status === '連線測試失敗' ? '連線測試失敗' : (vendor.status === '串接異常' && enabled ? '串接異常' : (enabled ? '已啟用' : '已停用'))} />
               </div>
             </div>
           </div>
@@ -6557,11 +6810,18 @@ function VendorAutoScreen({ vendor, onBack }) {
       <SectionCard title="Webhook 設定">
         <p style={{ fontSize: 13, color: '#606266', marginBottom: 12 }}>請將以下 URL 複製至{vendor.name}後台的「通知網址（ReturnURL）」欄位，系統將透過此網址接收付款結果通知。</p>
         <WebhookUrlField url={webhookUrl} onCopy={() => show('已複製到剪貼簿', 'success')} />
-        <p style={{ fontSize: 12, color: '#909399', marginTop: 8 }}>Webhook Token 如需重新產生，請至「Webhook 管理」頁面操作。</p>
+        <p style={{ fontSize: 12, color: '#909399', marginTop: 8, lineHeight: 1.7 }}>
+          網址中的 <code style={{ background: '#F5F7FA', padding: '1px 5px', borderRadius: 2, color: '#606266', fontFamily: 'monospace' }}>a3f9k2</code> 為本商店專屬的識別碼（唯一識別碼／UUID），可避免網址被猜測或冒用，請勿外流。<br />
+          Webhook Token 如需重新產生，請至「Webhook 管理」頁面操作。
+        </p>
       </SectionCard>
 
       {/* ── Section 4: 連線測試 ── */}
       <SectionCard title="連線測試">
+        {/* 串接異常（Webhook 連續失敗）且連線測試也失敗時，於測試按鈕上方顯示持久 Alert（PRD §6.2 方案 c） */}
+        {vendor.status === '串接異常' && (
+          <Banner type="error">此廠商目前為「串接異常」（Webhook 連續失敗）；偵測到上次連線測試也未通過，請一併確認 API 憑證是否正確，避免修復 Webhook 後仍有連線問題未處理。</Banner>
+        )}
         <p style={{ fontSize: 13, color: '#606266', marginBottom: 12 }}>填入 API 憑證後，點擊下方按鈕測試與廠商的連線狀態。每分鐘最多測試 5 次。</p>
         <button
           style={{ ...sharedBtns.plain, opacity: (!form.merchantId || testing) ? 0.6 : 1 }}
@@ -6577,7 +6837,6 @@ function VendorAutoScreen({ vendor, onBack }) {
 }
 
 Object.assign(window, { VendorAutoScreen });
-
 </script>
 
 <!-- components/VendorOtherScreens.jsx -->
@@ -6861,6 +7120,8 @@ function VendorSemiScreen({ vendor, onBack }) {
   const [lastSaved, setLastSaved] = React.useState(null);
   const [testResult, setTestResult] = React.useState(null);
   const [testing, setTesting] = React.useState(false);
+  const [showImportDialog, setShowImportDialog] = React.useState(false);
+  const [importMode, setImportMode] = React.useState('merge'); // merge | replace
   const [isAdvanced, setIsAdvanced] = React.useState(window.__evomni_isPro || false);
   React.useEffect(() => {
     const handler = e => setIsAdvanced(e.detail.isPro);
@@ -6869,6 +7130,16 @@ function VendorSemiScreen({ vendor, onBack }) {
   }, []);
 
   const unmapped = skus.filter(s => !s.vendorSku).length;
+
+  const openImportDialog = () => { setImportMode('merge'); setShowImportDialog(true); };
+  const handleImportConfirm = () => {
+    setShowImportDialog(false);
+    if (importMode === 'replace') {
+      show(`已以「全部替換」模式匯入，原有對照已清除並重建為 CSV 內容`, 'warning');
+    } else {
+      show(`已以「合併匯入」模式完成，CSV 中的 SKU 已新增或更新`, 'success');
+    }
+  };
 
   const handleSave = () => {
     setSaving(true);
@@ -6883,6 +7154,40 @@ function VendorSemiScreen({ vendor, onBack }) {
   return (
     <div>
       <ToastStack toasts={toasts} />
+
+      {/* 批次匯入模式選擇 Dialog */}
+      <Dialog
+        open={showImportDialog}
+        title="批次匯入 SKU 對照"
+        width={520}
+        confirmText={importMode === 'replace' ? '確認全部替換' : '確認匯入'}
+        confirmDanger={importMode === 'replace'}
+        onConfirm={handleImportConfirm}
+        onCancel={() => setShowImportDialog(false)}
+      >
+        <p style={{ fontSize: 13, color: '#606266', lineHeight: 1.7, marginBottom: 14 }}>
+          請選擇匯入模式並上傳 CSV 檔案（格式：<code style={{ fontFamily: 'monospace', background: '#F5F7FA', padding: '1px 5px', borderRadius: 2, color: '#606266' }}>系統SKU,倉儲SKU</code>）。
+          <a href="#" style={{ color: '#409EFF', marginLeft: 6 }} onClick={e => { e.preventDefault(); show('正在下載 CSV 匯入範本', 'info'); }}>下載範本</a>
+        </p>
+        <RadioGroup
+          value={importMode}
+          onChange={setImportMode}
+          options={[
+            { value: 'merge',   label: '合併匯入（建議）', desc: '保留現有對照，僅新增或更新 CSV 中出現的 SKU。' },
+            { value: 'replace', label: '全部替換',        desc: `清除目前全部 ${skus.length} 筆對照，完全以 CSV 內容取代。` },
+          ]}
+          vertical
+        />
+        {importMode === 'replace' && (
+          <div style={{ marginTop: 14, background: '#FEF0F0', border: '1px solid #FBC4C4', borderRadius: 3, padding: '10px 14px', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <span style={{ width: 16, height: 16, borderRadius: '50%', background: '#F56C6C', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 2 }}>!</span>
+            <span style={{ fontSize: 13, color: '#F56C6C', lineHeight: 1.7 }}>
+              「全部替換」會刪除現有 {skus.length} 筆對照且無法復原，僅保留 CSV 內的對照資料。請確認 CSV 內容完整後再執行。
+            </span>
+          </div>
+        )}
+      </Dialog>
+
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', gap: 6, fontSize: 13, color: '#909399', marginBottom: 8 }}>
           <span onClick={onBack} style={{ cursor: 'pointer' }}>串接設定</span><span>/</span><span style={{ color: '#303133' }}>{vendor.name}</span>
@@ -6918,6 +7223,11 @@ function VendorSemiScreen({ vendor, onBack }) {
         </SectionCard>
 
         <SectionCard title="SKU 對照表" extra={<span style={{ fontSize: 13, color: '#909399' }}>請將本系統 SKU 對應至倉儲廠商 SKU</span>}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+            <button style={{ ...sharedBtns.plain, height: 34, fontSize: 13 }} onClick={() => show('已新增一列空白對照，請填入 SKU', 'info')}>+ 新增對照</button>
+            <button style={{ ...sharedBtns.plain, height: 34, fontSize: 13 }} onClick={openImportDialog}>批次匯入</button>
+            <button style={{ ...sharedBtns.plain, height: 34, fontSize: 13 }} onClick={() => show('正在下載目前的 SKU 對照表（CSV）', 'info')}>下載對照表</button>
+          </div>
           <div style={{ background: '#fff', border: '1px solid #DCDFE6', borderRadius: 3 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead><tr style={{ background: '#F5F7FA' }}>{['本系統 SKU','產品名稱','倉儲廠商 SKU','最後更新'].map(h => <th key={h} style={{ padding: '10px 16px', textAlign: 'left', color: '#606266', fontWeight: 500, fontSize: 13, borderBottom: '1px solid #DCDFE6' }}>{h}</th>)}</tr></thead>
@@ -7134,7 +7444,6 @@ function LineOAScreen({ onBack }) {
 }
 
 Object.assign(window, { VendorBankScreen, VendorManualScreen, VendorSemiScreen, LineOAScreen });
-
 </script>
 
 <!-- components/UtilScreens.jsx -->
@@ -7248,7 +7557,7 @@ function InvoiceScreen({ onNavigate }) {
 
 // ─── Screen 7: Webhook 管理 ───────────────────────────────────────────────
 const WEBHOOK_URLS = [
-  { vendor: '綠界科技（金流）', type: '付款通知', url: 'https://yourstore.evomni.com/api/webhooks/payment/a3f9k2/ecpay', status: '連線異常', lastReceived: '2026/05/10 14:32' },
+  { vendor: '綠界科技（金流）', type: '付款通知', url: 'https://yourstore.evomni.com/api/webhooks/payment/a3f9k2/ecpay', status: '串接異常', lastReceived: '2026/05/10 14:32' },
   { vendor: 'LINE Pay',        type: '付款通知', url: 'https://yourstore.evomni.com/api/webhooks/payment/a3f9k2/linepay', status: '正常', lastReceived: '2026/05/11 08:15' },
   { vendor: '綠界科技（物流）', type: '物流狀態', url: 'https://yourstore.evomni.com/api/webhooks/logistics/a3f9k2/ecpay', status: '正常', lastReceived: '2026/05/10 22:00' },
 ];
@@ -7325,6 +7634,9 @@ function WebhookScreen() {
       {/* Tab 1: URL List */}
       {tab === 'urls' && (
         <div style={{ background: '#fff', border: '1px solid #DCDFE6', borderRadius: 3 }}>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid #EBEEF5', background: '#F5F7FA', fontSize: 12, color: '#909399', lineHeight: 1.7 }}>
+            網址格式為 <code style={{ fontFamily: 'monospace', color: '#606266' }}>/api/webhooks/payment/[商店識別碼]/[廠商代號]</code>，其中商店識別碼（唯一識別碼／UUID，如 <code style={{ fontFamily: 'monospace', color: '#606266' }}>a3f9k2</code>）為各商店專屬，可避免網址被猜測或冒用，請勿外流。
+          </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <thead><tr style={{ background: '#F5F7FA' }}>{['廠商名稱','串接類型','Webhook URL','狀態','最後收到'].map(h => <th key={h} style={{ padding: '10px 16px', textAlign: 'left', color: '#606266', fontWeight: 500, fontSize: 13, borderBottom: '1px solid #DCDFE6' }}>{h}</th>)}</tr></thead>
             <tbody>
@@ -7517,7 +7829,6 @@ function RecurringScreen({ onBack }) {
 }
 
 Object.assign(window, { InvoiceScreen, WebhookScreen, RecurringScreen });
-
 </script>
 
 <!-- components/FreightSettingsScreen.jsx -->
@@ -8740,8 +9051,40 @@ function CustomerDetailPage({ customer, onBack, onNavigate, showToast }) {
     if (blacklistReason.trim().length < 1) {setBlacklistReasonError('原因為必填欄位，請至少輸入 10 個字');return;}
     if (!blacklistConfirm) {setBlacklistReasonError('請先勾選確認才能執行此操作');return;}
     setBlacklistDialog(false);
-    showToast(`已將 ${customer.name} 加入黑名單`, 'warning');
+    showToast(`已將 ${customer.name} 加入黑名單，並立即撤銷其登入（強制登出所有裝置）`, 'warning');
   };
+
+  // §6.7C 加入黑名單立即生效項目與既有訂單依狀態分流處置
+  const BLACKLIST_EFFECTS = [
+    '立即撤銷登入（強制登出所有現有裝置 Session）',
+    '限制建立新訂單',
+    '限制付款',
+    '限制使用特定服務（依商家設定）',
+  ];
+  const BLACKLIST_ORDER_DISPOSITION = [
+    { status: '待付款', action: '限制繼續付款；訂單依原有逾時機制自動過期取消（不立即強制取消）' },
+    { status: '已付款未出貨', action: '進入人工審核佇列；後台訂單列表顯示「黑名單待審」警示標籤' },
+    { status: '已出貨', action: '維持原出貨流程，不干預；客服可自行追蹤後續情況' },
+    { status: '已完成', action: '維持不變；客服可自行追蹤後續情況' },
+  ];
+  const dispositionTable = (
+    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 8 }}>
+      <thead>
+        <tr style={{ background: T.bgPage }}>
+          <th style={{ textAlign: 'left', padding: '6px 10px', border: `1px solid ${T.border}`, color: T.textSecondary, fontWeight: 600, width: 120 }}>訂單狀態</th>
+          <th style={{ textAlign: 'left', padding: '6px 10px', border: `1px solid ${T.border}`, color: T.textSecondary, fontWeight: 600 }}>處置方式</th>
+        </tr>
+      </thead>
+      <tbody>
+        {BLACKLIST_ORDER_DISPOSITION.map((r) =>
+        <tr key={r.status}>
+            <td style={{ padding: '6px 10px', border: `1px solid ${T.border}`, color: T.textPrimary, fontWeight: 500, whiteSpace: 'nowrap' }}>{r.status}</td>
+            <td style={{ padding: '6px 10px', border: `1px solid ${T.border}`, color: T.textRegular, lineHeight: 1.6 }}>{r.action}</td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  );
 
   const pointPreview = pointAmount && !isNaN(pointAmount) ?
   pointType === 'add' ?
@@ -8756,9 +9099,19 @@ function CustomerDetailPage({ customer, onBack, onNavigate, showToast }) {
 
       {/* Blacklist Banner */}
       {isBlacklisted &&
-      <div style={{ background: '#fef0f0', border: `1px solid #fbc4c4`, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ color: T.danger }}>⚠</span>
-          <span style={{ color: T.danger, fontWeight: 600 }}>此會員目前在黑名單中</span>
+      <div style={{ background: '#fef0f0', border: `1px solid #fbc4c4`, padding: '14px 16px', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <span style={{ color: T.danger }}>⚠</span>
+            <span style={{ color: T.danger, fontWeight: 600 }}>此會員已被加入黑名單，訂單請依商家政策人工處理。</span>
+          </div>
+          <div style={{ fontSize: 13, color: T.textRegular, marginBottom: 4 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', height: 22, padding: '0 10px', borderRadius: 9999, fontSize: 12, background: '#fde2e2', color: T.danger, fontWeight: 600, marginRight: 8 }}>已立即撤銷登入</span>
+            該會員已被強制登出所有裝置，且無法建立新訂單、付款或使用特定服務。
+          </div>
+          <details style={{ marginTop: 8 }}>
+            <summary style={{ fontSize: 13, color: T.danger, cursor: 'pointer', userSelect: 'none' }}>查看既有訂單處置方式</summary>
+            {dispositionTable}
+          </details>
         </div>
       }
 
@@ -8944,7 +9297,7 @@ function CustomerDetailPage({ customer, onBack, onNavigate, showToast }) {
         <div>
           <MemCard title="標籤">
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 12, color: T.textSecondary, marginBottom: 8 }}>系統自動標籤（唯讀）</div>
+              <div style={{ fontSize: 12, color: T.textSecondary, marginBottom: 8 }}>系統自動標籤（唯讀，系統保護不可刪除／改名）</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {['高價值客', '活躍客'].filter((t) => tags.includes(t)).map((t) =>
                 <StatusTag key={t} type="warning">{t}</StatusTag>
@@ -9022,6 +9375,14 @@ function CustomerDetailPage({ customer, onBack, onNavigate, showToast }) {
           <button style={btnPlain} onClick={() => setBlacklistDialog(false)}>取消</button>
           <button style={{ ...btnPrimary, background: T.danger, borderColor: T.danger }} onClick={handleBlacklist}>確認加入黑名單</button>
         </>}>
+        <div style={{ background: '#fef0f0', border: `1px solid #fbc4c4`, padding: '12px 14px', marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: T.danger, marginBottom: 6 }}>加入後立即生效：</div>
+          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: T.textRegular, lineHeight: 1.8 }}>
+            {BLACKLIST_EFFECTS.map((e) => <li key={e}>{e}</li>)}
+          </ul>
+          <div style={{ fontSize: 13, fontWeight: 600, color: T.textPrimary, marginTop: 10, marginBottom: 2 }}>既有訂單依狀態分流處置（不會自動取消任何訂單）：</div>
+          {dispositionTable}
+        </div>
         <FormRow label="加入原因" required error={blacklistReasonError}>
           <Textarea value={blacklistReason} onChange={(v) => {setBlacklistReason(v);setBlacklistReasonError('');}}
           placeholder="請詳細說明將此會員加入黑名單的原因，例：惡意退貨 X 次、疑似詐騙下單等。此記錄不對消費者顯示，僅供內部查核。" rows={4} />
@@ -9383,10 +9744,10 @@ function TagsPage({ showToast }) {
 
       {tab === 'system' &&
       <div>
-          <MemInfoBanner>以下標籤由系統每日凌晨 02:00 自動計算套用，規則不可修改。標籤結果可用於顧客管理篩選及行銷活動分眾。</MemInfoBanner>
+          <MemInfoBanner>以下標籤由系統每日凌晨 02:00 自動計算套用，規則不可修改。此 6 個系統標籤是電商數據分析與行銷分眾的計算基礎，<strong>商家不可刪除、不可改名</strong>，以免自動標記排程失效、導致行銷活動觸發條件失準。標籤僅對具備電商消費行為的會員計算與顯示（不套用於純 CMS 顧客）。</MemInfoBanner>
           <div style={{ background: '#fff', borderRadius: 3, boxShadow: '0 2px 12px 0 rgba(0,0,0,0.08)' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-              <thead><tr>{['標籤預覽', '標籤名稱', '自動判斷規則說明'].map((h) => <th key={h} style={tableThStyle}>{h}</th>)}</tr></thead>
+              <thead><tr>{['標籤預覽', '標籤名稱', '自動判斷規則說明', '保護狀態'].map((h) => <th key={h} style={tableThStyle}>{h}</th>)}</tr></thead>
               <tbody>
                 {systemTags.map((t, i) =>
               <tr key={t.name}
@@ -9397,6 +9758,9 @@ function TagsPage({ showToast }) {
                     </td>
                     <td style={{ ...tableTdStyle, fontWeight: 600 }}>{t.name}</td>
                     <td style={tableTdStyle}>{t.rule}</td>
+                    <td style={tableTdStyle}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 22, padding: '0 10px', borderRadius: 9999, fontSize: 12, background: T.bgPage, border: `1px solid ${T.border}`, color: T.textSecondary }} title="系統保護：不可刪除、不可改名">系統保護（不可刪除／改名）</span>
+                    </td>
                   </tr>
               )}
               </tbody>
@@ -10511,7 +10875,6 @@ function PageMembers({ currentPage, onNavigate, show }) {
 
   return renderPage();
 }
-
 </script>
 
 <!-- components/pages/PageMarketing.jsx -->
@@ -18480,7 +18843,7 @@ const PLAN_C = {
 
 // ─── Locked features data ─────────────────────────────────────────────────────
 const FEATURES_INCLUDED = [
-  '產品管理（無上限）', '訂單管理', '會員系統', '金物流串接',
+  '產品管理（上限 1,000 件）', '訂單管理', '會員系統', '金物流串接',
   '基礎數據分析', '關鍵意見領袖（KOL）分潤管理', '產品廣告小幫手',
 ];
 const FEATURES_LOCKED = [
@@ -19081,7 +19444,7 @@ function ComparePlansPage({ onOpenInquiry }) {
       <div style={{ textAlign: 'center', padding: '16px 0', borderTop: `1px solid ${PLAN_C.border}` }}>
         <span style={{ fontSize: 14, color: PLAN_C.sub }}>不確定哪個方案適合您？</span>
         {' '}
-        <a href="#" style={{ fontSize: 14, color: PLAN_C.blue }}>預約 15 分鐘通話諮詢</a>
+        <a href="https://www.webtech.com.tw/contact" target="_blank" rel="noopener noreferrer" style={{ fontSize: 14, color: PLAN_C.blue }}>預約方案諮詢</a>
       </div>
     </div>
   );
@@ -19446,7 +19809,6 @@ function PagePlan({ currentPage, onNavigate, show }) {
     </div>
   );
 }
-
 </script>
 
 <!-- components/pages/PageEcommerceBasic.jsx -->
@@ -21806,6 +22168,11 @@ function PageTracking({ onNavigate, show }) {
         <div style={{ maxWidth: 760 }}>
 
           <div style={{ marginBottom: 20 }}>
+            <nav style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: '#909399', marginBottom: 8 }}>
+              <span>行銷中心</span>
+              <span style={{ color: '#C0C4CC' }}>/</span>
+              <span style={{ color: '#303133' }}>行銷追蹤碼管理</span>
+            </nav>
             <h1 style={{ fontSize: 20, fontWeight: 700, color: '#303133', marginBottom: 6 }}>行銷追蹤碼管理</h1>
             <p style={{ fontSize: 14, color: '#606266', lineHeight: 1.7 }}>
               在此設定 GA4、Meta Pixel、GTM 等行銷追蹤工具。填入 ID 後系統將自動安裝追蹤碼，無需手動埋設程式碼。
@@ -22036,8 +22403,630 @@ function PageTracking({ onNavigate, show }) {
     </div>
   );
 }
-
 </script>
+<script type="text/babel">
+// PageNotificationTemplates — 通知信範本管理模組
+// 範本資料由 PRD_V3/Evomni_通知信範本規格.md 解析產生（35 種範本）。
+// 同時供 html/通知信範本管理.html（獨立頁）與 index.html（整合 App）使用。
+
+const NOTIFY_CATEGORIES = /*__TEMPLATES_DATA__*/ [
+ {
+  "name": "訂單 & 退換貨通知信",
+  "full": "一、訂單 & 退換貨通知信",
+  "templates": [
+   {
+    "num": "1-1",
+    "name": "訂單建立通知（待付款）",
+    "key": "order_created",
+    "trigger": "消費者完成結帳，訂單建立",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】您的訂單已建立，請完成付款 #{order_number}",
+    "body": "親愛的 {buyer_name} 您好，\n\n感謝您在 {shop_name} 下單！您的訂單已成立，請於 {payment_deadline} 前完成付款，逾期訂單將自動取消。\n\n━━━━━━━━━━━━━━━━━━━━\n訂單編號：{order_number}\n下單時間：{created_at}\n付款期限：{payment_deadline}\n━━━━━━━━━━━━━━━━━━━━\n\n【訂單明細】\n{order_items_list}\n\n商品小計：{items_subtotal}\n運費：{shipping_fee}\n折扣：-{discount_amount}\n點數折抵：-{points_deducted}\n實付金額：{total_amount}\n\n【付款方式】\n{payment_method}\n\n[立即前往付款] → {payment_url}\n\n若您有任何問題，歡迎聯繫我們：{shop_service_email}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "1-2",
+    "name": "付款成功通知",
+    "key": "order_paid",
+    "trigger": "金流回調確認付款完成",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】付款成功！您的訂單 #{order_number} 正在處理中",
+    "body": "親愛的 {buyer_name} 您好，\n\n您的訂單付款已確認，我們正在為您備貨中！\n\n━━━━━━━━━━━━━━━━━━━━\n訂單編號：{order_number}\n付款時間：{paid_at}\n付款金額：{paid_amount}\n付款方式：{payment_method}\n━━━━━━━━━━━━━━━━━━━━\n\n【訂單明細】\n{order_items_list}\n\n[查看訂單狀態] → {order_detail_url}\n\n感謝您的購買，若有任何問題請聯繫：{shop_service_email}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "1-3",
+    "name": "訂單處理中通知",
+    "key": "order_processing",
+    "trigger": "商家後台將訂單標記為處理中",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】您的訂單 #{order_number} 正在備貨中",
+    "body": "親愛的 {buyer_name} 您好，\n\n您的訂單已進入備貨程序，我們會盡快為您出貨！\n\n訂單編號：{order_number}\n\n[查看訂單狀態] → {order_detail_url}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "1-4",
+    "name": "出貨通知",
+    "key": "order_shipped",
+    "trigger": "後台操作出貨",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】您的訂單 #{order_number} 已出貨！",
+    "body": "親愛的 {buyer_name} 您好，\n\n您的訂單已出貨，預計 {estimated_arrival} 送達。\n\n━━━━━━━━━━━━━━━━━━━━\n訂單編號：{order_number}\n出貨時間：{shipped_at}\n物流廠商：{shipping_company}\n物流單號：{tracking_number}\n預計送達：{estimated_arrival}\n━━━━━━━━━━━━━━━━━━━━\n\n[查詢物流狀態] → {tracking_url}\n\n收件地址：{shipping_address}\n\n若您有任何問題，歡迎聯繫：{shop_service_email}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "1-5",
+    "name": "配送中通知",
+    "key": "order_delivering",
+    "trigger": "物流更新為配送中",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】您的訂單 #{order_number} 配送員正在送貨中",
+    "body": "親愛的 {buyer_name} 您好，\n\n您的包裹目前正在配送途中，請保持電話暢通以便配送員聯繫。\n\n訂單編號：{order_number}\n物流單號：{tracking_number}\n配送廠商：{shipping_company}\n\n[即時追蹤包裹] → {tracking_url}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "1-6",
+    "name": "送達確認通知",
+    "key": "order_delivered",
+    "trigger": "物流確認商品已送達（訂單狀態變更為「已送達」）",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】您的訂單 #{order_number} 已送達，請確認收貨",
+    "body": "親愛的 {buyer_name} 您好，\n\n您訂購的商品已送達！請確認收貨，若商品有任何問題，請於確認前聯繫我們。\n\n━━━━━━━━━━━━━━━━━━━━\n訂單編號：{order_number}\n送達時間：{delivered_at}\n━━━━━━━━━━━━━━━━━━━━\n\n[確認收貨] → {confirm_receipt_url}\n\n提醒：若您於 7 天內未確認，系統將自動完成訂單並計入消費紀錄。\n\n若有任何問題，歡迎聯繫：{shop_service_email}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "1-7",
+    "name": "訂單完成通知",
+    "key": "order_completed",
+    "trigger": "訂單確認完成",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】訂單 #{order_number} 已完成，感謝您的購買！",
+    "body": "親愛的 {buyer_name} 您好，\n\n您的訂單已完成，感謝您選擇 {shop_name}！\n\n訂單編號：{order_number}\n完成時間：{completed_at}\n本次消費累積點數：+{points_earned} 點\n目前點數餘額：{points_balance} 點\n（此區塊於本次累積點數為 0 時不顯示）\n\n期待您的下次光臨，若對本次購物有任何建議，歡迎告訴我們！\n\n[再次購買] → {shop_url}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "1-8",
+    "name": "訂單取消通知",
+    "key": "order_cancelled",
+    "trigger": "訂單被取消",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】訂單 #{order_number} 已取消",
+    "body": "親愛的 {buyer_name} 您好，\n\n您的訂單已取消。\n\n訂單編號：{order_number}\n取消時間：{cancelled_at}\n取消原因：{cancel_reason}\n\n退款金額：{refund_amount}\n退款方式：{refund_method}\n預計退款時間：{refund_estimated_date}\n（此區塊於退款金額為 0 時不顯示）\n\n已退回點數：+{points_returned} 點\n（此行於退回點數為 0 時不顯示）\n\n若有任何疑問，請聯繫：{shop_service_email}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "1-9",
+    "name": "退貨申請收到通知",
+    "key": "return_request_received",
+    "trigger": "消費者提交退換貨申請",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】您的退換貨申請 #{return_number} 已收到",
+    "body": "親愛的 {buyer_name} 您好，\n\n我們已收到您的退換貨申請，將於 {review_sla} 個工作天內完成審核並通知您。\n\n━━━━━━━━━━━━━━━━━━━━\n退換貨申請編號：{return_number}\n對應訂單編號：{order_number}\n申請類型：{return_type}（退貨 / 換貨）\n申請原因：{return_reason}\n申請時間：{created_at}\n━━━━━━━━━━━━━━━━━━━━\n\n[查看申請狀態] → {return_detail_url}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "1-10",
+    "name": "退貨申請核准通知",
+    "key": "return_request_approved",
+    "trigger": "商家核准退換貨申請",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】退換貨申請 #{return_number} 已核准，請依指示寄回商品",
+    "body": "親愛的 {buyer_name} 您好，\n\n您的退換貨申請已核准！請依照以下指示寄回商品。\n\n申請編號：{return_number}\n核准時間：{approved_at}\n\n【退貨寄送說明】\n請於 {return_deadline} 前將商品寄至：\n{return_address}\n收件人：{return_contact}\n電話：{return_phone}\n\n注意事項：\n- 請保持商品原包裝完整\n- 請附上此申請編號於包裹內\n- 建議使用有追蹤號碼的寄送方式\n\n[查看申請詳情] → {return_detail_url}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "1-11",
+    "name": "退貨申請拒絕通知",
+    "key": "return_request_rejected",
+    "trigger": "商家拒絕退換貨申請",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】退換貨申請 #{return_number} 處理結果通知",
+    "body": "親愛的 {buyer_name} 您好，\n\n感謝您的耐心等待，關於您的退換貨申請，我們很遺憾無法受理。\n\n申請編號：{return_number}\n拒絕原因：{reject_reason}\n\n如有任何疑問，歡迎直接聯繫我們：\n{shop_service_email}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "1-12",
+    "name": "退款完成通知",
+    "key": "refund_completed",
+    "trigger": "退款處理完成",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】訂單 #{order_number} 退款已完成",
+    "body": "親愛的 {buyer_name} 您好，\n\n您的退款已處理完成，請確認款項是否入帳。\n\n━━━━━━━━━━━━━━━━━━━━\n退款金額：{refund_amount}\n退款方式：{refund_method}\n退款時間：{refunded_at}\n預計入帳：信用卡退款通常需 7–14 個工作天，實際入帳日依各家銀行作業時間為準\n（此行僅於付款方式為「信用卡原路退回」時顯示）\n━━━━━━━━━━━━━━━━━━━━\n\n退回點數：+{points_returned} 點（已存入您的帳戶）\n（此行於退回點數為 0 時不顯示）\n\n若款項遲遲未入帳，請先確認您的銀行帳戶，或聯繫：{shop_service_email}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "1-13",
+    "name": "換貨出貨通知",
+    "key": "exchange_shipped",
+    "trigger": "換貨商品出貨",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】換貨商品 #{return_number} 已出貨！",
+    "body": "親愛的 {buyer_name} 您好，\n\n您申請的換貨商品已出貨，預計 {estimated_arrival} 送達。\n\n申請編號：{return_number}\n換貨商品：{exchange_product_name}\n物流廠商：{shipping_company}\n物流單號：{tracking_number}\n\n[查詢物流狀態] → {tracking_url}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "1-14",
+    "name": "`closed` 狀態訂單通知",
+    "key": "order_closed",
+    "trigger": "訂單被標記為已關閉",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】訂單 #{order_number} 已關閉",
+    "body": "親愛的 {buyer_name} 您好，\n\n您的訂單已關閉。\n\n訂單編號：{order_number}\n關閉時間：{closed_at}\n關閉原因：{close_reason}\n\n退款金額：{refund_amount}\n退款方式：{refund_method}\n（此區塊於退款金額為 0 時不顯示）\n\n本訂單已進入終態，不再接受退換貨申請。若有疑問請聯繫：{shop_service_email}\n\n{shop_name} 敬上"
+   }
+  ]
+ },
+ {
+  "name": "會員相關通知信",
+  "full": "二、會員相關通知信",
+  "templates": [
+   {
+    "num": "2-1",
+    "name": "入會歡迎信",
+    "key": "member_welcome",
+    "trigger": "消費者完成會員註冊並驗證 Email",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】歡迎加入會員！您的專屬好禮已準備好了",
+    "body": "親愛的 {member_name} 您好，\n\n恭喜您成為 {shop_name} 的正式會員！\n\n您目前的會員等級：{member_level}\n\n入會禮：已為您存入 {welcome_points} 點數，可於下次消費折抵使用\n（此行於入會贈點為 0 時不顯示）\n\n入會優惠券：{welcome_coupon_code}\n   折扣內容：{welcome_coupon_description}\n   有效期限：{welcome_coupon_expires_at}\n（此區塊於無入會優惠券時不顯示）\n\n[前往會員中心] → {member_center_url}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "2-2",
+    "name": "會員升等通知",
+    "key": "member_level_upgraded",
+    "trigger": "會員升等時",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】恭喜升等！您已成為 {new_level} 會員 ",
+    "body": "親愛的 {member_name} 您好，\n\n恭喜您升等為 {new_level} 會員！感謝您對 {shop_name} 的支持與信任。\n\n舊等級：{old_level}\n新等級：{new_level}\n升等時間：{upgraded_at}\n等級有效期限：{level_expires_at}\n\n【{new_level} 專屬權益】\n{level_benefits}\n\n升等禮：已為您存入 {upgrade_points} 點數\n（此行於升等禮點數為 0 時不顯示）\n\n[查看會員權益] → {member_center_url}\n\n感謝您的支持，繼續享受專屬好禮！\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "2-3",
+    "name": "會員降等通知",
+    "key": "member_level_downgraded",
+    "trigger": "年度保級條件未達成，會員降等",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】您的會員等級已調整為 {new_level}",
+    "body": "親愛的 {member_name} 您好，\n\n感謝您持續支持 {shop_name}。由於本年度累計消費未達保級門檻，您的會員等級已調整。\n\n原等級：{old_level}\n目前等級：{new_level}\n調整時間：{downgraded_at}\n\n【如何升回 {old_level}？】\n累計消費達 {upgrade_threshold} 即可升等\n\n我們期待您的再次光臨，祝您購物愉快！\n\n[前往購物] → {shop_url}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "2-4",
+    "name": "保級預警通知",
+    "key": "member_level_retention_warning",
+    "trigger": "距離年度重置 30 天且累計消費尚未達保級門檻",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】您的 {current_level} 等級即將到期，還差 {amount_needed} 就能保級！",
+    "body": "親愛的 {member_name} 您好，\n\n您目前的 {current_level} 等級將於 {level_expires_at} 到期，距今僅剩 {days_left} 天！\n\n本年度累計消費：{current_yearly_spent}\n保級門檻：{retention_threshold}\n還需消費：{amount_needed}\n\n把握最後機會，繼續享受 {current_level} 的專屬好禮！\n\n[前往購物] → {shop_url}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "2-5",
+    "name": "點數即將到期通知",
+    "key": "member_points_expiring",
+    "trigger": "點數到期前 14 天",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】您有 {expiring_points} 點即將於 {expiry_date} 到期，快來使用吧！",
+    "body": "親愛的 {member_name} 您好，\n\n提醒您，您的點數即將到期，請盡快使用以免損失！\n\n即將到期點數：{expiring_points} 點\n到期日：{expiry_date}\n目前總點數：{total_points} 點\n\n每 {exchange_rate_points} 點可折抵 NT${exchange_rate_value}\n\n[立即使用點數購物] → {shop_url}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "2-6",
+    "name": "生日雙倍點數通知",
+    "key": "member_birthday_bonus",
+    "trigger": "會員生日當月第一天自動發送",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】生日快樂 本月消費享雙倍點數！",
+    "body": "親愛的 {member_name} 您好，\n\n生日快樂！感謝您一路以來的支持，{shop_name} 為您獻上生日好禮！\n\n本月生日特權：消費享雙倍點數回饋\n活動期間：{birthday_month_start} – {birthday_month_end}\n\n生日優惠券：{birthday_coupon_code}\n   {birthday_coupon_description}\n   有效期限：{birthday_coupon_expires_at}\n（此區塊於無生日優惠券時不顯示）\n\n[前往購物] → {shop_url}\n\n祝您生日快樂，{shop_name} 敬上"
+   },
+   {
+    "num": "2-7",
+    "name": "黑名單通知",
+    "key": "member_blacklisted",
+    "trigger": "商家將會員加入黑名單",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】您的帳號狀態通知",
+    "body": "親愛的會員您好，\n\n您的 {shop_name} 帳號目前已被暫時限制使用，無法進行新訂單。\n\n若您認為此限制有誤，或需要進一步了解，請聯繫我們：\n{shop_service_email}\n\n{shop_name} 敬上"
+   }
+  ]
+ },
+ {
+  "name": "方案管理通知信",
+  "full": "三、方案管理通知信",
+  "templates": [
+   {
+    "num": "3-1",
+    "name": "方案即將到期通知（到期前 90 天）",
+    "key": "subscription_expiring_90d",
+    "trigger": "方案到期前 90 天",
+    "recipient": "商家群組信箱（含 Owner，依 13-3 定案）",
+    "subject": "【Evomni】您的 {plan_name} 方案將於 {expires_at} 到期，建議提前規劃續約",
+    "body": "您好，\n\n提醒您，您的 Evomni {plan_name} 方案將於 {expires_at} 到期（距今約 90 天）。建議您提前與營運輔導顧問聯繫，安排續約事宜。\n\n方案名稱：{plan_name}\n到期日期：{expires_at}\n目前商店：{shop_domain}\n\n[預約方案諮詢] → https://www.webtech.com.tw/contact\n\nEvomni 團隊 敬上"
+   },
+   {
+    "num": "3-2",
+    "name": "方案即將到期通知（到期前 30 天）",
+    "key": "subscription_expiring_30d",
+    "trigger": "方案到期前 30 天",
+    "recipient": "商家群組信箱（含 Owner，依 13-3 定案）",
+    "subject": "【Evomni】您的 {plan_name} 方案將於 {expires_at} 到期，請盡早聯繫顧問續約",
+    "body": "您好，\n\n提醒您，您的 Evomni {plan_name} 方案將於 {expires_at} 到期（距今 30 天），為避免服務中斷，請盡早聯繫營運輔導顧問安排續約。\n\n方案名稱：{plan_name}\n到期日期：{expires_at}\n目前商店：{shop_domain}\n\n到期後若未續約，將進入 14 天寬限期，寬限期結束後部分功能將受限制。\n\n[預約方案諮詢] → https://www.webtech.com.tw/contact\n\nEvomni 團隊 敬上"
+   },
+   {
+    "num": "3-3",
+    "name": "方案即將到期通知（到期前 7 天）",
+    "key": "subscription_expiring_7d",
+    "trigger": "方案到期前 7 天",
+    "recipient": "商家群組信箱（含 Owner，依 13-3 定案）",
+    "subject": "【Evomni】緊急提醒：您的 {plan_name} 方案將於 7 天後到期",
+    "body": "您好，\n\n您的 Evomni {plan_name} 方案僅剩 7 天到期（{expires_at}），請立即聯繫營運輔導顧問確認續約，以確保服務不中斷。\n\n方案名稱：{plan_name}\n到期日期：{expires_at}\n\n[預約方案諮詢] → https://www.webtech.com.tw/contact\n\nEvomni 團隊 敬上"
+   },
+   {
+    "num": "3-4",
+    "name": "方案即將到期通知（到期前 1 天）",
+    "key": "subscription_expiring_1d",
+    "trigger": "方案到期前 1 天",
+    "recipient": "商家群組信箱（含 Owner，依 13-3 定案）",
+    "subject": "【Evomni】明日到期：{plan_name} 方案請立即確認續約",
+    "body": "您好，\n\n您的 Evomni {plan_name} 方案將於明日（{expires_at}）到期，請立即聯繫您的營運輔導顧問確認續約事宜。\n\n到期後將進入 14 天寬限期，期間功能正常運作；寬限期結束後部分功能將受限制。\n\n[預約方案諮詢] → https://www.webtech.com.tw/contact\n\nEvomni 團隊 敬上"
+   },
+   {
+    "num": "3-5",
+    "name": "方案到期通知（到期當日）",
+    "key": "subscription_expired",
+    "trigger": "方案到期當日 09:00",
+    "recipient": "商家群組信箱（含 Owner，依 13-3 定案）",
+    "subject": "【Evomni】您的 {plan_name} 方案今日到期，目前享有 14 天寬限期",
+    "body": "您好，\n\n您的 Evomni {plan_name} 方案已於今日（{expires_at}）到期。\n\n目前進入 14 天寬限期（至 {grace_period_ends_at}），期間所有功能維持正常運作。\n\n寬限期結束後，部分功能將受到限制，請盡快聯繫您的營運輔導顧問確認續約。\n\n[預約方案諮詢] → https://www.webtech.com.tw/contact\n\nEvomni 團隊 敬上"
+   },
+   {
+    "num": "3-6",
+    "name": "升級詢問確認信（寄給商家）",
+    "key": "upgrade_inquiry_confirmed",
+    "trigger": "商家送出升級詢問表單",
+    "recipient": "商家（Owner）",
+    "subject": "【Evomni】您的升級詢問已收到，我們將盡快與您聯繫",
+    "body": "您好，\n\n我們已收到您的升級詢問，Evomni 業務團隊將於 1–2 個工作天內與您聯繫。\n\n━━━━━━━━━━━━━━━━━━━━\n詢問編號：{inquiry_number}\n詢問時間：{created_at}\n目前方案：{current_plan}\n希望升級至：{target_plan}\n留言內容：{inquiry_message}\n━━━━━━━━━━━━━━━━━━━━\n\n如有緊急需求，請直接聯繫：support@evomni.com\n\nEvomni 團隊 敬上"
+   },
+   {
+    "num": "3-7",
+    "name": "升級詢問通知（寄給 Evomni 業務）",
+    "key": "upgrade_inquiry_internal",
+    "trigger": "商家送出升級詢問表單",
+    "recipient": "Evomni 業務團隊（`sales@evomni.com`）",
+    "subject": "【待處理】新升級詢問 #{inquiry_number}｜{shop_domain}",
+    "body": "有新的升級詢問待處理：\n\n━━━━━━━━━━━━━━━━━━━━\n詢問編號：{inquiry_number}\n商家名稱：{shop_name}\n商家網域：{shop_domain}\n聯繫 Email：{owner_email}\n聯繫電話：{owner_phone}\n目前方案：{current_plan}\n希望升級至：{target_plan}\n到期日：{current_plan_expires_at}\n留言：{inquiry_message}\n━━━━━━━━━━━━━━━━━━━━\n\n[前往後台查看] → {admin_inquiry_url}"
+   },
+   {
+    "num": "3-8",
+    "name": "升級成功通知",
+    "key": "subscription_upgraded",
+    "trigger": "Evomni 內部完成方案升級",
+    "recipient": "商家（Owner）",
+    "subject": "【Evomni】恭喜升級成功！您的 {new_plan} 方案已啟用",
+    "body": "您好，\n\n恭喜！您的 Evomni 方案已成功升級。\n\n升級前：{old_plan}\n升級後：{new_plan}\n生效時間：{activated_at}\n新方案到期日：{new_expires_at}\n\n【新方案專屬功能】\n{new_plan_features}\n\n立即前往後台體驗新功能：{admin_url}\n\n感謝您選擇 Evomni，如有任何問題請聯繫您的營運輔導顧問。\n\nEvomni 團隊 敬上"
+   }
+  ]
+ },
+ {
+  "name": "一頁式商店通知信",
+  "full": "四、一頁式商店通知信",
+  "templates": [
+   {
+    "num": "4-1",
+    "name": "LP 訂單確認信",
+    "key": "lp_order_created",
+    "trigger": "消費者於 LP 完成結帳",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】感謝訂購！您的訂單 #{order_number} 已建立",
+    "body": "親愛的 {buyer_name} 您好，\n\n感謝您訂購 {product_name}！\n\n━━━━━━━━━━━━━━━━━━━━\n訂單編號：{order_number}\n商品：{product_name}\n數量：{quantity}\n金額：{total_amount}\n付款方式：{payment_method}\n━━━━━━━━━━━━━━━━━━━━\n\n[立即完成付款] → {payment_url}\n（此 CTA 於付款方式為「貨到付款」時不顯示）\n\n若有任何問題，請聯繫：{shop_service_email}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "4-2",
+    "name": "LP 付款成功確認信",
+    "key": "lp_order_paid",
+    "trigger": "LP 金流回調確認付款",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】付款成功！訂單 #{order_number} 正在備貨中",
+    "body": "親愛的 {buyer_name} 您好，\n\n您的付款已確認，我們正在為您準備商品！\n\n訂單編號：{order_number}\n付款金額：{paid_amount}\n商品：{product_name}\n預計出貨：{estimated_ship_date}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "4-3",
+    "name": "LP 出貨通知信",
+    "key": "lp_order_shipped",
+    "trigger": "LP 訂單出貨",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】您的 {product_name} 已出貨！",
+    "body": "親愛的 {buyer_name} 您好，\n\n您訂購的商品已出貨，預計 {estimated_arrival} 送達。\n\n訂單編號：{order_number}\n物流廠商：{shipping_company}\n物流單號：{tracking_number}\n\n[查詢物流] → {tracking_url}\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "4-4",
+    "name": "LP 新會員歡迎信（含密碼設定連結）",
+    "key": "lp_member_welcome",
+    "trigger": "LP 訪客完成結帳後系統自動建立會員帳號（場景②）或 CRM 聯絡人點擊加入（場景③）",
+    "recipient": "消費者",
+    "subject": "【{shop_name}】設定密碼，開啟您的會員帳號",
+    "body": "親愛的 {buyer_name} 您好，\n\n感謝您在 {shop_name} 購物！我們已為您建立會員帳號，設定密碼後即可享有：\n\n- 快速帶入收件資料\n- 查詢歷史訂單\n- 累積點數回饋\n\n[立即設定密碼] → {set_password_link}\n\n此連結將於 {link_expires_at} 後失效（72 小時）。連結過期後，請至登入頁點選「忘記密碼」重新設定密碼，無需聯繫商家。\n\n若您並未在 {shop_name} 購物，請忽略此信。\n\n{shop_name} 敬上"
+   },
+   {
+    "num": "4-5",
+    "name": "KOL 報表分享通知信",
+    "key": "lp_kol_report_shared",
+    "trigger": "商家點擊「發送報表連結給 KOL」",
+    "recipient": "KOL（商家自填 Email）",
+    "subject": "【{shop_name}】您的合作業績報表已更新，立即查看",
+    "body": "Hi {kol_name}，\n\n{shop_name} 已與您分享合作業績報表，歡迎查看您的最新業績數據！\n\n[查看業績報表] → {report_link}\n\n報表有效期限：{report_expires_at}\n（連結到期後，請聯繫商家重新取得）\n\n若有任何問題，請聯繫：{shop_service_email}\n\n{shop_name} 敬上"
+   }
+  ]
+ },
+ {
+  "name": "顧客邀請信",
+  "full": "五、顧客邀請信",
+  "templates": [
+   {
+    "num": "5-1",
+    "name": "後台邀請顧客成為會員",
+    "key": "member_invitation",
+    "trigger": "商家從後台發送會員邀請給顧客",
+    "recipient": "被邀請的顧客",
+    "subject": "【{shop_name}】邀請您加入會員，享受專屬優惠！",
+    "body": "親愛的 {recipient_name} 您好，\n\n{shop_name} 誠摯邀請您加入會員，成為會員後即可享有：\n\n- 消費累積點數，折抵現金\n- 會員專屬優惠與活動\n- 快速查詢訂單記錄\n- 加入即送 {welcome_points} 點數（限新會員，{welcome_points} = 0 時不顯示）\n\n[立即加入會員] → {register_url}\n\n此邀請連結將於 {link_expires_at} 後失效（30 天有效），逾期請向商家重新申請。\n\n若您不希望收到此類信件，請忽略本信，您的資料不會有任何變動。\n\n{shop_name} 敬上"
+   }
+  ]
+ }
+];
+
+const NT_T = {
+  primary: '#409EFF', textPrimary: '#303133', textRegular: '#606266',
+  textSecondary: '#909399', border: '#DCDFE6', bgPage: '#F5F7FA', danger: '#F56C6C',
+};
+
+// Sample values for live preview (drawn from spec 參數說明 examples)
+const NT_SAMPLE = {
+  shop_name: '好好生活選品', buyer_name: '王小明', member_name: '王小明',
+  order_number: 'ORD-20260601-001', created_at: '2026/06/01 14:30',
+  payment_deadline: '2026/06/01 15:00', items_subtotal: 'NT$1,200', shipping_fee: 'NT$60',
+  discount_amount: 'NT$100', points_deducted: 'NT$50', total_amount: 'NT$1,110',
+  payment_method: '信用卡一次付清', payment_url: 'https://shop.evomni.com/pay/xxxx',
+  shop_service_email: 'service@shop.com', order_items_list: '草莓果醬（250g）× 2 = NT$360\n手工餅乾（綜合）× 1 = NT$840',
+  tracking_number: '1234-5678-9012', logistics_company: '黑貓宅急便', shipped_at: '2026/06/02 10:00',
+  member_level: '金卡會員', points_balance: '1,280', expiry_date: '2026/12/31',
+  plan_name: '電商啟航方案', plan_expiry_date: '2026/08/31', shop_admin_name: '陳老闆',
+  set_password_url: 'https://shop.evomni.com/setpwd/xxxx', lp_name: '夏季限定快閃',
+  kol_name: '美妝部落客 Amy', report_url: 'https://shop.evomni.com/kol/report/xxxx',
+  invite_url: 'https://shop.evomni.com/invite/xxxx', service_phone: '02-1234-5678',
+};
+
+const NT_ALL = NOTIFY_CATEGORIES.flatMap((c) =>
+  c.templates.map((t) => ({ ...t, category: c.name, categoryFull: c.full }))
+);
+
+const ntVarsIn = (text) => {
+  const set = new Set();
+  (text.match(/\{[a-z_]+\}/g) || []).forEach((v) => set.add(v));
+  return [...set];
+};
+
+// Render template text with variables substituted by NT_SAMPLE; unknown tokens highlighted.
+function NTRendered({ text }) {
+  const parts = text.split(/(\{[a-z_]+\})/g);
+  return (
+    <span style={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>
+      {parts.map((p, i) => {
+        const m = p.match(/^\{([a-z_]+)\}$/);
+        if (!m) return <React.Fragment key={i}>{p}</React.Fragment>;
+        const key = m[1];
+        if (NT_SAMPLE[key] !== undefined) return <span key={i} style={{ color: '#9B59B6' }}>{NT_SAMPLE[key]}</span>;
+        return <span key={i} style={{ background: '#FDF6EC', color: '#E6A23C', padding: '0 3px', borderRadius: 2 }}>{p}</span>;
+      })}
+    </span>
+  );
+}
+
+function NotificationTemplatesPage() {
+  const T = NT_T;
+  const [activeCat, setActiveCat] = React.useState('all');
+  const [search, setSearch] = React.useState('');
+  const [enabled, setEnabled] = React.useState(() => {
+    const m = {}; NT_ALL.forEach((t) => { m[t.key] = true; }); return m;
+  });
+  const [drafts, setDrafts] = React.useState({}); // key -> {subject, body}
+  const [editing, setEditing] = React.useState(null);
+  const [previewing, setPreviewing] = React.useState(null);
+  const { toasts, show } = useToast();
+
+  const [draftSubject, setDraftSubject] = React.useState('');
+  const [draftBody, setDraftBody] = React.useState('');
+  const lastField = React.useRef('body');
+
+  const openEdit = (t) => {
+    const d = drafts[t.key] || {};
+    setDraftSubject(d.subject !== undefined ? d.subject : t.subject);
+    setDraftBody(d.body !== undefined ? d.body : t.body);
+    setEditing(t);
+  };
+
+  const currentText = (t) => {
+    const d = drafts[t.key] || {};
+    return {
+      subject: d.subject !== undefined ? d.subject : t.subject,
+      body: d.body !== undefined ? d.body : t.body,
+    };
+  };
+  const isEdited = (t) => {
+    const d = drafts[t.key];
+    return d && ((d.subject !== undefined && d.subject !== t.subject) || (d.body !== undefined && d.body !== t.body));
+  };
+
+  const insertVar = (token) => {
+    if (lastField.current === 'subject') setDraftSubject((s) => s + token);
+    else setDraftBody((b) => b + token);
+  };
+
+  const saveEdit = () => {
+    setDrafts((d) => ({ ...d, [editing.key]: { subject: draftSubject, body: draftBody } }));
+    setEditing(null);
+    show('範本已儲存，將套用於後續發送的通知信', 'success');
+  };
+  const resetEdit = () => {
+    setDraftSubject(editing.subject);
+    setDraftBody(editing.body);
+    show('已還原為系統預設範本（尚未儲存）', 'info');
+  };
+
+  const cats = [{ id: 'all', label: '全部', count: NT_ALL.length }].concat(
+    NOTIFY_CATEGORIES.map((c) => ({ id: c.name, label: c.name, count: c.templates.length }))
+  );
+
+  const filtered = NT_ALL.filter((t) => {
+    if (activeCat !== 'all' && t.category !== activeCat) return false;
+    if (search) {
+      const q = search.toLowerCase();
+      if (!t.name.toLowerCase().includes(q) && !t.key.toLowerCase().includes(q)) return false;
+    }
+    return true;
+  });
+
+  const thS = { textAlign: 'left', padding: '10px 14px', fontSize: 13, fontWeight: 600, color: T.textSecondary, borderBottom: `1px solid ${T.border}`, background: T.bgPage, whiteSpace: 'nowrap' };
+  const tdS = { padding: '12px 14px', fontSize: 14, color: T.textRegular, borderBottom: `1px solid #EBEEF5`, verticalAlign: 'middle' };
+  const btnPlain = { height: 30, padding: '0 12px', background: '#fff', color: T.textPrimary, border: `1px solid ${T.border}`, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 };
+  const btnText = { background: 'none', border: 'none', color: T.primary, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, padding: 0 };
+
+  const editDraftVars = editing ? ntVarsIn(draftSubject + '\n' + draftBody) : [];
+
+  return (
+    <React.Fragment>
+      <ToastStack toasts={toasts} />
+
+      {/* Breadcrumb + title */}
+      <nav style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: T.textSecondary, marginBottom: 8 }}>
+        <span>電商設定</span><span style={{ color: '#C0C4CC' }}>/</span>
+        <span style={{ color: T.textPrimary }}>通知信範本</span>
+      </nav>
+      <h1 style={{ fontSize: 20, fontWeight: 700, color: T.textPrimary, marginBottom: 6 }}>通知信範本管理</h1>
+      <p style={{ fontSize: 14, color: T.textRegular, lineHeight: 1.7, marginBottom: 20, maxWidth: 760 }}>
+        系統提供 {NT_ALL.length} 種預設通知信範本（訂單／會員／方案／一頁式商店／顧客邀請）。您可自訂主旨與內文，未編輯者將使用系統預設。內文中的
+        <span style={{ background: '#FDF6EC', color: '#E6A23C', padding: '0 3px', borderRadius: 2, margin: '0 2px' }}>{'{變數}'}</span>
+        會在實際寄送時自動替換為真實資料。
+      </p>
+
+      {/* Category tabs + search */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12, marginBottom: 16 }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          {cats.map((c) => {
+            const on = activeCat === c.id;
+            return (
+              <button key={c.id} onClick={() => setActiveCat(c.id)}
+                style={{ height: 32, padding: '0 14px', borderRadius: 9999, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13,
+                  background: on ? '#ECF5FF' : '#fff', color: on ? T.primary : T.textRegular, border: `1px solid ${on ? '#B3D8FF' : T.border}`, fontWeight: on ? 600 : 400 }}>
+                {c.label}<span style={{ marginLeft: 6, color: on ? T.primary : T.textSecondary }}>{c.count}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div style={{ position: 'relative' }}>
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜尋範本名稱或代碼"
+            style={{ width: 240, height: 34, padding: '0 12px', border: `1px solid ${T.border}`, fontSize: 13, outline: 'none', fontFamily: 'inherit', background: '#fff' }} />
+        </div>
+      </div>
+
+      {/* Table */}
+      <div style={{ background: '#fff', border: `1px solid ${T.border}`, borderRadius: 3 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <thead>
+            <tr>
+              {['範本名稱', '代碼', '觸發時機', '收件人', '狀態', '操作'].map((h) => <th key={h} style={thS}>{h}</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((t) => (
+              <tr key={t.key} onMouseEnter={(e) => e.currentTarget.style.background = '#FAFAFA'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                <td style={tdS}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontWeight: 500, color: T.textPrimary }}>{t.name}</span>
+                    {isEdited(t) && <span style={{ fontSize: 11, color: T.primary, background: '#ECF5FF', border: '1px solid #B3D8FF', borderRadius: 2, padding: '0 5px' }}>已自訂</span>}
+                  </div>
+                  <div style={{ fontSize: 12, color: T.textSecondary, marginTop: 2 }}>{t.num}　{t.categoryFull}</div>
+                </td>
+                <td style={{ ...tdS, fontFamily: 'monospace', fontSize: 12, color: T.textSecondary }}>{t.key}</td>
+                <td style={{ ...tdS, fontSize: 13, maxWidth: 220 }}>{t.trigger}</td>
+                <td style={{ ...tdS, whiteSpace: 'nowrap' }}>{t.recipient}</td>
+                <td style={tdS}>
+                  <Switch checked={enabled[t.key]} onChange={(v) => { setEnabled((m) => ({ ...m, [t.key]: v })); show(`${t.name}已${v ? '啟用' : '停用'}`, v ? 'success' : 'info'); }} />
+                </td>
+                <td style={tdS}>
+                  <div style={{ display: 'flex', gap: 14 }}>
+                    <button style={btnText} onClick={() => setPreviewing(t)}>預覽</button>
+                    <button style={btnText} onClick={() => openEdit(t)}>編輯</button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {filtered.length === 0 &&
+              <tr><td colSpan={6} style={{ ...tdS, textAlign: 'center', color: T.textSecondary, padding: '40px 0' }}>找不到符合條件的範本</td></tr>}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Preview Dialog */}
+      {previewing && (() => { const ct = currentText(previewing); return (
+        <Dialog open={true} title={`預覽：${previewing.name}`} width={620} onClose={() => setPreviewing(null)}
+          footer={<button style={{ ...btnPlain, height: 34 }} onClick={() => setPreviewing(null)}>關閉</button>}>
+          <div style={{ fontSize: 12, color: T.textSecondary, marginBottom: 6 }}>主旨</div>
+          <div style={{ border: `1px solid ${T.border}`, borderRadius: 3, padding: '10px 12px', marginBottom: 16, fontWeight: 600, color: T.textPrimary }}>
+            <NTRendered text={ct.subject} />
+          </div>
+          <div style={{ fontSize: 12, color: T.textSecondary, marginBottom: 6 }}>內文預覽（變數已套用範例值）</div>
+          <div style={{ border: `1px solid ${T.border}`, borderRadius: 3, padding: '16px 18px', background: '#fff', fontSize: 14, color: T.textRegular, maxHeight: 420, overflow: 'auto' }}>
+            <NTRendered text={ct.body} />
+          </div>
+        </Dialog>
+      ); })()}
+
+      {/* Edit Drawer */}
+      <Drawer open={!!editing} title={editing ? `編輯範本：${editing.name}` : ''} width={760} onClose={() => setEditing(null)}>
+        {editing && (
+          <div style={{ flex: 1, overflow: 'auto', padding: 24 }}>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 16, fontSize: 13, color: T.textSecondary }}>
+              <span>代碼：<code style={{ fontFamily: 'monospace', color: T.textRegular }}>{editing.key}</code></span>
+              <span>觸發：{editing.trigger}</span>
+              <span>收件人：{editing.recipient}</span>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 12, color: T.textSecondary, marginBottom: 6 }}>可用變數（點擊插入至上次編輯的欄位；寄送時自動替換）</div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                {editDraftVars.length === 0 && <span style={{ fontSize: 13, color: T.textSecondary }}>此範本無變數</span>}
+                {editDraftVars.map((v) => (
+                  <button key={v} onClick={() => insertVar(v)}
+                    style={{ height: 26, padding: '0 10px', borderRadius: 9999, fontSize: 12, fontFamily: 'monospace', cursor: 'pointer',
+                      background: '#FDF6EC', color: '#E6A23C', border: '1px solid #F5DAB1' }}>{v}</button>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: T.textPrimary, marginBottom: 6 }}>主旨</div>
+              <input value={draftSubject} onChange={(e) => setDraftSubject(e.target.value)} onFocus={() => lastField.current = 'subject'}
+                style={{ width: '100%', height: 40, padding: '0 12px', border: `1px solid ${T.border}`, fontSize: 14, outline: 'none', fontFamily: 'inherit' }} />
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: T.textPrimary, marginBottom: 6 }}>內文</div>
+              <textarea value={draftBody} onChange={(e) => setDraftBody(e.target.value)} onFocus={() => lastField.current = 'body'} rows={16}
+                style={{ width: '100%', padding: '12px', border: `1px solid ${T.border}`, fontSize: 13, outline: 'none', fontFamily: 'ui-monospace, Menlo, Consolas, monospace', lineHeight: 1.7, resize: 'vertical' }} />
+            </div>
+
+            <div style={{ marginBottom: 8 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: T.textPrimary, marginBottom: 6 }}>即時預覽（變數已套用範例值）</div>
+              <div style={{ border: `1px solid ${T.border}`, borderRadius: 3, background: '#FAFAFA' }}>
+                <div style={{ padding: '10px 14px', borderBottom: `1px solid ${T.border}`, fontWeight: 600, color: T.textPrimary, fontSize: 14 }}>
+                  <NTRendered text={draftSubject} />
+                </div>
+                <div style={{ padding: '16px 18px', fontSize: 14, color: T.textRegular }}>
+                  <NTRendered text={draftBody} />
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+        {editing &&
+          <div style={{ borderTop: `1px solid ${T.border}`, padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+            <button style={btnPlain} onClick={resetEdit}>還原系統預設</button>
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button style={btnPlain} onClick={() => setEditing(null)}>取消</button>
+              <button style={{ height: 30, padding: '0 16px', background: T.primary, color: '#fff', border: `1px solid ${T.primary}`, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13 }} onClick={saveEdit}>儲存</button>
+            </div>
+          </div>}
+      </Drawer>
+    </React.Fragment>
+  );
+}
+
+Object.assign(window, { NotificationTemplatesPage, NOTIFY_CATEGORIES });
+</script>
+
 
 <!-- components/pages/PageWebsiteDesign.jsx -->
 <script type="text/babel">
@@ -24190,6 +25179,9 @@ function App() {
     }
     if (currentPage === 'gs-tracking') {
       return <PageTracking onNavigate={navigate} show={show} />;
+    }
+    if (currentPage === 'gs-notification-templates') {
+      return <NotificationTemplatesPage />;
     }
     if (currentPage === 'gs-temp-freight' || currentPage === 'gs-weight-freight') {
       return <PageFreight currentPage={currentPage} onNavigate={navigate} show={show} />;

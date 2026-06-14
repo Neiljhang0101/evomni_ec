@@ -16,7 +16,7 @@ const PLAN_C = {
 
 // ─── Locked features data ─────────────────────────────────────────────────────
 const FEATURES_INCLUDED = [
-  '產品管理（無上限）', '訂單管理', '會員系統', '金物流串接',
+  '產品管理（上限 1,000 件）', '訂單管理', '會員系統', '金物流串接',
   '基礎數據分析', '關鍵意見領袖（KOL）分潤管理', '產品廣告小幫手',
 ];
 const FEATURES_LOCKED = [
@@ -617,7 +617,7 @@ function ComparePlansPage({ onOpenInquiry }) {
       <div style={{ textAlign: 'center', padding: '16px 0', borderTop: `1px solid ${PLAN_C.border}` }}>
         <span style={{ fontSize: 14, color: PLAN_C.sub }}>不確定哪個方案適合您？</span>
         {' '}
-        <a href="#" style={{ fontSize: 14, color: PLAN_C.blue }}>預約 15 分鐘通話諮詢</a>
+        <a href="https://www.webtech.com.tw/contact" target="_blank" rel="noopener noreferrer" style={{ fontSize: 14, color: PLAN_C.blue }}>預約方案諮詢</a>
       </div>
     </div>
   );

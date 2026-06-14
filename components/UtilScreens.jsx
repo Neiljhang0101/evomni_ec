@@ -107,7 +107,7 @@ function InvoiceScreen({ onNavigate }) {
 
 // ─── Screen 7: Webhook 管理 ───────────────────────────────────────────────
 const WEBHOOK_URLS = [
-  { vendor: '綠界科技（金流）', type: '付款通知', url: 'https://yourstore.evomni.com/api/webhooks/payment/a3f9k2/ecpay', status: '連線異常', lastReceived: '2026/05/10 14:32' },
+  { vendor: '綠界科技（金流）', type: '付款通知', url: 'https://yourstore.evomni.com/api/webhooks/payment/a3f9k2/ecpay', status: '串接異常', lastReceived: '2026/05/10 14:32' },
   { vendor: 'LINE Pay',        type: '付款通知', url: 'https://yourstore.evomni.com/api/webhooks/payment/a3f9k2/linepay', status: '正常', lastReceived: '2026/05/11 08:15' },
   { vendor: '綠界科技（物流）', type: '物流狀態', url: 'https://yourstore.evomni.com/api/webhooks/logistics/a3f9k2/ecpay', status: '正常', lastReceived: '2026/05/10 22:00' },
 ];
@@ -184,6 +184,9 @@ function WebhookScreen() {
       {/* Tab 1: URL List */}
       {tab === 'urls' && (
         <div style={{ background: '#fff', border: '1px solid #DCDFE6', borderRadius: 3 }}>
+          <div style={{ padding: '12px 16px', borderBottom: '1px solid #EBEEF5', background: '#F5F7FA', fontSize: 12, color: '#909399', lineHeight: 1.7 }}>
+            網址格式為 <code style={{ fontFamily: 'monospace', color: '#606266' }}>/api/webhooks/payment/[商店識別碼]/[廠商代號]</code>，其中商店識別碼（唯一識別碼／UUID，如 <code style={{ fontFamily: 'monospace', color: '#606266' }}>a3f9k2</code>）為各商店專屬，可避免網址被猜測或冒用，請勿外流。
+          </div>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
             <thead><tr style={{ background: '#F5F7FA' }}>{['廠商名稱','串接類型','Webhook URL','狀態','最後收到'].map(h => <th key={h} style={{ padding: '10px 16px', textAlign: 'left', color: '#606266', fontWeight: 500, fontSize: 13, borderBottom: '1px solid #DCDFE6' }}>{h}</th>)}</tr></thead>
             <tbody>

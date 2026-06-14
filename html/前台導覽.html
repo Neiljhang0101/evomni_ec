@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>前台頁面導覽 — Evomni Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<link rel="stylesheet" href="../frontend-design-system/colors_and_type.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { min-height: 100%; }
+  body { font-family: var(--font-sans); font-size: 16px; background: var(--fill-300); color: var(--fg); -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--line-300); }
+  a { color: inherit; text-decoration: none; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 56px 24px 96px; }
+  .eyebrow { font: 500 14px/1 var(--font-sans); letter-spacing: .16em; text-transform: uppercase; color: var(--fg-subtle); }
+  .h1 { font: 600 32px/1.2 var(--font-sans); letter-spacing: -.01em; color: var(--fg); margin: 14px 0 12px; }
+  .lead { font: 400 16px/1.7 var(--font-sans); color: var(--fg-muted); max-width: 640px; }
+  .flow { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 28px 0 40px; padding: 16px 20px; background: var(--bg); border: 1px solid var(--line-300); }
+  .flow-label { font: 500 13px/1 var(--font-sans); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-subtle); margin-right: 6px; }
+  .flow-step { font: 500 15px/1 var(--font-sans); color: var(--fg); }
+  .flow-sep { color: var(--fg-subtle); }
+  .group-label { font: 500 13px/1 var(--font-sans); letter-spacing: .12em; text-transform: uppercase; color: var(--fg-subtle); margin: 40px 0 16px; }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .card { display: flex; flex-direction: column; background: var(--bg); border: 1px solid var(--line-300); padding: 22px 22px 18px; transition: box-shadow .2s, transform .2s; }
+  .card:hover { box-shadow: 0 8px 24px rgba(0,0,0,.07); transform: translateY(-2px); }
+  .card-eyebrow { font: 500 12px/1 var(--font-sans); letter-spacing: .1em; text-transform: uppercase; color: var(--fg-subtle); margin-bottom: 8px; }
+  .card-title { font: 600 19px/1.3 var(--font-sans); color: var(--fg); margin-bottom: 8px; }
+  .card-desc { font: 400 15px/1.6 var(--font-sans); color: var(--fg-muted); flex: 1; }
+  .card-tag { display: inline-block; align-self: flex-start; margin-top: 12px; padding: 3px 9px; font: 400 13px/1.4 var(--font-sans); color: var(--accent, #9B59B6); background: rgba(155,89,182,.08); border: 1px solid rgba(155,89,182,.25); }
+  .card-cta { display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; font: 500 15px/1 var(--font-sans); color: var(--fg); }
+  .card-cta .material-icons-outlined { font-size: 18px; transition: transform .2s; }
+  .card:hover .card-cta .material-icons-outlined { transform: translateX(3px); }
+  .note { margin-top: 40px; padding: 14px 18px; background: var(--bg); border: 1px solid var(--line-300); font: 400 14px/1.7 var(--font-sans); color: var(--fg-muted); }
+  @media (max-width: 860px) { .grid { grid-template-columns: 1fr; } .h1 { font-size: 26px; } }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="eyebrow">Evomni Storefront</div>
+    <h1 class="h1">前台頁面導覽</h1>
+    <p class="lead">消費者端（前台）所有原型頁面的統一入口。前台與後台（<code>index.html</code>）為獨立系統，前台頁請由此進入。</p>
+
+    <div class="flow">
+      <span class="flow-label">購物動線</span>
+      <a class="flow-step" href="商品列表.html">商品列表</a><span class="flow-sep">→</span>
+      <a class="flow-step" href="商品詳情.html">商品詳情</a><span class="flow-sep">→</span>
+      <a class="flow-step" href="購物車.html">購物車</a><span class="flow-sep">→</span>
+      <a class="flow-step" href="結帳頁.html">結帳</a><span class="flow-sep">→</span>
+      <a class="flow-step" href="訂單確認頁.html">訂單確認</a>
+    </div>
+
+    <div class="group-label">購物流程</div>
+    <div class="grid">
+      <a class="card" href="商品列表.html">
+        <div class="card-eyebrow">Products</div>
+        <div class="card-title">商品列表</div>
+        <div class="card-desc">全部商品、分類篩選、加入購物車。</div>
+        <span class="card-cta">開啟頁面 <span class="material-icons-outlined">arrow_forward</span></span>
+      </a>
+      <a class="card" href="商品詳情.html">
+        <div class="card-eyebrow">Product Detail</div>
+        <div class="card-title">商品詳情</div>
+        <div class="card-desc">規格選擇、加購流程、低溫宅配選項。</div>
+        <span class="card-cta">開啟頁面 <span class="material-icons-outlined">arrow_forward</span></span>
+      </a>
+      <a class="card" href="購物車.html">
+        <div class="card-eyebrow">Cart</div>
+        <div class="card-title">購物車</div>
+        <div class="card-desc">品項數量調整、訂單摘要、前往結帳。</div>
+        <span class="card-cta">開啟頁面 <span class="material-icons-outlined">arrow_forward</span></span>
+      </a>
+      <a class="card" href="結帳頁.html">
+        <div class="card-eyebrow">Checkout</div>
+        <div class="card-title">結帳</div>
+        <div class="card-desc">收件資料、電子發票、付款方式。頂部示意可切換「免費商品（0 元）」狀態。</div>
+        <span class="card-tag">含 #17 — 0 元訂單跳過金流</span>
+        <span class="card-cta">開啟頁面 <span class="material-icons-outlined">arrow_forward</span></span>
+      </a>
+      <a class="card" href="訂單確認頁.html">
+        <div class="card-eyebrow">Order Confirmed</div>
+        <div class="card-title">訂單確認</div>
+        <div class="card-desc">訂單成立確認。上方可切換預覽 10 種訂單狀態 Tag（含已退款／已關閉）。</div>
+        <span class="card-tag">含 #18 — 訂單狀態 10 種 Tag</span>
+        <span class="card-cta">開啟頁面 <span class="material-icons-outlined">arrow_forward</span></span>
+      </a>
+    </div>
+
+    <div class="group-label">會員與訂單</div>
+    <div class="grid">
+      <a class="card" href="會員中心.html">
+        <div class="card-eyebrow">Member Center</div>
+        <div class="card-title">會員中心</div>
+        <div class="card-desc">個人資料、點數、訂單、登入裝置管理（工作階段 7／30 天）。</div>
+        <span class="card-tag">含 #19 — 記住我 7／30 天說明</span>
+        <span class="card-cta">開啟頁面 <span class="material-icons-outlined">arrow_forward</span></span>
+      </a>
+      <a class="card" href="訪客訂單查詢.html">
+        <div class="card-eyebrow">Order Inquiry</div>
+        <div class="card-title">訪客訂單查詢</div>
+        <div class="card-desc">未登入訪客以訂單編號＋結帳時填寫的 Email 查詢訂單狀態。</div>
+        <span class="card-tag">含 #16 — 第二驗證改 Email</span>
+        <span class="card-cta">開啟頁面 <span class="material-icons-outlined">arrow_forward</span></span>
+      </a>
+    </div>
+
+    <div class="group-label">會員認證流程</div>
+    <div class="grid">
+      <a class="card" href="會員登入.html">
+        <div class="card-eyebrow">Login</div>
+        <div class="card-title">登入</div>
+        <div class="card-desc">Email＋密碼、記住我、第三方登入（LINE／Google），含 7 種錯誤態與 CAPTCHA 觸發。</div>
+        <span class="card-tag">含 #20 — 登入頁</span>
+        <span class="card-cta">開啟頁面 <span class="material-icons-outlined">arrow_forward</span></span>
+      </a>
+      <a class="card" href="會員登入.html">
+        <div class="card-eyebrow">Forgot / Reset</div>
+        <div class="card-title">忘記密碼 · 重設密碼</div>
+        <div class="card-desc">忘記密碼（60 秒倒數重發）、重設密碼（強度指示條、Token 過期態、成功態）。</div>
+        <span class="card-tag">含 #21 · #22</span>
+        <span class="card-cta">開啟頁面 <span class="material-icons-outlined">arrow_forward</span></span>
+      </a>
+      <a class="card" href="會員登入.html">
+        <div class="card-eyebrow">Verify / Resend</div>
+        <div class="card-title">帳號驗證 · 重發驗證信</div>
+        <div class="card-desc">帳號啟用成功／連結失效＋重發；重發驗證信（60 秒倒數、返回登入）。</div>
+        <span class="card-tag">含 #23 · #24</span>
+        <span class="card-cta">開啟頁面 <span class="material-icons-outlined">arrow_forward</span></span>
+      </a>
+      <a class="card" href="會員登入.html">
+        <div class="card-eyebrow">OAuth Flow</div>
+        <div class="card-title">第三方登入流程</div>
+        <div class="card-desc">OAuth 授權中 Loading（正在連接 LINE／Google／Facebook）、Email 補全頁（無 Email 情境）、帳號合併確認頁（遮蔽 Email、密碼驗證、確認綁定）。</div>
+        <span class="card-tag">含 #25 · #26 · #27</span>
+        <span class="card-cta">開啟頁面 <span class="material-icons-outlined">arrow_forward</span></span>
+      </a>
+    </div>
+
+    <div class="group-label">一頁式商店（進階電商包）</div>
+    <div class="grid">
+      <a class="card" href="一頁式商店.html">
+        <div class="card-eyebrow">Landing Page</div>
+        <div class="card-title">一頁式商店</div>
+        <div class="card-desc">沉浸式單頁購買流程（無導覽選單）：銷售頁（Hero／倒數計時／賣點／評論／固定底部 CTA Bar）→ 規格加購 Bottom Sheet（含低溫宅配自動顯示）→ 沉浸式結帳 → 付款成功。</div>
+        <span class="card-tag">含 #28 · #29 · #30</span>
+        <span class="card-cta">開啟頁面 <span class="material-icons-outlined">arrow_forward</span></span>
+      </a>
+    </div>
+
+    <div class="note">
+      會員認證流程為單一原型檔（<code>會員登入.html</code>），以頂部切換條檢視 8 個頁面與各自狀態。一頁式商店（<code>一頁式商店.html</code>）由銷售頁「立即購買」開啟規格 Bottom Sheet，再進入沉浸式結帳。清單 #11–#30 已全部完成。
+    </div>
+  </div>
+</body>
+</html>

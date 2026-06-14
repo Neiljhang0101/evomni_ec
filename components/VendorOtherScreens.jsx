@@ -277,6 +277,8 @@ function VendorSemiScreen({ vendor, onBack }) {
   const [lastSaved, setLastSaved] = React.useState(null);
   const [testResult, setTestResult] = React.useState(null);
   const [testing, setTesting] = React.useState(false);
+  const [showImportDialog, setShowImportDialog] = React.useState(false);
+  const [importMode, setImportMode] = React.useState('merge'); // merge | replace
   const [isAdvanced, setIsAdvanced] = React.useState(window.__evomni_isPro || false);
   React.useEffect(() => {
     const handler = e => setIsAdvanced(e.detail.isPro);
@@ -285,6 +287,16 @@ function VendorSemiScreen({ vendor, onBack }) {
   }, []);
 
   const unmapped = skus.filter(s => !s.vendorSku).length;
+
+  const openImportDialog = () => { setImportMode('merge'); setShowImportDialog(true); };
+  const handleImportConfirm = () => {
+    setShowImportDialog(false);
+    if (importMode === 'replace') {
+      show(`已以「全部替換」模式匯入，原有對照已清除並重建為 CSV 內容`, 'warning');
+    } else {
+      show(`已以「合併匯入」模式完成，CSV 中的 SKU 已新增或更新`, 'success');
+    }
+  };
 
   const handleSave = () => {
     setSaving(true);
@@ -299,6 +311,40 @@ function VendorSemiScreen({ vendor, onBack }) {
   return (
     <div>
       <ToastStack toasts={toasts} />
+
+      {/* 批次匯入模式選擇 Dialog */}
+      <Dialog
+        open={showImportDialog}
+        title="批次匯入 SKU 對照"
+        width={520}
+        confirmText={importMode === 'replace' ? '確認全部替換' : '確認匯入'}
+        confirmDanger={importMode === 'replace'}
+        onConfirm={handleImportConfirm}
+        onCancel={() => setShowImportDialog(false)}
+      >
+        <p style={{ fontSize: 13, color: '#606266', lineHeight: 1.7, marginBottom: 14 }}>
+          請選擇匯入模式並上傳 CSV 檔案（格式：<code style={{ fontFamily: 'monospace', background: '#F5F7FA', padding: '1px 5px', borderRadius: 2, color: '#606266' }}>系統SKU,倉儲SKU</code>）。
+          <a href="#" style={{ color: '#409EFF', marginLeft: 6 }} onClick={e => { e.preventDefault(); show('正在下載 CSV 匯入範本', 'info'); }}>下載範本</a>
+        </p>
+        <RadioGroup
+          value={importMode}
+          onChange={setImportMode}
+          options={[
+            { value: 'merge',   label: '合併匯入（建議）', desc: '保留現有對照，僅新增或更新 CSV 中出現的 SKU。' },
+            { value: 'replace', label: '全部替換',        desc: `清除目前全部 ${skus.length} 筆對照，完全以 CSV 內容取代。` },
+          ]}
+          vertical
+        />
+        {importMode === 'replace' && (
+          <div style={{ marginTop: 14, background: '#FEF0F0', border: '1px solid #FBC4C4', borderRadius: 3, padding: '10px 14px', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+            <span style={{ width: 16, height: 16, borderRadius: '50%', background: '#F56C6C', color: '#fff', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700, flexShrink: 0, marginTop: 2 }}>!</span>
+            <span style={{ fontSize: 13, color: '#F56C6C', lineHeight: 1.7 }}>
+              「全部替換」會刪除現有 {skus.length} 筆對照且無法復原，僅保留 CSV 內的對照資料。請確認 CSV 內容完整後再執行。
+            </span>
+          </div>
+        )}
+      </Dialog>
+
       <div style={{ marginBottom: 16 }}>
         <div style={{ display: 'flex', gap: 6, fontSize: 13, color: '#909399', marginBottom: 8 }}>
           <span onClick={onBack} style={{ cursor: 'pointer' }}>串接設定</span><span>/</span><span style={{ color: '#303133' }}>{vendor.name}</span>
@@ -334,6 +380,11 @@ function VendorSemiScreen({ vendor, onBack }) {
         </SectionCard>
 
         <SectionCard title="SKU 對照表" extra={<span style={{ fontSize: 13, color: '#909399' }}>請將本系統 SKU 對應至倉儲廠商 SKU</span>}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
+            <button style={{ ...sharedBtns.plain, height: 34, fontSize: 13 }} onClick={() => show('已新增一列空白對照，請填入 SKU', 'info')}>+ 新增對照</button>
+            <button style={{ ...sharedBtns.plain, height: 34, fontSize: 13 }} onClick={openImportDialog}>批次匯入</button>
+            <button style={{ ...sharedBtns.plain, height: 34, fontSize: 13 }} onClick={() => show('正在下載目前的 SKU 對照表（CSV）', 'info')}>下載對照表</button>
+          </div>
           <div style={{ background: '#fff', border: '1px solid #DCDFE6', borderRadius: 3 }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
               <thead><tr style={{ background: '#F5F7FA' }}>{['本系統 SKU','產品名稱','倉儲廠商 SKU','最後更新'].map(h => <th key={h} style={{ padding: '10px 16px', textAlign: 'left', color: '#606266', fontWeight: 500, fontSize: 13, borderBottom: '1px solid #DCDFE6' }}>{h}</th>)}</tr></thead>

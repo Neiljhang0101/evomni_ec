@@ -472,8 +472,40 @@ function CustomerDetailPage({ customer, onBack, onNavigate, showToast }) {
     if (blacklistReason.trim().length < 1) {setBlacklistReasonError('原因為必填欄位，請至少輸入 10 個字');return;}
     if (!blacklistConfirm) {setBlacklistReasonError('請先勾選確認才能執行此操作');return;}
     setBlacklistDialog(false);
-    showToast(`已將 ${customer.name} 加入黑名單`, 'warning');
+    showToast(`已將 ${customer.name} 加入黑名單，並立即撤銷其登入（強制登出所有裝置）`, 'warning');
   };
+
+  // §6.7C 加入黑名單立即生效項目與既有訂單依狀態分流處置
+  const BLACKLIST_EFFECTS = [
+    '立即撤銷登入（強制登出所有現有裝置 Session）',
+    '限制建立新訂單',
+    '限制付款',
+    '限制使用特定服務（依商家設定）',
+  ];
+  const BLACKLIST_ORDER_DISPOSITION = [
+    { status: '待付款', action: '限制繼續付款；訂單依原有逾時機制自動過期取消（不立即強制取消）' },
+    { status: '已付款未出貨', action: '進入人工審核佇列；後台訂單列表顯示「黑名單待審」警示標籤' },
+    { status: '已出貨', action: '維持原出貨流程，不干預；客服可自行追蹤後續情況' },
+    { status: '已完成', action: '維持不變；客服可自行追蹤後續情況' },
+  ];
+  const dispositionTable = (
+    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, marginTop: 8 }}>
+      <thead>
+        <tr style={{ background: T.bgPage }}>
+          <th style={{ textAlign: 'left', padding: '6px 10px', border: `1px solid ${T.border}`, color: T.textSecondary, fontWeight: 600, width: 120 }}>訂單狀態</th>
+          <th style={{ textAlign: 'left', padding: '6px 10px', border: `1px solid ${T.border}`, color: T.textSecondary, fontWeight: 600 }}>處置方式</th>
+        </tr>
+      </thead>
+      <tbody>
+        {BLACKLIST_ORDER_DISPOSITION.map((r) =>
+        <tr key={r.status}>
+            <td style={{ padding: '6px 10px', border: `1px solid ${T.border}`, color: T.textPrimary, fontWeight: 500, whiteSpace: 'nowrap' }}>{r.status}</td>
+            <td style={{ padding: '6px 10px', border: `1px solid ${T.border}`, color: T.textRegular, lineHeight: 1.6 }}>{r.action}</td>
+          </tr>
+        )}
+      </tbody>
+    </table>
+  );
 
   const pointPreview = pointAmount && !isNaN(pointAmount) ?
   pointType === 'add' ?
@@ -488,9 +520,19 @@ function CustomerDetailPage({ customer, onBack, onNavigate, showToast }) {
 
       {/* Blacklist Banner */}
       {isBlacklisted &&
-      <div style={{ background: '#fef0f0', border: `1px solid #fbc4c4`, padding: '12px 16px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ color: T.danger }}>⚠</span>
-          <span style={{ color: T.danger, fontWeight: 600 }}>此會員目前在黑名單中</span>
+      <div style={{ background: '#fef0f0', border: `1px solid #fbc4c4`, padding: '14px 16px', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+            <span style={{ color: T.danger }}>⚠</span>
+            <span style={{ color: T.danger, fontWeight: 600 }}>此會員已被加入黑名單，訂單請依商家政策人工處理。</span>
+          </div>
+          <div style={{ fontSize: 13, color: T.textRegular, marginBottom: 4 }}>
+            <span style={{ display: 'inline-flex', alignItems: 'center', height: 22, padding: '0 10px', borderRadius: 9999, fontSize: 12, background: '#fde2e2', color: T.danger, fontWeight: 600, marginRight: 8 }}>已立即撤銷登入</span>
+            該會員已被強制登出所有裝置，且無法建立新訂單、付款或使用特定服務。
+          </div>
+          <details style={{ marginTop: 8 }}>
+            <summary style={{ fontSize: 13, color: T.danger, cursor: 'pointer', userSelect: 'none' }}>查看既有訂單處置方式</summary>
+            {dispositionTable}
+          </details>
         </div>
       }
 
@@ -676,7 +718,7 @@ function CustomerDetailPage({ customer, onBack, onNavigate, showToast }) {
         <div>
           <MemCard title="標籤">
             <div style={{ marginBottom: 12 }}>
-              <div style={{ fontSize: 12, color: T.textSecondary, marginBottom: 8 }}>系統自動標籤（唯讀）</div>
+              <div style={{ fontSize: 12, color: T.textSecondary, marginBottom: 8 }}>系統自動標籤（唯讀，系統保護不可刪除／改名）</div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                 {['高價值客', '活躍客'].filter((t) => tags.includes(t)).map((t) =>
                 <StatusTag key={t} type="warning">{t}</StatusTag>
@@ -754,6 +796,14 @@ function CustomerDetailPage({ customer, onBack, onNavigate, showToast }) {
           <button style={btnPlain} onClick={() => setBlacklistDialog(false)}>取消</button>
           <button style={{ ...btnPrimary, background: T.danger, borderColor: T.danger }} onClick={handleBlacklist}>確認加入黑名單</button>
         </>}>
+        <div style={{ background: '#fef0f0', border: `1px solid #fbc4c4`, padding: '12px 14px', marginBottom: 16 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: T.danger, marginBottom: 6 }}>加入後立即生效：</div>
+          <ul style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: T.textRegular, lineHeight: 1.8 }}>
+            {BLACKLIST_EFFECTS.map((e) => <li key={e}>{e}</li>)}
+          </ul>
+          <div style={{ fontSize: 13, fontWeight: 600, color: T.textPrimary, marginTop: 10, marginBottom: 2 }}>既有訂單依狀態分流處置（不會自動取消任何訂單）：</div>
+          {dispositionTable}
+        </div>
         <FormRow label="加入原因" required error={blacklistReasonError}>
           <Textarea value={blacklistReason} onChange={(v) => {setBlacklistReason(v);setBlacklistReasonError('');}}
           placeholder="請詳細說明將此會員加入黑名單的原因，例：惡意退貨 X 次、疑似詐騙下單等。此記錄不對消費者顯示，僅供內部查核。" rows={4} />
@@ -1115,10 +1165,10 @@ function TagsPage({ showToast }) {
 
       {tab === 'system' &&
       <div>
-          <MemInfoBanner>以下標籤由系統每日凌晨 02:00 自動計算套用，規則不可修改。標籤結果可用於顧客管理篩選及行銷活動分眾。</MemInfoBanner>
+          <MemInfoBanner>以下標籤由系統每日凌晨 02:00 自動計算套用，規則不可修改。此 6 個系統標籤是電商數據分析與行銷分眾的計算基礎，<strong>商家不可刪除、不可改名</strong>，以免自動標記排程失效、導致行銷活動觸發條件失準。標籤僅對具備電商消費行為的會員計算與顯示（不套用於純 CMS 顧客）。</MemInfoBanner>
           <div style={{ background: '#fff', borderRadius: 3, boxShadow: '0 2px 12px 0 rgba(0,0,0,0.08)' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
-              <thead><tr>{['標籤預覽', '標籤名稱', '自動判斷規則說明'].map((h) => <th key={h} style={tableThStyle}>{h}</th>)}</tr></thead>
+              <thead><tr>{['標籤預覽', '標籤名稱', '自動判斷規則說明', '保護狀態'].map((h) => <th key={h} style={tableThStyle}>{h}</th>)}</tr></thead>
               <tbody>
                 {systemTags.map((t, i) =>
               <tr key={t.name}
@@ -1129,6 +1179,9 @@ function TagsPage({ showToast }) {
                     </td>
                     <td style={{ ...tableTdStyle, fontWeight: 600 }}>{t.name}</td>
                     <td style={tableTdStyle}>{t.rule}</td>
+                    <td style={tableTdStyle}>
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, height: 22, padding: '0 10px', borderRadius: 9999, fontSize: 12, background: T.bgPage, border: `1px solid ${T.border}`, color: T.textSecondary }} title="系統保護：不可刪除、不可改名">系統保護（不可刪除／改名）</span>
+                    </td>
                   </tr>
               )}
               </tbody>

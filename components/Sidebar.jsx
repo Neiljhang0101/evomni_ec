@@ -152,6 +152,7 @@ const ECOMMERCE_ITEMS = [
       { id: 'push-logs',            label: '推播記錄' },
       { id: 'marketing-landing',    label: '一頁式商店' },
       { id: 'marketing-ad-tools',   label: '廣告投放工具' },
+      { id: 'gs-tracking',          label: '行銷追蹤碼' },
     ],
   },
   {
@@ -187,8 +188,8 @@ const ECOMMERCE_ITEMS = [
           { id: 'gs-member-verification', label: '會員驗證設定' },
         ],
       },
-      { id: 'gs-tracking',   label: '行銷追蹤碼' },
       { id: 'gs-newsletter', label: '電子報' },
+      { id: 'gs-notification-templates', label: '通知信範本' },
       { id: 'gs-msl',        label: '美安串接' },
     ],
   },
@@ -284,7 +285,7 @@ const NAV_GROUP_MAP = {
   'gs-temp-freight': 'ecommerce-settings', 'gs-weight-freight': 'ecommerce-settings',
   'gs-advanced': 'ecommerce-settings', 'gs-third-party-login': 'ecommerce-settings', 'line-oa': 'ecommerce-settings',
   'gs-cart-timeout': 'ecommerce-settings', 'gs-stock-alert': 'ecommerce-settings', 'gs-member-verification': 'ecommerce-settings',
-  'gs-tracking': 'ecommerce-settings', 'gs-newsletter': 'ecommerce-settings', 'gs-newsletter-flydove': 'ecommerce-settings',
+  'gs-tracking': 'marketing', 'gs-newsletter': 'ecommerce-settings', 'gs-newsletter-flydove': 'ecommerce-settings', 'gs-notification-templates': 'ecommerce-settings',
   'gs-msl': 'ecommerce-settings', 'gs-msl-detail': 'ecommerce-settings',
   // Website CMS
   'website-menu': 'website-cms', 'system-pages': 'website-cms',

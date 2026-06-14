@@ -376,9 +376,20 @@ const InvoiceSection = ({ invoiceType, setInvoiceType, invoiceData, setInvoiceDa
 };
 
 // ─── Section 6: Payment ───────────────────────────────────────────────────────
-const PaymentSection = ({ selected, onChange }) => (
+const PaymentSection = ({ selected, onChange, isFreeOrder }) => (
   <SectionCard eyebrow="STEP 02" title="付款方式">
-    {PAYMENT_OPTIONS.map(opt => (
+    {isFreeOrder ? (
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, padding: '16px 18px', background: 'var(--success-soft, #f0f9eb)', border: '1px solid #c2e7b0' }}>
+        <Icon name="check_circle" size={20} style={{ color: 'var(--success)', flexShrink: 0, marginTop: 1 }} />
+        <div>
+          <div style={{ font: '500 16px/1.4 var(--font-sans)', color: 'var(--fg)', marginBottom: 4 }}>免費商品，無需付款</div>
+          <p style={{ font: '400 14px/1.6 var(--font-sans)', color: 'var(--fg-muted)' }}>
+            本訂單結帳金額為 NT$ 0，將跳過金流付款，送出後系統會直接成立並標示為「已付款」。
+          </p>
+        </div>
+      </div>
+    ) : (
+    PAYMENT_OPTIONS.map(opt => (
       <RadioCard key={opt.id} selected={selected === opt.id} onClick={() => onChange(opt.id)}>
         <span style={{ font: '500 14px/1 var(--font-sans)', color: 'var(--fg)' }}>{opt.label}</span>
         {opt.note && <span style={{ font: '400 14px/1 var(--font-sans)', color: 'var(--fg-subtle)', marginLeft: 8 }}>（{opt.note}）</span>}
@@ -391,13 +402,14 @@ const PaymentSection = ({ selected, onChange }) => (
           </div>
         )}
       </RadioCard>
-    ))}
+    )))}
   </SectionCard>
 );
 
 // ─── Order Sidebar ────────────────────────────────────────────────────────────
-const OrderSidebar = ({ deliveryFee, couponDiscount, pointsDiscount, submitting, onSubmit }) => {
-  const total = Math.max(0, SUBTOTAL - couponDiscount - pointsDiscount + deliveryFee);
+const OrderSidebar = ({ deliveryFee, couponDiscount, pointsDiscount, submitting, onSubmit, isFreeOrder }) => {
+  const freeDiscount = isFreeOrder ? (SUBTOTAL + deliveryFee - couponDiscount - pointsDiscount) : 0;
+  const total = isFreeOrder ? 0 : Math.max(0, SUBTOTAL - couponDiscount - pointsDiscount + deliveryFee);
   const Row = ({ label, value, bold, color }) => (
     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0' }}>
       <span style={{ font: `${bold ? '500' : '400'} 16px/1 var(--font-sans)`, color: bold ? 'var(--fg)' : 'var(--fg-muted)' }}>{label}</span>
@@ -434,9 +446,15 @@ const OrderSidebar = ({ deliveryFee, couponDiscount, pointsDiscount, submitting,
         {couponDiscount > 0 && <Row label="優惠代碼折扣" value={`- NT$ ${couponDiscount.toLocaleString()}`} color="var(--success)" />}
         {pointsDiscount > 0 && <Row label="點數折抵" value={`- NT$ ${pointsDiscount.toLocaleString()}`} color="var(--success)" />}
         <Row label="運費" value={deliveryFee === 0 ? '免運費' : `NT$ ${deliveryFee}`} color={deliveryFee === 0 ? 'var(--success)' : undefined} />
+        {isFreeOrder && freeDiscount > 0 && <Row label="免費商品折抵" value={`- NT$ ${freeDiscount.toLocaleString()}`} color="var(--success)" />}
       </div>
       <div style={{ padding: '12px 20px 20px' }}>
         <Row label="結帳金額" value={`NT$ ${total.toLocaleString()}`} bold />
+        {isFreeOrder && (
+          <p style={{ font: '400 13px/1.6 var(--font-sans)', color: 'var(--success)', marginTop: 8 }}>
+            本訂單為免費商品，無需付款，送出後直接成立。
+          </p>
+        )}
         <div style={{ marginTop: 16 }}>
           <button onClick={onSubmit} disabled={submitting} style={{
             width: '100%', height: 48, border: 'none',
@@ -447,7 +465,7 @@ const OrderSidebar = ({ deliveryFee, couponDiscount, pointsDiscount, submitting,
             transition: 'background .2s var(--ease)',
           }}>
             {submitting && <Spinner />}
-            {submitting ? '處理中…' : '確認送出'}
+            {submitting ? '處理中…' : (isFreeOrder ? '確認訂單（免付款）' : '確認送出')}
           </button>
         </div>
         <p style={{ font: '400 14px/1.5 var(--font-sans)', color: 'var(--fg-subtle)', textAlign: 'center', marginTop: 10 }}>
@@ -469,10 +487,12 @@ const App = () => {
   const [submitting, setSubmitting] = useState(false);
 
   const isGuest = pageState === 'guest';
+  const isFreeOrder = pageState === 'free';
 
   const STATES = [
     { key: 'member', label: '已登入會員' },
     { key: 'guest', label: '訪客結帳' },
+    { key: 'free', label: '免費商品（0 元）' },
     { key: 'submitting', label: '確認送出中' },
   ];
 
@@ -509,7 +529,7 @@ const App = () => {
           <div style={{ flex: 1, minWidth: 0 }}>
             <ShippingSection isGuest={isGuest} form={form} setForm={setForm} deliveryMethod={deliveryMethod} />
             <InvoiceSection invoiceType={invoiceType} setInvoiceType={setInvoiceType} invoiceData={invoiceData} setInvoiceData={setInvoiceData} />
-            <PaymentSection selected={payment} onChange={setPayment} />
+            <PaymentSection selected={payment} onChange={setPayment} isFreeOrder={isFreeOrder} />
             {/* Mobile CTA */}
             <div className="mobile-cta">
               <button onClick={handleSubmit} disabled={submitting || pageState === 'submitting'} style={{
@@ -527,6 +547,7 @@ const App = () => {
             <OrderSidebar
               deliveryFee={deliveryFee} couponDiscount={couponDiscount} pointsDiscount={pointsDiscount}
               submitting={submitting || pageState === 'submitting'} onSubmit={handleSubmit}
+              isFreeOrder={isFreeOrder}
             />
           </div>
         </div>

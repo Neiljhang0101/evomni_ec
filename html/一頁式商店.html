@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一頁式商店 — Evomni Store</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+<link rel="stylesheet" href="../frontend-design-system/colors_and_type.css">
+<link rel="stylesheet" href="../evomnialert/evomnialert.css">
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script src="../evomnialert/evomnialert.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body, #root { min-height: 100%; }
+  body { font-family: var(--font-sans); font-size: 16px; background: var(--fill-300); color: var(--fg); -webkit-font-smoothing: antialiased; }
+  ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-thumb { background: var(--line-300); }
+  a { color: inherit; text-decoration: none; }
+  button { cursor: pointer; font-family: var(--font-sans); }
+  input, select { font-family: var(--font-sans); outline: none; }
+  /* RWD：手機單欄全寬，平板/桌機放大並置中內容 */
+  .lp-frame { width: 100%; background: var(--bg); min-height: 100vh; position: relative; }
+  .lp-container { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  .lp-hero { position: relative; height: clamp(340px, 60vw, 560px); }
+  .lp-hero-title { font: 600 clamp(26px, 5vw, 44px)/1.2 var(--font-sans); }
+  .lp-hero-sub { font: 400 clamp(15px, 2.4vw, 19px)/1.5 var(--font-sans); }
+  .lp-points { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .lp-reviews { display: grid; grid-template-columns: 1fr; gap: 14px; }
+  .lp-cta-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 999; background: #fff; border-top: 1px solid var(--line-300); }
+  .lp-cta-inner { max-width: 1080px; margin: 0 auto; display: flex; align-items: center; gap: 12px; padding: 10px 16px; }
+  .lp-sheet-wrap { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: flex-end; justify-content: center; }
+  .lp-sheet { position: relative; width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; background: var(--bg); animation: lp-sheet-up .28s ease; }
+  .lp-checkout, .lp-success { max-width: 640px; margin: 0 auto; }
+  .of-input { width: 100%; height: 46px; padding: 0 12px; border: 1px solid var(--line-300); background: var(--bg); font: 400 16px/1 var(--font-sans); color: var(--fg); }
+  .of-input:focus { border-color: var(--fg); }
+  .of-input.err { border-color: var(--danger); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes lp-shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-6px)} 40%,80%{transform:translateX(6px)} }
+  @keyframes lp-sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  @keyframes lp-modal-in { from { transform: translateY(16px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .lp-shake { animation: lp-shake .4s ease; }
+  @media (min-width: 768px) {
+    .lp-points { grid-template-columns: repeat(4, 1fr); }
+    .lp-reviews { grid-template-columns: repeat(2, 1fr); }
+    /* Bottom Sheet → 桌機置中 Modal */
+    .lp-sheet-wrap { align-items: center; padding: 24px; }
+    .lp-sheet { max-height: 88vh; animation: lp-modal-in .25s ease; }
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
+
+const Icon = ({ name, size = 18, style }) => (
+  <span className="material-icons-outlined" style={{ fontSize: size, lineHeight: 1, ...style }}>{name}</span>
+);
+
+// ── Data ─────────────────────────────────────────────────────────────────────
+const PRODUCT = {
+  name: '北海道生乳卷 經典原味',
+  subtitle: '日本北海道乳源・冷凍直送・限時嚐鮮',
+  price: 880,
+  temp: 'frozen', // 低溫宅配
+  spec: { name: '口味', values: [
+    { v: '經典原味', stock: 24 },
+    { v: '抹茶', stock: 4 },
+    { v: '巧克力', stock: 0 },
+  ] },
+};
+const POINTS = [
+  { icon: 'ac_unit', title: '全程冷凍直送', desc: '-18°C 物流配送，鎖住新鮮與綿密口感' },
+  { icon: 'verified', title: '北海道乳源', desc: '選用日本北海道高品質乳脂，香氣濃郁' },
+  { icon: 'spa', title: '無添加香精', desc: '天然原料製作，吃得安心無負擔' },
+  { icon: 'local_shipping', title: '滿額免運', desc: '訂單滿 NT$1,200 享低溫宅配免運' },
+];
+const REVIEWS = [
+  { name: '陳＊婷', stars: 5, text: '口感超綿密，冷凍宅配到貨還是很完整，全家都喜歡！' },
+  { name: '林＊豪', stars: 5, text: '抹茶味很濃但不會太甜，回購第三次了。' },
+  { name: '黃＊如', stars: 4, text: '包裝很用心，退冰後口感最佳。' },
+  { name: '王＊明', stars: 5, text: '送禮自用兩相宜，朋友收到都讚不絕口。' },
+  { name: '張＊華', stars: 5, text: '物流很快，隔天就到，保冷做得很好。' },
+  { name: '李＊珊', stars: 4, text: '原味很經典，下次想試巧克力口味。' },
+];
+const ADDONS = [
+  { name: '北海道特濃鮮奶茶（6 入）', orig: 360, addon: 280 },
+  { name: '手工乳酪球禮盒', orig: 520, addon: 420 },
+  { name: '保冷袋（可重複使用）', orig: 180, addon: 99 },
+];
+
+const Stars = ({ n, size = 14 }) => (
+  <span style={{ display: 'inline-flex', color: '#E6A23C' }}>
+    {[1,2,3,4,5].map(i => <Icon key={i} name={i <= n ? 'star' : 'star_border'} size={size} />)}
+  </span>
+);
+
+const Photo = ({ h = 220, label, tint = '#d8cfc4' }) => (
+  <div style={{ width: '100%', height: h, background: `linear-gradient(135deg, ${tint}, #efe9e1)`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(0,0,0,.32)' }}>
+    <Icon name="image" size={36} />{label && <span style={{ marginLeft: 8, font: '500 14px/1 var(--font-sans)' }}>{label}</span>}
+  </div>
+);
+
+// ── Countdown HH:MM:SS ───────────────────────────────────────────────────────
+function useHMS(initial) {
+  const [s, setS] = useState(initial);
+  const ref = useRef(null);
+  useEffect(() => { ref.current = setInterval(() => setS(x => x > 0 ? x - 1 : 0), 1000); return () => clearInterval(ref.current); }, []);
+  const p = (n) => String(n).padStart(2, '0');
+  return `${p(Math.floor(s/3600))}:${p(Math.floor((s%3600)/60))}:${p(s%60)}`;
+}
+
+// ── Page 1：銷售頁（#28）─────────────────────────────────────────────────────
+const SalesPage = ({ onBuy }) => {
+  const hms = useHMS(47 * 3600 + 23 * 60 + 11);
+  const [moreReviews, setMoreReviews] = useState(false);
+  const shown = moreReviews ? REVIEWS : REVIEWS.slice(0, 5);
+  return (
+    <div style={{ paddingBottom: 84 }}>
+      {/* Hero */}
+      <div className="lp-hero">
+        <Photo h="100%" tint="#cdbfae" />
+        <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(0,0,0,.05), rgba(0,0,0,.5))', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', alignItems: 'center', textAlign: 'center', padding: '0 24px 40px' }}>
+          <h1 className="lp-hero-title" style={{ color: '#fff', textShadow: '0 2px 12px rgba(0,0,0,.4)', marginBottom: 10, maxWidth: 720 }}>{PRODUCT.name}</h1>
+          <p className="lp-hero-sub" style={{ color: 'rgba(255,255,255,.92)', textShadow: '0 1px 6px rgba(0,0,0,.4)', marginBottom: 22, maxWidth: 600 }}>{PRODUCT.subtitle}</p>
+          <button onClick={onBuy} style={{ width: 220, height: 54, background: 'var(--brand)', color: '#fff', border: 'none', font: '500 16px/1 var(--font-sans)', letterSpacing: '.04em' }}>立即購買</button>
+        </div>
+      </div>
+
+      {/* 倒數計時 */}
+      <div style={{ background: '#303133', color: '#fff', textAlign: 'center', padding: '14px 16px' }}>
+        <span style={{ font: '400 15px/1 var(--font-sans)', letterSpacing: '.02em' }}>限時優惠剩餘　</span>
+        <span style={{ font: '600 20px/1 var(--font-sans)', fontVariantNumeric: 'tabular-nums', letterSpacing: '.06em' }}>{hms}</span>
+      </div>
+
+      {/* 商品介紹圖 */}
+      <Photo h={240} label="商品介紹圖" />
+
+      {/* 賣點卡片 */}
+      <div className="lp-container" style={{ paddingTop: 36, paddingBottom: 8 }}>
+        <div style={{ font: '500 14px/1 var(--font-sans)', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--fg-subtle)', textAlign: 'center', marginBottom: 18 }}>Why Choose Us</div>
+        <div className="lp-points">
+          {POINTS.map(p => (
+            <div key={p.title} style={{ border: '1px solid var(--line-300)', padding: '18px 16px', textAlign: 'center' }}>
+              <Icon name={p.icon} size={36} style={{ color: 'var(--fg)' }} />
+              <div style={{ font: '600 16px/1.4 var(--font-sans)', color: 'var(--fg)', margin: '10px 0 6px' }}>{p.title}</div>
+              <div style={{ font: '400 14px/1.6 var(--font-sans)', color: 'var(--fg-muted)' }}>{p.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 評論 */}
+      <div className="lp-container" style={{ paddingTop: 24, paddingBottom: 40 }}>
+        <div style={{ font: '500 14px/1 var(--font-sans)', letterSpacing: '.14em', textTransform: 'uppercase', color: 'var(--fg-subtle)', textAlign: 'center', marginBottom: 18 }}>Customer Reviews</div>
+        <div className="lp-reviews">
+          {shown.map((r, i) => (
+            <div key={i} style={{ border: '1px solid var(--line-300)', padding: '14px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                <span style={{ font: '500 15px/1 var(--font-sans)', color: 'var(--fg)' }}>{r.name}</span>
+                <Stars n={r.stars} />
+              </div>
+              <p style={{ font: '400 15px/1.6 var(--font-sans)', color: 'var(--fg-muted)' }}>{r.text}</p>
+            </div>
+          ))}
+        </div>
+        {!moreReviews && REVIEWS.length > 5 && (
+          <button onClick={() => setMoreReviews(true)} style={{ display: 'block', margin: '18px auto 0', background: 'none', border: 'none', font: '500 15px/1 var(--font-sans)', color: 'var(--fg)', textDecorationLine: 'underline', textUnderlineOffset: 3 }}>查看更多評論</button>
+        )}
+      </div>
+
+      {/* 固定底部 CTA Bar */}
+      <div className="lp-cta-bar">
+        <div className="lp-cta-inner">
+          <div style={{ width: 40, height: 40, flexShrink: 0 }}><Photo h={40} tint="#cdbfae" /></div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ font: '500 14px/1.3 var(--font-sans)', color: 'var(--fg)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{PRODUCT.name}</div>
+            <div style={{ font: '600 15px/1 var(--font-sans)', color: 'var(--fg)', marginTop: 3 }}>NT$ {PRODUCT.price.toLocaleString()}</div>
+          </div>
+          <button onClick={onBuy} style={{ width: 140, height: 44, background: 'var(--brand)', color: '#fff', border: 'none', font: '500 15px/1 var(--font-sans)', flexShrink: 0 }}>立即購買</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Page 2：規格選擇 / 加購 Bottom Sheet（#29）───────────────────────────────
+const SpecSheet = ({ onClose, onCheckout }) => {
+  const [sel, setSel] = useState(null);
+  const [qty, setQty] = useState(1);
+  const [addons, setAddons] = useState([]);
+  const [shake, setShake] = useState(false);
+  const specRef = useRef(null);
+
+  const selValue = PRODUCT.spec.values.find(v => v.v === sel);
+  const lowStock = selValue && selValue.stock > 0 && selValue.stock <= 5;
+  const addonTotal = addons.reduce((s, i) => s + ADDONS[i].addon, 0);
+  const total = PRODUCT.price * qty + addonTotal;
+
+  const toCheckout = () => {
+    if (!sel) {
+      setShake(true);
+      setTimeout(() => setShake(false), 450);
+      SiteAlert.warning('請先選擇規格', `請先選擇「${PRODUCT.spec.name}」再前往結帳`);
+      return;
+    }
+    onCheckout();
+  };
+
+  return (
+    <div className="lp-sheet-wrap">
+      <div onClick={onClose} style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,.45)' }} />
+      <div className="lp-sheet">
+        {/* Header */}
+        <div style={{ position: 'sticky', top: 0, background: 'var(--bg)', display: 'flex', alignItems: 'flex-start', gap: 12, padding: '16px 16px 12px', borderBottom: '1px solid var(--line-200)' }}>
+          <div style={{ width: 64, height: 64, flexShrink: 0 }}><Photo h={64} tint="#cdbfae" /></div>
+          <div style={{ flex: 1 }}>
+            <div style={{ font: '500 15px/1.4 var(--font-sans)', color: 'var(--fg)' }}>{PRODUCT.name}</div>
+            <div style={{ font: '600 16px/1 var(--font-sans)', color: 'var(--fg)', marginTop: 4 }}>NT$ {PRODUCT.price.toLocaleString()}</div>
+            <div style={{ font: '400 13px/1.4 var(--font-sans)', color: 'var(--fg-subtle)', marginTop: 4 }}>{sel ? `已選：${sel}` : '請選擇規格'}</div>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--fg-subtle)', display: 'flex', padding: 4 }}><Icon name="close" size={22} /></button>
+        </div>
+
+        <div style={{ padding: '16px' }}>
+          {/* 低溫宅配自動顯示（#29）*/}
+          {PRODUCT.temp !== 'normal' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: '#EAF4FB', border: '1px solid #BFE0F2', marginBottom: 16 }}>
+              <Icon name="ac_unit" size={18} style={{ color: '#1C7EC2', flexShrink: 0 }} />
+              <span style={{ font: '400 14px/1.5 var(--font-sans)', color: '#1C6FA8' }}>此商品需低溫配送，結帳時將自動套用低溫宅配與對應運費。</span>
+            </div>
+          )}
+
+          {/* 規格選擇 */}
+          <div ref={specRef} className={shake ? 'lp-shake' : ''} style={{ marginBottom: 20 }}>
+            <div style={{ font: '500 15px/1 var(--font-sans)', color: 'var(--fg)', marginBottom: 10 }}>{PRODUCT.spec.name}</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10 }}>
+              {PRODUCT.spec.values.map(v => {
+                const oos = v.stock === 0;
+                const on = sel === v.v;
+                return (
+                  <button key={v.v} disabled={oos} title={oos ? '此規格目前無庫存' : ''}
+                    onClick={() => !oos && setSel(v.v)}
+                    style={{ position: 'relative', minWidth: 88, height: 42, padding: '0 16px', background: on ? '#F5F7FA' : 'var(--bg)',
+                      border: `${on ? 2 : 1}px solid ${oos ? 'var(--line-300)' : (on ? '#303133' : 'var(--line-300)')}`,
+                      color: oos ? '#C0C4CC' : 'var(--fg)', font: '400 15px/1 var(--font-sans)', cursor: oos ? 'not-allowed' : 'pointer',
+                      textDecoration: oos ? 'line-through' : 'none' }}>
+                    {v.v}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 數量 */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+            <span style={{ font: '500 15px/1 var(--font-sans)', color: 'var(--fg)' }}>數量</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+              {lowStock && <span style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--danger)' }}>剩餘 {selValue.stock} 件</span>}
+              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid var(--line-300)' }}>
+                <button onClick={() => setQty(q => Math.max(1, q - 1))} style={{ width: 38, height: 38, background: 'var(--bg)', border: 'none', color: 'var(--fg)' }}><Icon name="remove" size={16} /></button>
+                <span style={{ width: 40, textAlign: 'center', font: '500 15px/1 var(--font-sans)' }}>{qty}</span>
+                <button onClick={() => setQty(q => selValue ? Math.min(selValue.stock, q + 1) : q + 1)} style={{ width: 38, height: 38, background: 'var(--bg)', border: 'none', color: 'var(--fg)' }}><Icon name="add" size={16} /></button>
+              </div>
+            </div>
+          </div>
+
+          {/* 加購推薦 */}
+          <div style={{ marginBottom: 18 }}>
+            <div style={{ font: '500 15px/1 var(--font-sans)', color: 'var(--fg)', marginBottom: 10 }}>搭配更划算</div>
+            <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 4 }}>
+              {ADDONS.map((a, i) => {
+                const on = addons.includes(i);
+                return (
+                  <div key={i} style={{ width: 150, flexShrink: 0, border: `1px solid ${on ? '#303133' : 'var(--line-300)'}`, padding: 10 }}>
+                    <div style={{ width: '100%', height: 80 }}><Photo h={80} tint="#d8cfc4" /></div>
+                    <div style={{ font: '400 14px/1.4 var(--font-sans)', color: 'var(--fg)', margin: '8px 0 6px', height: 38, overflow: 'hidden' }}>{a.name}</div>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 8 }}>
+                      <span style={{ font: '400 13px/1 var(--font-sans)', color: 'var(--fg-subtle)', textDecoration: 'line-through' }}>NT$ {a.orig}</span>
+                      <span style={{ font: '600 15px/1 var(--font-sans)', color: 'var(--danger)' }}>NT$ {a.addon}</span>
+                    </div>
+                    <button onClick={() => setAddons(p => on ? p.filter(x => x !== i) : [...p, i])}
+                      style={{ width: '100%', height: 34, background: on ? '#303133' : 'var(--bg)', color: on ? '#fff' : 'var(--fg)', border: '1px solid #303133', font: '400 14px/1 var(--font-sans)' }}>
+                      {on ? '已加購' : '+ 加購'}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 購物車摘要 */}
+          <div style={{ borderTop: '1px solid var(--line-200)', paddingTop: 12, marginBottom: 14 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', font: '400 15px/1.8 var(--font-sans)', color: 'var(--fg-muted)' }}>
+              <span>主商品小計（× {qty}）</span><span>NT$ {(PRODUCT.price * qty).toLocaleString()}</span>
+            </div>
+            {addons.map(i => (
+              <div key={i} style={{ display: 'flex', justifyContent: 'space-between', font: '400 14px/1.8 var(--font-sans)', color: 'var(--fg-subtle)' }}>
+                <span>＋ {ADDONS[i].name}</span><span>NT$ {ADDONS[i].addon}</span>
+              </div>
+            ))}
+            <div style={{ display: 'flex', justifyContent: 'space-between', font: '600 17px/1 var(--font-sans)', color: 'var(--fg)', marginTop: 8 }}>
+              <span>合計</span><span>NT$ {total.toLocaleString()}</span>
+            </div>
+          </div>
+
+          <button onClick={toCheckout} style={{ width: '100%', height: 52, background: 'var(--brand)', color: '#fff', border: 'none', font: '500 16px/1 var(--font-sans)', letterSpacing: '.04em' }}>前往結帳</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ── Page 3：沉浸式結帳（#30）─────────────────────────────────────────────────
+const CheckoutPage = ({ onDone }) => {
+  const STEPS = ['填寫資料', '確認訂單', '完成付款'];
+  const [form, setForm] = useState({ name: '', phone: '', email: '', addr: '' });
+  const [errs, setErrs] = useState({});
+  const [coupon, setCoupon] = useState('');
+  const [applied, setApplied] = useState(0);
+  const [pay, setPay] = useState('credit');
+  const set = (k, v) => { setForm(f => ({ ...f, [k]: v })); setErrs(e => ({ ...e, [k]: null })); };
+
+  const subtotal = PRODUCT.price;
+  const shipping = 0; // 低溫宅配滿額免運
+  const total = Math.max(0, subtotal - applied + shipping);
+
+  const submit = () => {
+    const e = {};
+    if (!form.name.trim()) e.name = '請填寫收件人姓名';
+    if (!/^09\d{8}$/.test(form.phone.replace(/[-\s]/g, ''))) e.phone = '請填寫正確的手機號碼';
+    if (!/.+@.+\..+/.test(form.email)) e.email = '請填寫正確的 Email';
+    if (!form.addr.trim()) e.addr = '請填寫收件地址';
+    setErrs(e);
+    if (Object.keys(e).length) return;
+    onDone();
+  };
+
+  const FieldRow = ({ label, k, type = 'text', ph }) => (
+    <div style={{ marginBottom: 14 }}>
+      <label style={{ display: 'block', font: '500 14px/1 var(--font-sans)', color: 'var(--fg)', marginBottom: 7 }}>{label}</label>
+      <input className={`of-input${errs[k] ? ' err' : ''}`} type={type} value={form[k]} placeholder={ph} onChange={e => set(k, e.target.value)} />
+      {errs[k] && <div style={{ font: '400 14px/1.4 var(--font-sans)', color: 'var(--danger)', marginTop: 5 }}>{errs[k]}</div>}
+    </div>
+  );
+
+  return (
+    <div style={{ paddingBottom: 40 }}>
+      {/* 頁首 Logo（置中），無導覽選單 */}
+      <div style={{ textAlign: 'center', padding: '20px 0 14px', borderBottom: '1px solid var(--line-200)' }}>
+        <div style={{ font: '600 18px/1 var(--font-sans)', letterSpacing: '.22em', color: 'var(--fg)' }}>EVOMNI</div>
+      </div>
+      {/* 進度條 3 步驟 */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px' }}>
+        {STEPS.map((s, i) => (
+          <React.Fragment key={s}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ width: 22, height: 22, borderRadius: '50%', background: i === 0 ? 'var(--brand)' : 'var(--line-200)', color: i === 0 ? '#fff' : 'var(--fg-subtle)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', font: '500 13px/1 var(--font-sans)' }}>{i + 1}</span>
+              <span style={{ font: '400 14px/1 var(--font-sans)', color: i === 0 ? 'var(--fg)' : 'var(--fg-subtle)' }}>{s}</span>
+            </div>
+            {i < STEPS.length - 1 && <span style={{ width: 18, height: 1, background: 'var(--line-300)' }} />}
+          </React.Fragment>
+        ))}
+      </div>
+
+      <div className="lp-checkout" style={{ padding: '8px 20px' }}>
+        {/* 收件資訊 */}
+        <h2 style={{ font: '600 17px/1 var(--font-sans)', color: 'var(--fg)', margin: '12px 0 14px' }}>收件資訊</h2>
+        <FieldRow label="收件人姓名" k="name" ph="請輸入姓名" />
+        <FieldRow label="手機號碼" k="phone" ph="09xxxxxxxx" />
+        <FieldRow label="電子信箱" k="email" type="email" ph="abc@example.com" />
+        <FieldRow label="收件地址" k="addr" ph="請輸入完整收件地址" />
+
+        {/* 物流（低溫自動）*/}
+        <h2 style={{ font: '600 17px/1 var(--font-sans)', color: 'var(--fg)', margin: '22px 0 12px' }}>配送方式</h2>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, padding: '10px 12px', background: '#EAF4FB', border: '1px solid #BFE0F2', marginBottom: 12 }}>
+          <Icon name="ac_unit" size={18} style={{ color: '#1C7EC2', flexShrink: 0, marginTop: 1 }} />
+          <span style={{ font: '400 14px/1.5 var(--font-sans)', color: '#1C6FA8' }}>此商品需低溫配送，已為您自動套用低溫宅配服務（不顯示其他物流選項以避免選錯）。</span>
+        </div>
+        <label style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', border: '2px solid var(--brand)', background: 'var(--bg)' }}>
+          <input type="radio" checked readOnly style={{ width: 16, height: 16, accentColor: 'var(--brand)' }} />
+          <span style={{ font: '500 15px/1 var(--font-sans)', color: 'var(--fg)' }}>低溫宅配（冷凍）</span>
+          <span style={{ marginLeft: 'auto', font: '400 14px/1 var(--font-sans)', color: 'var(--success)' }}>滿額免運</span>
+        </label>
+
+        {/* 金流 */}
+        <h2 style={{ font: '600 17px/1 var(--font-sans)', color: 'var(--fg)', margin: '22px 0 12px' }}>付款方式</h2>
+        {[['credit', '信用卡一次付清'], ['atm', 'ATM 虛擬帳號'], ['cod', '貨到付款']].map(([k, l]) => (
+          <label key={k} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', border: `1px solid ${pay === k ? 'var(--fg)' : 'var(--line-300)'}`, marginBottom: 8 }}>
+            <input type="radio" checked={pay === k} onChange={() => setPay(k)} style={{ width: 16, height: 16, accentColor: 'var(--brand)' }} />
+            <span style={{ font: '400 15px/1 var(--font-sans)', color: 'var(--fg)' }}>{l}</span>
+          </label>
+        ))}
+
+        {/* 優惠碼 */}
+        <h2 style={{ font: '600 17px/1 var(--font-sans)', color: 'var(--fg)', margin: '22px 0 12px' }}>優惠碼</h2>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <input className="of-input" value={coupon} onChange={e => setCoupon(e.target.value)} placeholder="輸入優惠碼" style={{ flex: 1 }} />
+          <button onClick={() => { if (coupon.trim()) { setApplied(100); SiteAlert.success('優惠碼已套用', '已折抵 NT$100'); } }}
+            style={{ width: 88, height: 46, background: 'var(--fg)', color: '#fff', border: 'none', font: '500 15px/1 var(--font-sans)' }}>套用</button>
+        </div>
+
+        {/* 明細 */}
+        <div style={{ borderTop: '1px solid var(--line-200)', marginTop: 22, paddingTop: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', font: '400 15px/1.9 var(--font-sans)', color: 'var(--fg-muted)' }}><span>商品小計</span><span>NT$ {subtotal.toLocaleString()}</span></div>
+          {applied > 0 && <div style={{ display: 'flex', justifyContent: 'space-between', font: '400 15px/1.9 var(--font-sans)', color: 'var(--success)' }}><span>優惠碼折扣</span><span>- NT$ {applied}</span></div>}
+          <div style={{ display: 'flex', justifyContent: 'space-between', font: '400 15px/1.9 var(--font-sans)', color: 'var(--fg-muted)' }}><span>低溫宅配運費</span><span style={{ color: 'var(--success)' }}>免運費</span></div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', font: '600 18px/1 var(--font-sans)', color: 'var(--fg)', marginTop: 8 }}><span>應付總計</span><span>NT$ {total.toLocaleString()}</span></div>
+        </div>
+
+        <button onClick={submit} style={{ width: '100%', height: 56, background: 'var(--brand)', color: '#fff', border: 'none', font: '500 16px/1 var(--font-sans)', letterSpacing: '.04em', marginTop: 18 }}>確認下單並付款</button>
+      </div>
+    </div>
+  );
+};
+
+// ── 付款成功 ─────────────────────────────────────────────────────────────────
+const SuccessPage = ({ onRestart }) => (
+  <div className="lp-success" style={{ textAlign: 'center', padding: '64px 28px' }}>
+    <Icon name="check_circle" size={72} style={{ color: 'var(--success)' }} />
+    <h1 style={{ font: '600 24px/1.3 var(--font-sans)', color: 'var(--fg)', margin: '18px 0 10px' }}>付款成功，感謝您的訂購！</h1>
+    <p style={{ font: '400 15px/1.7 var(--font-sans)', color: 'var(--fg-muted)' }}>訂單編號：<strong style={{ color: 'var(--fg)' }}>ORD-20260612-000188</strong></p>
+    <p style={{ font: '400 15px/1.7 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 20 }}>確認信已寄至 <strong style={{ color: 'var(--fg)' }}>abc@example.com</strong></p>
+    <div style={{ background: 'var(--fill-300)', border: '1px solid var(--line-300)', padding: '16px 18px', font: '400 15px/1.7 var(--font-sans)', color: 'var(--fg-muted)', marginBottom: 20 }}>
+      您的北海道生乳卷將以低溫宅配寄出，預計 2–3 個工作天到貨。請留意保冷狀態並儘早冷藏／冷凍保存。
+    </div>
+    <button onClick={() => SiteAlert.info('分享', '即將開啟 LINE 分享…')} style={{ width: '100%', height: 48, background: '#06C755', color: '#fff', border: 'none', font: '500 15px/1 var(--font-sans)', marginBottom: 10 }}>分享給 LINE 好友</button>
+    <button onClick={onRestart} style={{ width: '100%', height: 48, background: 'var(--bg)', color: 'var(--fg-muted)', border: '1px solid var(--line-300)', font: '500 15px/1 var(--font-sans)' }}>回到銷售頁（示意重玩）</button>
+  </div>
+);
+
+// ── App ──────────────────────────────────────────────────────────────────────
+function App() {
+  const [view, setView] = useState('sales'); // sales | checkout | success
+  const [sheet, setSheet] = useState(false);
+
+  return (
+    <div className="lp-frame">
+      {view === 'sales' && <SalesPage onBuy={() => setSheet(true)} />}
+      {view === 'checkout' && <CheckoutPage onDone={() => setView('success')} />}
+      {view === 'success' && <SuccessPage onRestart={() => { setView('sales'); setSheet(false); }} />}
+      {view === 'sales' && sheet && <SpecSheet onClose={() => setSheet(false)} onCheckout={() => { setSheet(false); setView('checkout'); window.scrollTo(0, 0); }} />}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

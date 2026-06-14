@@ -96,6 +96,7 @@
 <script type="text/babel" src="components/pages/PageThirdPartyLogin.jsx"></script>
 <script type="text/babel" src="components/pages/PageAdTools.jsx"></script>
 <script type="text/babel" src="components/pages/PageTracking.jsx"></script>
+<script type="text/babel" src="components/pages/PageNotificationTemplates.jsx"></script>
 <script type="text/babel" src="components/pages/PageWebsiteDesign.jsx"></script>
 <script type="text/babel" src="components/pages/PageSystemPages.jsx"></script>
 
@@ -249,6 +250,9 @@ function App() {
     }
     if (currentPage === 'gs-tracking') {
       return <PageTracking onNavigate={navigate} show={show} />;
+    }
+    if (currentPage === 'gs-notification-templates') {
+      return <NotificationTemplatesPage />;
     }
     if (currentPage === 'gs-temp-freight' || currentPage === 'gs-weight-freight') {
       return <PageFreight currentPage={currentPage} onNavigate={navigate} show={show} />;
